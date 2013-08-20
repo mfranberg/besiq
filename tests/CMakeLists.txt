@@ -1,0 +1,13 @@
+include_directories( ${LIBBAYESIC_INCLUDE_DIR} )
+include_directories( ${LIBGLM_INCLUDE_DIR} )
+include_directories( ${GTEST_INCLUDE_DIR} )
+include_directories( ${ARMADILLO_INCLUDE_DIR} )
+
+file( GLOB TEST_LIST "*_test.cpp" )
+
+foreach( TEST_PATH ${TEST_LIST} )
+    get_filename_component( TEST_NAME ${TEST_PATH} NAME_WE )
+    add_executable( ${TEST_NAME} ${TEST_PATH} )
+    target_link_libraries( ${TEST_NAME} gtest gtest_main libglm libbayesic ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} )
+    add_test( ${TEST_NAME} ${TEST_NAME} )
+endforeach( TEST_PATH )
