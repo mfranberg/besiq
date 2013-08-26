@@ -5,27 +5,39 @@
 
 #include <models/glm_model.hpp>
 #include <irls.hpp>
+#include <libdcdf.hpp>
 
 using namespace arma;
 
 /**
- * Solves the weighted least square problem:
- *   
- *   W*X*W*b = X*W*y
- *
- * The algorithm uses the singular value decomposition, to
- * compute the solution b:
- *   
- *   b = V * S^-1 * U^t sqrt( w ) * y
- *
- * where wX = U S V^t
- *
- * @param X The design matrix.
- * @param y The right hand side.
- * @param w The weight for each observation.
- *
- * @return The vector b that minimizes the weighted least squares problem.
- */
+* Sets the weights of missing observations to zero, so that
+* the will not influence the regression.
+*/
+void
+set_missing_to_zero(const uvec &missing, vec &w)
+{   
+    for(int i = 0; i < w.size( ); i++)
+    {
+        if( missing[ i ] == 1 )
+        {
+            w[ i ] = 0.0;
+        }
+    }
+}
+
+vec
+chi_square_cdf(const vec &x, unsigned int df)
+{
+    vec p = ones<vec>( x.n_elem );
+    for(int i = 0; i < x.n_elem; i++)
+    {
+        p[ i ] = chi_square_cdf( x[ i ], df );
+    }
+
+    return p;
+}
+
+
 vec
 weighted_least_squares(const mat &X, const vec &y, const vec &w)
 {
@@ -39,20 +51,15 @@ weighted_least_squares(const mat &X, const vec &y, const vec &w)
     return pinv( A ) * ty;
 }
 
-/**
- * This function performs the iteratively reweighted
- * least squares algorithm to estimate beta coefficients
- * of a genearlized linear model.
- *
- * @param X The design matrix (caller is responsible for
- *          adding an intercept).
- * @param y The observations.
- * @param model The GLM model to estimate.
- *
- * @return Estimated beta coefficients.
- */
 vec
-irls(const mat &X, const vec &y, const glm_model &model)
+irls(const mat &X, const vec &y, const glm_model &model, irls_info &output)
+{
+    uvec missing = zeros<uvec>( y.n_elem );
+    return irls( X, y, missing, model, output );
+}
+
+vec
+irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, irls_info &output)
 {
     vec b = model.init_beta( X, y );
     vec w( X.n_rows );
@@ -60,24 +67,34 @@ irls(const mat &X, const vec &y, const glm_model &model)
 
     int num_iter = 0;
     double old_logl = -DBL_MAX;
-    double logl = model.likelihood( X, y, b );
+    double logl = model.likelihood( X, y, b, missing );
     while( num_iter < IRLS_MAX_ITERS && ! ( fabs( logl - old_logl ) < IRLS_TOLERANCE ) )
     {
         w = model.compute_w( X, y, b );
         z = model.compute_z( X, y, b );
+        set_missing_to_zero( missing, w );
         b = weighted_least_squares( X, z, w );
 
         old_logl = logl;
-        logl = model.likelihood( X, y, b );
+        logl = model.likelihood( X, y, b, missing );
         num_iter++;
     }
 
-    if( num_iter == IRLS_MAX_ITERS + 1 )
-    {
-        std::cout << "bayesic: warning: IRLS did not converge." << std::endl;
-    }
 
-    std::cout << "Converged in " << num_iter << " iterations." << std::endl;
+    if( num_iter <= IRLS_MAX_ITERS )
+    {
+        mat C = inv( X.t( ) *  diagmat( w ) * X );
+        output.se_beta = sqrt( diagvec( C ) );
+        vec wald_z = b / output.se_beta;
+        output.p_value = 1.0 - chi_square_cdf( wald_z % wald_z, 1 );
+        output.num_iters = num_iter;
+        output.converged = true;
+    }
+    else
+    {   
+        output.num_iters = num_iter;
+        output.converged = false;
+    }
 
     return b;
 }

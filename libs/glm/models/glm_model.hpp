@@ -50,10 +50,11 @@ class glm_model
          * @param X The design matrix.
          * @param y The observations.
          * @param b The beta coefficients.
+         * @param missing Indiciates missing samples by 1 and not missing by 0.
          *
          * @return The log likelihood.
          */
-        virtual double likelihood(const arma::mat &X, const arma::vec &y, const arma::vec &b) const = 0;
+        virtual double likelihood(const arma::mat &X, const arma::vec &y, const arma::vec &b, const arma::uvec &missing) const = 0;
 };
 
 #endif /* End of __GLM_MODEL_H__ */

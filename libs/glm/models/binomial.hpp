@@ -27,7 +27,7 @@ public:
     /**
      * @see glm_model.init_beta.
      */
-    virtual double likelihood(const arma::mat &X, const arma::vec &y, const arma::vec &b) const;
+    virtual double likelihood(const arma::mat &X, const arma::vec &y, const arma::vec &b, const arma::uvec &missing) const;
 
 private:
 };

@@ -1,4 +1,6 @@
 add_subdirectory( bayesic )
 add_subdirectory( cpp-argparse )
 add_subdirectory( glm )
+add_subdirectory( plink )
 add_subdirectory( gtest )
+add_subdirectory( dcdflib )

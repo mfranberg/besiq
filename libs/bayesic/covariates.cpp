@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <vector>
 
+#include <assert.h>
+
 #include <armadillo>
 
 #include <covariates.hpp>
@@ -34,12 +36,11 @@ get_fields(const std::string &header)
 }
 
 mat
-parse_covariate_matrix(std::istream &stream, const char *missing_string)
+parse_covariate_matrix(std::istream &stream, arma::uvec &missing, const char *missing_string)
 {
     std::string header;
     std::getline( stream, header );
     std::vector<std::string> header_fields = get_fields( header );
-    std::vector<bool> missing;
 
     mat X;
     std::string line;
@@ -47,8 +48,6 @@ parse_covariate_matrix(std::istream &stream, const char *missing_string)
     rowvec row( header_fields.size( ) );
     while( std::getline( stream, line ) )
     {
-        missing.push_back( false );
-
         std::istringstream line_stream( line );
         for(int i = 0; i < header_fields.size( ); i++)
         {
@@ -62,7 +61,7 @@ parse_covariate_matrix(std::istream &stream, const char *missing_string)
                 if( ! (field_stream >> field) || field_stream.get( c ) )
                 {
                     std::ostringstream error_message;
-                    error_message << "Could not parse covariate file, error on line: " << row_num + 2 << " column " << i;
+                    error_message << "Could not parse file, error on line: " << row_num + 2 << " column " << i;
                     throw bad_conversion( error_message.str( ) );
                 }
 
@@ -70,7 +69,7 @@ parse_covariate_matrix(std::istream &stream, const char *missing_string)
             }
             else
             {
-                missing[ row_num ] = true;
+                missing[ row_num ] = 1.0;
                 row[ i ] = 0.0;
             }
         }
@@ -85,4 +84,12 @@ parse_covariate_matrix(std::istream &stream, const char *missing_string)
     std::cout << X.n_rows << std::endl;
 
     return X;
+}
+
+arma::vec
+parse_phenotypes(std::istream &stream, arma::uvec &missing, const char *missing_string)
+{
+    mat phenotype_matrix = parse_covariate_matrix( stream, missing, missing_string );
+    assert( phenotype_matrix.n_cols == 1 );
+    return phenotype_matrix.col( 0 );
 }

@@ -18,9 +18,7 @@ binomial::compute_w(const mat &X, const vec &y, const vec &b) const
 {
     vec eta = X * b;
     vec mu = 1.0 / ( 1.0 + exp( -eta ) );
-    vec denom = mu % ( 1 - mu );
-
-    vec w = denom % denom % denom;
+    vec w = mu % ( 1 - mu );
 
     return w;
 }
@@ -36,10 +34,20 @@ binomial::compute_z(const mat &X, const vec &y, const vec &b) const
 }
 
 double
-binomial::likelihood(const mat &X, const vec &y, const vec &b) const
+binomial::likelihood(const mat &X, const vec &y, const vec &b, const uvec &missing) const
 {
     vec eta = X * b;
     vec mu = 1.0 / ( 1.0 + exp( -eta ) );
 
-    return sum( (y % log( mu ) ) + ( (1 - y) % log( 1 - mu ) ) );
+    double loglikelihood = 0.0;
+    for(int i = 0; i < y.n_elem; i++)
+    {
+        if( missing[ i ] == 0 )
+        {
+            loglikelihood += y[ i ] * log( mu[ i ] ) + ( 1 - y[ i ] ) * log( 1 - mu[ i ] );
+        }
+    }
+
+    return loglikelihood;
+    //return sum( (y % log( mu ) ) + ( (1 - y) % log( 1 - mu ) ) );
 }
