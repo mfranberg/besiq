@@ -3,23 +3,17 @@
 using namespace arma;
 
 saturated::saturated(log_double prior)
-: m_prior( prior )
+: model::model( prior )
 {
 
 }
 
-log_double
-saturated::prior( )
-{
-    return m_prior;
-}
 
 log_double
 saturated::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight)
 {
     mat counts = joint_count( row1, row2, phenotype, weight );
-    std::cout << counts << std::endl;
-
+    
     log_double likelihood = 1.0;
     for(int i = 0; i < counts.n_rows; i++)
     {
@@ -32,15 +26,9 @@ saturated::prob(const snp_row &row1, const snp_row &row2, const arma::vec &pheno
 }
 
 null::null(log_double prior)
-: m_prior( prior )
+: model::model( prior )
 {
 
-}
-
-log_double
-null::prior( )
-{
-    return m_prior;
 }
 
 log_double
@@ -86,16 +74,10 @@ null::compute_alpha(const snp_row &row1, const snp_row &row2)
 }
 
 ld_assoc::ld_assoc(log_double prior, bool is_first)
-: m_prior( prior ),
+: model::model( prior ),
   m_is_first( is_first )
 {
 
-}
-
-log_double
-ld_assoc::prior( )
-{
-    return m_prior;
 }
 
 log_double

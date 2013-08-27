@@ -5,10 +5,19 @@
 #include <cfloat>
 #include <stdexcept>
 
+/**
+ * This class represents a value on the log scale that supports
+ * the common arithmetic operators.
+ */
 template <class T>
 class log_scale
 {
 public:
+    /**
+     * Constructor.
+     *
+     * @param value The value to log.
+     */
     log_scale(T value)
     {
         if( value != 0.0 )
@@ -23,12 +32,16 @@ public:
         }
     }
 
-    log_scale(const log_scale<T> &other)
-    {
-        m_log_value = other.m_log_value;
-        m_is_zero = other.m_is_zero;
-    }
-
+    /**
+     * Secondary constructor.
+     *
+     * Intializes the class directly from a value already on the
+     * log scale.
+     *
+     * @param log_value A already logged value.
+     *
+     * @return The initialized object.
+     */
     template <class K>
     static log_scale<K> from_log(K log_value)
     {
@@ -38,6 +51,9 @@ public:
         return from_log;
     }
 
+    /**
+     * Assignment operator.
+     */
     const log_scale<T> &operator=(const log_scale<T> &other)
     {
         if( this != &other )
@@ -48,6 +64,7 @@ public:
         return *this;
     }
 
+    /* Arithmetic operators +, -, * and /. */
     const log_scale<T> &operator+=(const log_scale<T> &other)
     {
         if( !m_is_zero && !other.m_is_zero )
@@ -118,6 +135,11 @@ public:
         return *this;
     }
 
+    /**
+     * Returns the un-logged value.
+     * 
+     * @return the un-logged value.
+     */
     T value()
     {
         if( !m_is_zero )
@@ -130,6 +152,11 @@ public:
         }
     }
 
+    /**
+     * Returns the logged value.
+     * 
+     * @return the logged value.
+     */
     T log_value()
     {
         if( !m_is_zero )
@@ -154,6 +181,7 @@ private:
     bool m_is_zero;
 };
 
+/* Binaray arithmetic operators for +, -, * and /. */
 template <class T>
 log_scale<T> operator+(const log_scale<T> &lhs, const log_scale<T> &rhs)
 {
@@ -227,6 +255,7 @@ log_scale<T> operator*(const log_scale<T> &lhs, const T &rhs)
     return log_scale<T>( lhs ) *= log_scale<T>( rhs );
 }
 
+/* Convenience definitions for common types. */
 typedef log_scale<double> log_double;
 typedef log_scale<float> log_float;
 typedef log_scale<int> log_int;
