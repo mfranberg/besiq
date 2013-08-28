@@ -11,6 +11,7 @@
 #include <pair_iter.hpp>
 #include <method/bayesic_method.hpp>
 #include <method/logistic_method.hpp>
+#include <method/loglinear_method.hpp>
 #include <method/method.hpp>
 
 using namespace arma;
@@ -77,7 +78,7 @@ main(int argc, char *argv[])
     parser.add_option( "-c" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
     
     char const* const choices[] = { "bayes", "logistic", "loglinear" };
-    parser.add_option( "-m" ).choices( &choices[ 0 ], &choices[ 2 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'logistic' or 'loglinear'." );
+    parser.add_option( "-m" ).choices( &choices[ 0 ], &choices[ 3 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'logistic' or 'loglinear'." );
 
     parser.add_option( "-n" ).type( "int" ).help( "The number of interactions to correct for." );
 
@@ -121,6 +122,11 @@ main(int argc, char *argv[])
     {
         logistic_method logistic( data );
         run_method( logistic, genotype_matrix, genotype_file->get_loci( ), pairs );
+    }
+    else if( options[ "m" ] == "loglinear" )
+    {
+        loglinear_method loglinear( data );
+        run_method( loglinear, genotype_matrix, genotype_file->get_loci( ), pairs );
     }
 
     return 0;

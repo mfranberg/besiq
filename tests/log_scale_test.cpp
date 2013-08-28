@@ -89,6 +89,32 @@ TEST(log_scale_test, Div)
     ASSERT_NEAR( c.value( ), 1.0, 0.00001 );
 }
 
+TEST(log_scale_test, Cmp)
+{
+    log_double a = 0.25;
+    log_double b = 0.5;
+
+    ASSERT_TRUE( a < b );
+    ASSERT_FALSE( b < a );
+    ASSERT_FALSE( a < a );
+    
+    ASSERT_TRUE( a <= b );
+    ASSERT_FALSE( b <= a );
+    ASSERT_FALSE( a >= b );
+    ASSERT_TRUE( b >= a );
+
+    a = b;
+    ASSERT_TRUE( a <= b );
+    ASSERT_TRUE( a >= b );
+    ASSERT_TRUE( a == b );
+    ASSERT_FALSE( a != b );
+
+    a = 0.0;
+    ASSERT_TRUE( a < b );
+    ASSERT_FALSE( b < a );
+    ASSERT_FALSE( a < a );    
+}
+
 TEST(log_scale_test, Zero)
 {
     log_double a = 0.5;

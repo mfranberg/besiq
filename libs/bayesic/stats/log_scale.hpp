@@ -140,7 +140,7 @@ public:
      * 
      * @return the un-logged value.
      */
-    T value()
+    T value() const
     {
         if( !m_is_zero )
         {
@@ -157,7 +157,7 @@ public:
      * 
      * @return the logged value.
      */
-    T log_value()
+    T log_value() const
     {
         if( !m_is_zero )
         {
@@ -253,6 +253,116 @@ template <class T>
 log_scale<T> operator*(const log_scale<T> &lhs, const T &rhs)
 {
     return log_scale<T>( lhs ) *= log_scale<T>( rhs );
+}
+
+/* Comparisson operators, not sure about how do this nicely
+   without boost::less_than_comparable. */
+template <class T>
+bool operator<(const log_scale<T> &lhs, const log_scale<T> &rhs)
+{
+    return lhs.log_value( ) < rhs.log_value( );
+}
+
+template <class T>
+bool operator<(const T &lhs, const log_scale<T> &rhs)
+{
+    return log_scale<T>( lhs ) < rhs;
+}
+
+template <class T>
+bool operator<(const log_scale<T> &lhs, const T &rhs)
+{
+    return lhs < log_scale<T>( rhs );
+}
+
+template <class T>
+bool operator<=(const log_scale<T> &lhs, const log_scale<T> &rhs)
+{
+    return lhs.log_value( ) <= rhs.log_value( );
+}
+
+template <class T>
+bool operator<=(const T &lhs, const log_scale<T> &rhs)
+{
+    return log_scale<T>( lhs ) <= rhs;
+}
+
+template <class T>
+bool operator<=(const log_scale<T> &lhs, const T &rhs)
+{
+    return lhs <= log_scale<T>( rhs );
+}
+
+template <class T>
+bool operator>(const log_scale<T> &lhs, const log_scale<T> &rhs)
+{
+    return lhs.log_value( ) > rhs.log_value( );
+}
+
+template <class T>
+bool operator>(const T &lhs, const log_scale<T> &rhs)
+{
+    return log_scale<T>( lhs ) > rhs;
+}
+
+template <class T>
+bool operator>(const log_scale<T> &lhs, const T &rhs)
+{
+    return lhs > log_scale<T>( rhs );
+}
+
+template <class T>
+bool operator>=(const log_scale<T> &lhs, const log_scale<T> &rhs)
+{
+    return lhs.log_value( ) >= rhs.log_value( );
+}
+
+template <class T>
+bool operator>=(const T &lhs, const log_scale<T> &rhs)
+{
+    return log_scale<T>( lhs ) >= rhs;
+}
+
+template <class T>
+bool operator>=(const log_scale<T> &lhs, const T &rhs)
+{
+    return lhs >= log_scale<T>( rhs );
+}
+
+template <class T>
+bool operator==(const log_scale<T> &lhs, const log_scale<T> &rhs)
+{
+    return lhs.log_value( ) == rhs.log_value( );
+}
+
+template <class T>
+bool operator==(const T &lhs, const log_scale<T> &rhs)
+{
+    return log_scale<T>( lhs ) == rhs;
+}
+
+template <class T>
+bool operator==(const log_scale<T> &lhs, const T &rhs)
+{
+    return lhs == log_scale<T>( rhs );
+}
+
+template <class T>
+bool operator!=(const log_scale<T> &lhs, const log_scale<T> &rhs)
+{
+    return lhs.log_value( ) != rhs.log_value( );
+}
+
+template <class T>
+bool operator!=(const T &lhs, const log_scale<T> &rhs)
+{
+    return log_scale<T>( lhs ) != rhs;
+}
+
+template <class T>
+bool operator!=(const log_scale<T> &lhs, const T &rhs)
+{
+    return lhs != log_scale<T>( rhs );
 }
 
 /* Convenience definitions for common types. */
