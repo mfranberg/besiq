@@ -61,13 +61,19 @@ public:
     }
 
     /**
+     * Outputs the column names that will be
+     * outputted by this method separated by '\t'.
+     */
+    virtual void init(std::ostream &output) = 0;
+
+    /**
      * 
      * @param row1 The first genotype.
      * @param row2 The second genotype.
      * @param name1 Name of the first genotype.
      * @param name2 Name of the second genotype.
      */
-    virtual void run(const snp_row &row1, const snp_row &row2, const std::string &name1, const std::string &name2) = 0;
+    virtual void run(const snp_row &row1, const snp_row &row2, std::ostream &output) = 0;
 
 private:
     /**

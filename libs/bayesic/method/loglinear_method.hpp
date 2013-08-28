@@ -25,6 +25,11 @@ public:
      *             covariates.
      */
     loglinear_method(method_data_ptr data);
+    
+    /**
+     * @see method_type::init.
+     */
+    virtual void init(std::ostream &output);
 
     /**
      * Returns the number of usable samples.
@@ -40,7 +45,7 @@ public:
     /**
      * @see method_type::run.
      */
-    virtual void run(const snp_row &row1, const snp_row &row2, const std::string &name1, const std::string &name2);
+    virtual void run(const snp_row &row1, const snp_row &row2, std::ostream &output);
 
 private: 
     /**

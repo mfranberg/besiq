@@ -14,8 +14,13 @@ logistic_method::logistic_method(method_data_ptr data)
     m_design_matrix.col( 3 ) = arma::ones<arma::vec>( data->phenotype.n_elem );
 }
 
+void
+logistic_method::init(std::ostream &output)
+{
+    output << "Beta" << "\t" << "SE" << "\t" << "P";
+}
 
-void logistic_method::run(const snp_row &row1, const snp_row &row2, const std::string &name1, const std::string &name2)
+void logistic_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
 {
     arma::uvec missing = get_data( )->missing;
 
@@ -36,9 +41,8 @@ void logistic_method::run(const snp_row &row1, const snp_row &row2, const std::s
         }
     }
 
-    irls_info output;
-    arma::vec b = irls( m_design_matrix, get_data( )->phenotype, missing, m_model, output );   
+    irls_info info;
+    arma::vec b = irls( m_design_matrix, get_data( )->phenotype, missing, m_model, info );   
 
-    std::cout << name1 << " " << name2 << "\t" << b[ 2 ] << "\t" <<
-            output.se_beta[ 2 ] << "\t" << output.p_value[ 2 ] << std::endl;
+    output << b[ 2 ] << "\t" << info.se_beta[ 2 ] << "\t" << info.p_value[ 2 ];
 }

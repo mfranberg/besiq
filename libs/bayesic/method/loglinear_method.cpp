@@ -20,7 +20,13 @@ loglinear_method::num_ok_samples(const snp_row &row1, const snp_row &row2, const
 }
 
 void
-loglinear_method::run(const snp_row &row1, const snp_row &row2, const std::string &name1, const std::string &name2)
+loglinear_method::init(std::ostream &output)
+{
+    output << "P";
+}
+
+void
+loglinear_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
 {
     double num_samples = num_ok_samples( row1, row2, get_data( )->phenotype );
     std::vector<log_double> likelihood( m_models.size( ), 0.0 );
@@ -34,5 +40,5 @@ loglinear_method::run(const snp_row &row1, const snp_row &row2, const std::strin
     unsigned int best_model = std::distance( bic.begin( ), std::min_element( bic.begin( ) + 1, bic.end( ) ) );
     double LR = -2.0*(likelihood[ best_model ].log_value( ) - likelihood[ 0 ].log_value( ));
     
-    std::cout << name1 << " " << name2 << "\t" << 1.0 - chi_square_cdf( LR, m_models[ best_model ]->df( ) ) << std::endl;
+    output << 1.0 - chi_square_cdf( LR, m_models[ best_model ]->df( ) );
 }

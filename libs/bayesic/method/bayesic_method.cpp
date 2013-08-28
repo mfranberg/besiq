@@ -15,8 +15,13 @@ bayesic_method::bayesic_method(method_data_ptr data)
     }
 }
 
+void
+bayesic_method::init(std::ostream &output)
+{
+    output << "Posterior";
+}
 
-void bayesic_method::run(const snp_row &row1, const snp_row &row2, const std::string &name1, const std::string &name2)
+void bayesic_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
 {
     log_double denominator = 0.0;
     std::vector<log_double> prior_likelihood( m_models.size( ), 0.0 );
@@ -27,5 +32,5 @@ void bayesic_method::run(const snp_row &row1, const snp_row &row2, const std::st
     }
     log_double posterior = prior_likelihood[ 0 ] / denominator;
 
-    std::cout << name1 << " " << name2 << "\t" << posterior.value( ) << std::endl;
+    std::cout << posterior.value( );
 }
