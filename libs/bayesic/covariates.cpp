@@ -45,10 +45,11 @@ parse_covariate_matrix(std::istream &stream, arma::uvec &missing, const char *mi
     mat X;
     std::string line;
     int row_num = 0;
-    rowvec row( header_fields.size( ) );
+    rowvec row( header_fields.size( ) + 1 );
     while( std::getline( stream, line ) )
     {
         std::istringstream line_stream( line );
+        row[ 0 ] = 1.0; // intercept
         for(int i = 0; i < header_fields.size( ); i++)
         {
             std::string field_str;
@@ -65,12 +66,12 @@ parse_covariate_matrix(std::istream &stream, arma::uvec &missing, const char *mi
                     throw bad_conversion( error_message.str( ) );
                 }
 
-                row[ i ] = field;
+                row[ i + 1 ] = field;
             }
             else
             {
                 missing[ row_num ] = 1.0;
-                row[ i ] = 0.0;
+                row[ i + 1 ] = 0.0;
             }
         }
 

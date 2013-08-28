@@ -89,6 +89,7 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, ir
         output.p_value = 1.0 - chi_square_cdf( wald_z % wald_z, 1 );
         output.num_iters = num_iter;
         output.converged = true;
+        output.mu = model.compute_mu( X, b );
     }
     else
     {   

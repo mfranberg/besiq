@@ -33,6 +33,12 @@ binomial::compute_z(const mat &X, const vec &y, const vec &b) const
     return z;
 }
 
+vec
+binomial::compute_mu(const arma::mat &X, const arma::vec &b) const
+{
+    return 1.0 / ( 1.0 + exp( -X*b ) );
+}
+
 double
 binomial::likelihood(const mat &X, const vec &y, const vec &b, const uvec &missing) const
 {

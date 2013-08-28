@@ -45,6 +45,16 @@ class glm_model
         virtual arma::vec compute_z(const arma::mat &X, const arma::vec &y, const arma::vec &b) const = 0;
 
         /**
+         * Transforms X, b to the mean value parameterization mu.
+         *
+         * @param X The design matrix.
+         * @param b The beta coefficients.
+         *
+         * @return The mean value parameterization.
+         */
+        virtual arma::vec compute_mu(const arma::mat &X, const arma::vec &b) const = 0;
+
+        /**
          * Compute the log likelihood for the parameters.
          *
          * @param X The design matrix.

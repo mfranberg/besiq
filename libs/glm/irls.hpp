@@ -26,6 +26,11 @@ struct irls_info
     unsigned int num_iters;
 
     /**
+     * Estimated mean value.
+     */
+    arma::vec mu;
+
+    /**
     * True if converged, false otherwise.
     */
     bool converged;

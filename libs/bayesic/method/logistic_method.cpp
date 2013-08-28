@@ -2,16 +2,15 @@
 
 logistic_method::logistic_method(method_data_ptr data)
 : method_type::method_type( data ),
-  m_design_matrix( data->phenotype.n_elem, data->covariate_matrix.n_cols + 4 )
+  m_design_matrix( data->phenotype.n_elem, data->covariate_matrix.n_cols + 3 )
 {
     /*
      * First three columns are snp1, snp2 and snp1 x snp2.
      */
     for(int i = 0; i < data->covariate_matrix.n_cols; i++)
     {
-        m_design_matrix.col( i + 4 ) = data->covariate_matrix.col( i );
+        m_design_matrix.col( i + 3 ) = data->covariate_matrix.col( i );
     }
-    m_design_matrix.col( 3 ) = arma::ones<arma::vec>( data->phenotype.n_elem );
 }
 
 void
