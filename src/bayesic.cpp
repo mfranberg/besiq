@@ -87,7 +87,7 @@ main(int argc, char *argv[])
                                          .description( DESCRIPTION )
                                          .epilog( EPILOG );
     
-    parser.add_option( "-c", "--covariates" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
+    parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
     
     char const* const choices[] = { "bayes", "logistic", "loglinear" };
     parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 3 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'logistic' or 'loglinear'." );
@@ -117,12 +117,12 @@ main(int argc, char *argv[])
     data->missing = zeros<uvec>( genotype_file->get_samples( ).size( ) );
     data->phenotype = create_phenotype_vector( genotype_file, data->missing );
     std::vector<std::string> order = get_order( genotype_file->get_samples( ) );
-    if( options.is_set( "p" ) )
+    if( options.is_set( "pheno" ) )
     {
         std::ifstream phenotype_file( options[ "p" ].c_str( ) );
         data->phenotype = parse_phenotypes( phenotype_file, data->missing, order );
     }
-    if( options.is_set( "c" ) )
+    if( options.is_set( "cov" ) )
     {
         std::ifstream covariate_file( options[ "c" ].c_str( ) );
         data->covariate_matrix = parse_covariate_matrix( covariate_file, data->missing, order );
@@ -136,17 +136,17 @@ main(int argc, char *argv[])
     }
 
     /* Run method */
-    if( options[ "m" ] == "bayes" )
+    if( options[ "method" ] == "bayes" )
     {
         bayesic_method bayesic( data );
         run_method( bayesic, genotype_matrix, genotype_file->get_loci( ), pairs );
     }
-    else if( options[ "m" ] == "logistic" )
+    else if( options[ "method" ] == "logistic" )
     {
         logistic_method logistic( data );
         run_method( logistic, genotype_matrix, genotype_file->get_loci( ), pairs );
     }
-    else if( options[ "m" ] == "loglinear" )
+    else if( options[ "method" ] == "loglinear" )
     {
         loglinear_method loglinear( data );
         run_method( loglinear, genotype_matrix, genotype_file->get_loci( ), pairs );
