@@ -15,24 +15,24 @@ public:
     virtual arma::vec init_beta(const arma::mat &X, const arma::vec &y) const;
 
     /**
-     * @see glm_model.compute_w.
+     * @see glm_model.mu.
      */
-    virtual arma::vec compute_w(const arma::mat &X, const arma::vec &y, const arma::vec &b) const;
+    virtual arma::vec mu(const arma::vec &eta) const;
 
     /**
-     * @see glm_model.compute_z.
+     * @see glm_model.mu_eta.
      */
-    virtual arma::vec compute_z(const arma::mat &X, const arma::vec &y, const arma::vec &b) const;
+    virtual arma::vec mu_eta(const arma::vec &mu) const;
 
     /**
      * @see glm_model.compute_mu.
      */
-    virtual arma::vec compute_mu(const arma::mat &X, const arma::vec &b) const;
+    virtual arma::vec var(const arma::vec &mu) const;
 
     /**
      * @see glm_model.likelihood.
      */
-    virtual double likelihood(const arma::mat &X, const arma::vec &y, const arma::vec &b, const arma::uvec &missing) const;
+    virtual double likelihood(const arma::vec &mu, const arma::vec &y, const arma::uvec &missing) const;
 
 private:
 };

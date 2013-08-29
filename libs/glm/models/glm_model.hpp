@@ -21,50 +21,44 @@ class glm_model
         virtual arma::vec init_beta(const arma::mat &X, const arma::vec &y) const = 0;
 
         /**
-         * Compute the weight vector that is used in one iteration
-         * in the Iteratively reweighted least squares algorithm.
+         * Compute the mean value parameter from the linearized parameter.
          *
-         * @param X The design matrix.
-         * @param y The observations.
-         * @param b The beta coefficients.
+         * @param eta The linearized parameter.
          *
-         * @return A weight vector.
+         * @return The mean value parameter.
          */
-        virtual arma::vec compute_w(const arma::mat &X, const arma::vec &y, const arma::vec &b) const = 0;
+        virtual arma::vec mu(const arma::vec &eta) const = 0;
+        
+        /**
+         * The derivative of mu with respect to eta. It is often good to
+         * use the relationship dmu/deta = (deta/dmu)^-1.
+         *
+         * @param mu The mean value parameter.
+         *
+         * @return The derivative of mu with respect to eta.
+         */
+        virtual arma::vec mu_eta(const arma::vec &mu) const = 0;
 
         /**
-         * Compute the adjusted dependent variates in the Iteratively reweighted
-         * least squares algorithm.
+         * The variance of each observation given the mean value
+         * parameter.
          *
-         * @param X The design matrix.
-         * @param y The observations.
-         * @param b The beta coefficients.
+         * @param mu The mean value parameter.
          *
-         * @return The adjusted dependent variates.
+         * @return The variance of each observation.
          */
-        virtual arma::vec compute_z(const arma::mat &X, const arma::vec &y, const arma::vec &b) const = 0;
-
-        /**
-         * Transforms X, b to the mean value parameterization mu.
-         *
-         * @param X The design matrix.
-         * @param b The beta coefficients.
-         *
-         * @return The mean value parameterization.
-         */
-        virtual arma::vec compute_mu(const arma::mat &X, const arma::vec &b) const = 0;
+        virtual arma::vec var(const arma::vec &mu) const = 0;
 
         /**
          * Compute the log likelihood for the parameters.
          *
-         * @param X The design matrix.
+         * @param mu The mean value parameter.
          * @param y The observations.
-         * @param b The beta coefficients.
          * @param missing Indiciates missing samples by 1 and not missing by 0.
          *
          * @return The log likelihood.
          */
-        virtual double likelihood(const arma::mat &X, const arma::vec &y, const arma::vec &b, const arma::uvec &missing) const = 0;
+        virtual double likelihood(const arma::vec &mu, const arma::vec &y, const arma::uvec &missing) const = 0;
 };
 
 #endif /* End of __GLM_MODEL_H__ */

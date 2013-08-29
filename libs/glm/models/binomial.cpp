@@ -14,37 +14,26 @@ binomial::init_beta(const mat &X, const vec &y) const
 }
 
 vec
-binomial::compute_w(const mat &X, const vec &y, const vec &b) const
+binomial::mu(const arma::vec &eta) const
 {
-    vec eta = X * b;
-    vec mu = 1.0 / ( 1.0 + exp( -eta ) );
-    vec w = mu % ( 1 - mu );
-
-    return w;
+    return 1.0 / ( 1.0 + exp( -eta ) );
 }
 
 vec
-binomial::compute_z(const mat &X, const vec &y, const vec &b) const
+binomial::mu_eta(const arma::vec &mu) const
 {
-    vec eta = X * b;
-    vec mu = 1.0 / ( 1.0 + exp( -eta ) );
-    vec z = eta + ( 1.0 / ( mu % ( 1 - mu ) ) ) % ( y - mu );
-
-    return z;
+    return 1.0 / ( mu % ( 1.0 - mu ) );
 }
 
 vec
-binomial::compute_mu(const arma::mat &X, const arma::vec &b) const
+binomial::var(const arma::vec &mu) const
 {
-    return 1.0 / ( 1.0 + exp( -X*b ) );
+    return mu % ( 1.0 - mu );
 }
 
 double
-binomial::likelihood(const mat &X, const vec &y, const vec &b, const uvec &missing) const
+binomial::likelihood(const arma::vec &mu, const arma::vec &y, const arma::uvec &missing) const
 {
-    vec eta = X * b;
-    vec mu = 1.0 / ( 1.0 + exp( -eta ) );
-
     double loglikelihood = 0.0;
     for(int i = 0; i < y.n_elem; i++)
     {

@@ -67,6 +67,30 @@ static double IRLS_TOLERANCE = 10e-8;
 arma::vec weighted_least_squares(const arma::mat &X, const arma::vec &y, const arma::vec &w);
 
 /**
+ * Compute the adjusted dependent variates in the Iteratively reweighted
+ * least squares algorithm.
+ *
+ * @param eta The linearized parameter.
+ * @param mu The mean value parameter.
+ * @param mu_eta The derivative of mu with respect to eta.
+ * @param y The observations.
+ *
+ * @return The adjusted dependent variates.
+ */
+arma::vec compute_z(const arma::vec &eta, const arma::vec &mu, const arma::vec &mu_eta, const arma::vec &y);
+
+/**
+ * Compute the weight vector that is used in one iteration
+ * in the Iteratively reweighted least squares algorithm.
+ *
+ * @param var Variance of each observation.
+ * @param mu_eta The derivative of mu with respect to eta.
+ *
+ * @return A weight vector.
+ */
+arma::vec compute_w(const arma::vec &var, const arma::vec& mu_eta);
+
+/**
  * This function performs the iteratively reweighted
  * least squares algorithm to estimate beta coefficients
  * of a genearlized linear model.
