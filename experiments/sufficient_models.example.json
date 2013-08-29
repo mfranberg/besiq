@@ -1,0 +1,38 @@
+{
+    "experiments" :
+    [
+        {
+            "type" : "sufficient",
+            "name" : "Dominant covariates",
+            "title" : "Power under Dominant model with covariates",
+            "xlabel" : "Effect size",
+            "ylabel" : "Power",
+            "models" : [
+                {
+                    "params" : [ 0.1, 0.1, 0.1,
+                                 0.1, 0.15, 0.15,
+                                 0.1, 0.15, 0.15 ],
+                    "covariates" : [ "sex,0.8,binomial,1,0.5", "age,1.0,normal,55,7" ]
+                },
+                {
+                    "params" : [ 0.1, 0.1, 0.1,
+                                 0.1, 0.20, 0.20,
+                                 0.1, 0.20, 0.20 ],
+                    "covariates" : [ "sex,0.8,binomial,1,0.5", "age,1.0,normal,55,7" ]
+                },
+                {
+                    "params" : [ 0.1, 0.1, 0.1,
+                                 0.1, 0.25, 0.25,
+                                 0.1, 0.25, 0.25 ],
+                    "covariates" : [ "sex,0.8,binomial,1,0.5", "age,1.0,normal,55,7" ]
+                },
+                {
+                    "params" : [ 0.1, 0.1, 0.1,
+                                 0.1, 0.30, 0.30,
+                                 0.1, 0.30, 0.30 ],
+                    "covariates" : [ "sex,0.8,binomial,1,0.5", "age,1.0,normal,55,7" ]
+                }
+            ] 
+        }
+    ]
+}
