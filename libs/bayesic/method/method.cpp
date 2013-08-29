@@ -2,9 +2,10 @@
 
 void run_method(method_type &method, const std::vector<snp_row> &genotype_matrix, const std::vector<pio_locus_t> &loci, pair_iter &pairs)
 {
+    std::cout.precision( 4 );
     std::cout << "snp1 snp2\t";
     method.init( std::cout );
-    std::cout << std::endl;
+    std::cout << "\tN" << std::endl;
 
     std::pair<size_t, size_t> pair;
     while( pairs.get_pair( &pair ) )
@@ -17,7 +18,7 @@ void run_method(method_type &method, const std::vector<snp_row> &genotype_matrix
 
         std::cout << name1 << " " << name2 << "\t";
         method.run( row1, row2, std::cout );
-        std::cout << std::endl;
+        std::cout << "\t" << method.num_usable_samples( row1, row2 ) << std::endl;
     }
 
 }

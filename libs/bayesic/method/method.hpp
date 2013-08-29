@@ -59,12 +59,27 @@ public:
     {
         return m_data;
     }
+    
+    virtual size_t num_usable_samples(const snp_row &row1, const snp_row &row2)
+    {
+        unsigned int n = 0;
+        for(int i = 0; i < row1.size( ); i++)
+        {
+            if( row1[ i ] != 3 && row2[ i ] != 3 && m_data->missing[ i ] == 0 )
+            {
+                n++;
+            }
+        }
+
+        return n;
+    }
 
     /**
      * Outputs the column names that will be
      * outputted by this method separated by '\t'.
      */
     virtual void init(std::ostream &output) = 0;
+
 
     /**
      * 
