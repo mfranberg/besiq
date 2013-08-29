@@ -67,6 +67,18 @@ count_interactions(const char *pair_file_path, const std::vector<pio_locus_t> &l
     return num_interactions;
 }
 
+std::vector<std::string>
+get_order(const std::vector<pio_sample_t> &samples)
+{
+    std::vector<std::string> order;
+    for(int i = 0; i < samples.size( ); i++)
+    {
+        order.push_back( samples[ i ].iid );
+    }
+
+    return order;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -75,12 +87,13 @@ main(int argc, char *argv[])
                                          .description( DESCRIPTION )
                                          .epilog( EPILOG );
     
-    parser.add_option( "-c" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
+    parser.add_option( "-c", "--covariates" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
     
     char const* const choices[] = { "bayes", "logistic", "loglinear" };
-    parser.add_option( "-m" ).choices( &choices[ 0 ], &choices[ 3 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'logistic' or 'loglinear'." );
+    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 3 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'logistic' or 'loglinear'." );
 
     parser.add_option( "-n" ).type( "int" ).help( "The number of interactions to correct for." );
+    parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
 
     Values options = parser.parse_args( argc, argv );
     std::vector<std::string> args = parser.args( );
@@ -91,28 +104,38 @@ main(int argc, char *argv[])
         exit( 1 );
     }
 
+    /* Read all genotypes */
     plink_file_ptr genotype_file = open_plink_file( args[ 1 ] );
     std::vector<snp_row> genotype_matrix = create_genotype_matrix( genotype_file );
     
+    /* Create pair iterator */
     std::ifstream pair_file( args[ 0 ].c_str( ) );
     pair_iter pairs( pair_file, genotype_file->get_loci( ) );
     
+    /* Read additional data  */
     method_data_ptr data( new method_data( ) );
     data->missing = zeros<uvec>( genotype_file->get_samples( ).size( ) );
     data->phenotype = create_phenotype_vector( genotype_file, data->missing );
+    std::vector<std::string> order = get_order( genotype_file->get_samples( ) );
+    if( options.is_set( "p" ) )
+    {
+        std::ifstream phenotype_file( options[ "p" ].c_str( ) );
+        data->phenotype = parse_phenotypes( phenotype_file, data->missing, order );
+    }
+    if( options.is_set( "c" ) )
+    {
+        std::ifstream covariate_file( options[ "c" ].c_str( ) );
+        data->covariate_matrix = parse_covariate_matrix( covariate_file, data->missing, order );
+    }
 
+    /* Count the number of interactions to adjust for */
     data->num_interactions = (unsigned int) options.get( "n" );
     if( !options.is_set( "n" ) )
     {
         data->num_interactions = count_interactions( args[ 0 ].c_str( ), genotype_file->get_loci( ) );
     }
 
-    if( options.is_set( "c" ) )
-    {
-        std::ifstream covariate_file( options[ "c" ].c_str( ) );
-        data->covariate_matrix = parse_covariate_matrix( covariate_file, data->missing );
-    }
-
+    /* Run method */
     if( options[ "m" ] == "bayes" )
     {
         bayesic_method bayesic( data );
