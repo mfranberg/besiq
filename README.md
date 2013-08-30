@@ -26,7 +26,7 @@ To build and run:
     > cmake ../
     > make
 
-    > ls /mydata/
+    > ls /data/
     dataset.pair
     dataset.bim
     dataset.fam
@@ -122,6 +122,12 @@ Bayesic currently supports three modes *-m bayes*, *-m logistic* and *-m logline
     rs51512     rs516163    0.4001      3416
     
 where
+
+    > ls /data/
+    dataset.pair
+    dataset.bim
+    dataset.fam
+    dataset.bed
 
     > cat /data/dataset.pair
     rs412512 rs516161
