@@ -87,14 +87,14 @@ To build with dependencies with root access:
     mkdir build
     cd build
     cmake ../
-    make install
+    sudo make install
 
     git clone https://github.com/fadern/libplinkio.git
     cd libplinkio
     mkdir build
     cd build
     ../configure --disable-tests
-    make install
+    sudo make install
 
     git clone https://github.com/fadern/bayesic
     mkdir build
