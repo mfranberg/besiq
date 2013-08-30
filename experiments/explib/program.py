@@ -12,7 +12,6 @@ class BayesicMethod:
 
     def run(self, data_prefix, num_tests, output_file, include_covariates = False):
         cmd = [ self.path,
-                "-p", data_prefix + ".pair",
                 "-m", "bayes",
                 "-n", str( num_tests ),
                 data_prefix + ".pair",
@@ -36,7 +35,6 @@ class LogLinearMethod:
 
     def run(self, data_prefix, num_tests, output_file, include_covariates = False):
         cmd = [ self.path,
-                "-p", data_prefix + ".pair",
                 "-m", "loglinear",
                 "-n", str( num_tests ),
                 data_prefix + ".pair",
@@ -60,7 +58,6 @@ class LogisticMethod:
 
     def run(self, data_prefix, num_tests, output_file, include_covariates = False):
         cmd = [ self.path,
-                "-p", data_prefix + ".pair",
                 "-m", "logistic",
                 "-n", str( num_tests ),
                 data_prefix + ".pair",
