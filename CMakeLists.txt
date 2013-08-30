@@ -9,7 +9,6 @@ set( BAYESIC_VERSION_PATCH 0 )
 
 find_package( Armadillo REQUIRED )
 find_package( BLAS REQUIRED )
-find_package( PlinkIo REQUIRED )
 
 set( LIBBAYESIC_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/bayesic/" )
 set( LIBPLINK_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/plink/" )
@@ -17,7 +16,9 @@ set( LIBCPPARGPARSE_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/cpp-argparse/" )
 set( LIBGLM_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/glm/" )
 set( GTEST_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/gtest/include/" )
 set( DCDFLIB_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/dcdflib/" )
-#set( LIBCPPTHREAD_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/libcppthread/" )
+
+set( PLINKIO_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/libplinkio/src/" )
+set( PLINKIO_LIBRARIES libplinkio-static )
 
 enable_testing( )
 

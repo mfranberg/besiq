@@ -6,10 +6,8 @@
 #include <vector>
 #include <shared_ptr.hpp>
 
-extern "C"
-{
-    #include <plinkio/plinkio.h>
-}
+#include <snp_row.hpp>
+#include <plinkio/plinkio.h>
 
 /**
  * General exception class when dealing with plink files.
@@ -22,53 +20,6 @@ public:
     : std::runtime_error(s)
     {
     }
-};
-
-class snp_row
-{
-public:
-    /**
-     * Constructor.
-     */
-    snp_row();
-
-    /**
-     * Resizes the row to be able to hold the given size.
-     *
-     * @param new_size The new size of the row.
-     */
-    void resize(size_t new_size);
-
-    /**
-     * Returns the length of the row.
-     *
-     * @return The length of the row.
-     */
-    size_t size() const;
-
-    /**
-     * Access operator, not checked for bounds.
-     *
-     * @param index Index of the SNP to retrive.
-     * 
-     * @return Return the SNP at the given index.
-     */
-    const snp_t & operator[](size_t index) const;
-
-    /**
-     * Access operator for assignment.
-     *
-     * @param index Index of the SNP to modify.
-     *
-     * @return A reference to the SNP to modify.
-     */
-    snp_t & operator[](size_t index);
-
-private:
-    /**
-     * Internal data structure, as a vector.
-     */
-    std::vector<snp_t> m_genotypes;
 };
 
 /**
@@ -92,6 +43,22 @@ public:
      * samples.
      */
     const std::vector<pio_sample_t> & get_samples() const;
+
+    /**
+     * Returns a vector that contains the iids of all samples,
+     * in the order they appear.
+     *
+     * @return A vector that contains the names of all samples.
+     */
+    std::vector<std::string> get_sample_iids() const;
+
+    /**
+     * Returns a vector that contains the names of all loci,
+     * in the order they appear.
+     *
+     * @return a vector that contains the names of all loci.
+     */
+    std::vector<std::string> get_locus_names() const;
 
     /**
      * Reads a row from the underlying plink file, and writes

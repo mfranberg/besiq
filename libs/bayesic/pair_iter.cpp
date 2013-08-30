@@ -4,12 +4,12 @@
 
 #include <pair_iter.hpp>
 
-pair_iter::pair_iter(std::istream &pair_stream, const std::vector<pio_locus_t> &loci)
+pair_iter::pair_iter(std::istream &pair_stream, const std::vector<std::string> &loci)
     : m_pair_stream( pair_stream )
 {
     for(int i = 0; i < loci.size( ); i++)
     {
-        m_snp_to_index[ loci[ i ].name ] = i;
+        m_snp_to_index[ loci[ i ] ] = i;
     }
 }
 

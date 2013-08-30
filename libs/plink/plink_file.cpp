@@ -14,10 +14,34 @@ plink_file::get_samples() const
     return m_samples;
 }
 
+std::vector<std::string>
+plink_file::get_sample_iids() const
+{
+    std::vector<std::string> iids;
+    for(int i = 0; i < m_samples.size( ); i++)
+    {
+        iids.push_back( m_samples[ i ].iid );
+    }
+
+    return iids;
+}
+
 const std::vector<pio_locus_t> &
 plink_file::get_loci() const
 {
     return m_loci;
+}
+
+std::vector<std::string>
+plink_file::get_locus_names() const
+{
+    std::vector<std::string> loci_names;
+    for(int i = 0; i < m_loci.size( ); i++)
+    {
+        loci_names.push_back( m_loci[ i ].name );
+    }
+
+    return loci_names;
 }
 
 bool
@@ -42,35 +66,6 @@ plink_file::~plink_file()
 {
     free( m_row_buffer );
     pio_close( &m_file );
-}
-
-snp_row::snp_row()
-{
-}
-
-
-void
-snp_row::resize(size_t new_size)
-{
-    m_genotypes.resize( new_size );
-}
-
-size_t
-snp_row::size() const
-{
-    return m_genotypes.size( );
-}
-
-const snp_t &
-snp_row::operator[](size_t index) const
-{
-    return m_genotypes[ index ];
-}
-
-snp_t &
-snp_row::operator[](size_t index)
-{
-    return m_genotypes[ index ];
 }
 
 plink_file_ptr

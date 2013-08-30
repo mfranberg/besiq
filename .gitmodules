@@ -1,0 +1,3 @@
+[submodule "libs/libplinkio"]
+	path = libs/libplinkio
+	url = https://github.com/fadern/libplinkio.git

@@ -3,7 +3,7 @@
 
 #include <armadillo>
 
-#include <plink_file.hpp>
+#include <snp_row.hpp>
 #include <stats/dirichlet.hpp>
 #include <stats/log_scale.hpp>
 #include <stats/snp_count.hpp>

@@ -2,6 +2,8 @@
 
 #include <armadillo>
 
+#include <plinkio/plinkio.h>
+
 #include <covariates.hpp>
 #include <irls.hpp>
 #include <models/binomial.hpp>
@@ -53,7 +55,7 @@ create_phenotype_vector(plink_file_ptr genotype_file, uvec &missing)
 }
 
 unsigned int
-count_interactions(const char *pair_file_path, const std::vector<pio_locus_t> &loci)
+count_interactions(const char *pair_file_path, const std::vector<std::string> &loci)
 {
     std::ifstream pair_file( pair_file_path );
     pair_iter pairs( pair_file, loci );
@@ -65,18 +67,6 @@ count_interactions(const char *pair_file_path, const std::vector<pio_locus_t> &l
     }
 
     return num_interactions;
-}
-
-std::vector<std::string>
-get_order(const std::vector<pio_sample_t> &samples)
-{
-    std::vector<std::string> order;
-    for(int i = 0; i < samples.size( ); i++)
-    {
-        order.push_back( samples[ i ].iid );
-    }
-
-    return order;
 }
 
 int
@@ -110,13 +100,14 @@ main(int argc, char *argv[])
     
     /* Create pair iterator */
     std::ifstream pair_file( args[ 0 ].c_str( ) );
-    pair_iter pairs( pair_file, genotype_file->get_loci( ) );
+    std::vector<std::string> locus_names = genotype_file->get_locus_names( );
+    pair_iter pairs( pair_file, locus_names );
     
     /* Read additional data  */
     method_data_ptr data( new method_data( ) );
     data->missing = zeros<uvec>( genotype_file->get_samples( ).size( ) );
     data->phenotype = create_phenotype_vector( genotype_file, data->missing );
-    std::vector<std::string> order = get_order( genotype_file->get_samples( ) );
+    std::vector<std::string> order = genotype_file->get_sample_iids( );
     if( options.is_set( "pheno" ) )
     {
         std::ifstream phenotype_file( options[ "p" ].c_str( ) );
@@ -132,24 +123,24 @@ main(int argc, char *argv[])
     data->num_interactions = (unsigned int) options.get( "n" );
     if( !options.is_set( "n" ) )
     {
-        data->num_interactions = count_interactions( args[ 0 ].c_str( ), genotype_file->get_loci( ) );
+        data->num_interactions = count_interactions( args[ 0 ].c_str( ), locus_names );
     }
 
     /* Run method */
     if( options[ "method" ] == "bayes" )
     {
         bayesic_method bayesic( data );
-        run_method( bayesic, genotype_matrix, genotype_file->get_loci( ), pairs );
+        run_method( bayesic, genotype_matrix, locus_names, pairs );
     }
     else if( options[ "method" ] == "logistic" )
     {
         logistic_method logistic( data );
-        run_method( logistic, genotype_matrix, genotype_file->get_loci( ), pairs );
+        run_method( logistic, genotype_matrix, locus_names, pairs );
     }
     else if( options[ "method" ] == "loglinear" )
     {
         loglinear_method loglinear( data );
-        run_method( loglinear, genotype_matrix, genotype_file->get_loci( ), pairs );
+        run_method( loglinear, genotype_matrix, locus_names, pairs );
     }
 
     return 0;

@@ -6,8 +6,6 @@
 #include <utility>
 #include <vector>
 
-#include <plinkio/plinkio.h>
-
 /**
  * The purpose of this class is to iterate over pairs, but
  * not keep them all in memory, as this list can be very large.
@@ -21,7 +19,7 @@ public:
      * @param path Path to the file containing pairs.
      * @param loci The list of loci.
      */
-    pair_iter(std::istream &pair_stream, const std::vector<pio_locus_t> &loci);
+    pair_iter(std::istream &pair_stream, const std::vector<std::string> &loci);
 
     /**
      * Retrives a pair and writes it.
