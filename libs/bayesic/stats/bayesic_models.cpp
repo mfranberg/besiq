@@ -94,7 +94,6 @@ ld_assoc::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenot
         vec row_count = counts.row( i ).t( );
         vec alpha = ones<vec>( 2 );
         likelihood *= log_double::from_log( ldirmult( row_count, alpha ) );
-
     }
 
     return likelihood * null::snp_prob( snp1, snp2, phenotype, weight );

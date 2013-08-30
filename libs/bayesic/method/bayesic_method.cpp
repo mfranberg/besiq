@@ -6,8 +6,8 @@ bayesic_method::bayesic_method(method_data_ptr data)
 : method_type::method_type( data )
 {
     m_models.push_back( new saturated( 1.0 / ( 4.0 * data->num_interactions ) ) );
-    m_models.push_back( new ld_assoc( true, 1.0 / ( 4.0 * data->num_interactions ) ) );
-    m_models.push_back( new ld_assoc( false, 1.0 / ( 4.0 * data->num_interactions ) ) );
+    m_models.push_back( new ld_assoc( 1.0 / ( 4.0 * data->num_interactions ), true ) );
+    m_models.push_back( new ld_assoc( 1.0 / ( 4.0 * data->num_interactions ), false ) );
     m_models.push_back( new null( 1.0 - ( 3.0 / ( 4.0 * data->num_interactions ) ) ) );
 }
 
@@ -53,7 +53,7 @@ void bayesic_method::run(const snp_row &row1, const snp_row &row2, std::ostream 
     for(int i = 0; i < m_models.size( ); i++)
     {
         prior_likelihood[ i ] = m_models[ i ]->prior( ) * m_models[ i ]->prob( row1, row2, get_data( )->phenotype, m_weight );
-        denominator += prior_likelihood[ i ];  
+        denominator += prior_likelihood[ i ];
     }
     log_double posterior = prior_likelihood[ 0 ] / denominator;
 
