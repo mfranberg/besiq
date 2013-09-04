@@ -19,8 +19,12 @@ The following things will be added at some point:
 
 ## For the impatient
 
-To build and run:
+Make sure you have the Armadillo matrix library installed. Then to build and run (note --recursive flag to get submodules):
 
+    > git clone --recursive https://github.com/fadern/bayesic
+    > cd bayesic
+    > git submodule init
+    > git submodule update
     > mkdir build
     > cd build
     > cmake ../
@@ -49,57 +53,44 @@ Bayesic requires you to have the following packages installed:
 
 * [CMake](http://www.cmake.org/cmake/resources/software.html) (A build system for C and C++)
 * [Armadillo](http://arma.sourceforge.net/download.html) (C++ matrix library which in turn depends on BLAS and LAPACK)
-* [libplinkio](https://github.com/fadern/libplinkio/) (A C library for reading plink genotype files)
 
 If you install them locally (as on a cluster) just specify -DCMAKE_PREFIX_PATH to tell cmake where the libraries are.
 
 ## Installing
 
-To build with dependencies without root access:
+To build with dependencies without root access (note --recursive flag to get submodules):
 
-    mkdir ~/prefix
+    > mkdir ~/prefix
 
-    wget http://sourceforge.net/projects/arma/files/armadillo-3.910.0.tar.gz
-    tar -xf armadillo-3.910.0.tar.gz
-    cd armadillo-3.910.0
-    mkdir build
-    cd build
-    cmake ../ -DCMAKE_INSTALL_PREFIX=$HOME/prefix
-    make install
+    > wget http://sourceforge.net/projects/arma/files/armadillo-3.910.0.tar.gz
+    > tar -xf armadillo-3.910.0.tar.gz
+    > cd armadillo-3.910.0
+    > mkdir build
+    > cd build
+    > cmake ../ -DCMAKE_INSTALL_PREFIX=$HOME/prefix
+    > make install
 
-    git clone https://github.com/fadern/libplinkio.git
-    cd libplinkio
-    mkdir build
-    cd build
-    ../configure --prefix=$HOME/prefix --disable-tests
-    make install
-
-    git clone https://github.com/fadern/bayesic
-    mkdir build
-    cd build
-    cmake ../ -DCMAKE_PREFIX_PATH=$HOME/prefix
+    > git clone --recursive https://github.com/fadern/bayesic
+    > cd bayesic
+    > mkdir build
+    > cd build
+    > cmake ../ -DCMAKE_PREFIX_PATH=$HOME/prefix
 
 To build with dependencies with root access:
     
-    wget http://sourceforge.net/projects/arma/files/armadillo-3.910.0.tar.gz
-    tar -xf armadillo-3.910.0.tar.gz
-    cd armadillo-3.910.0
-    mkdir build
-    cd build
-    cmake ../
-    sudo make install
+    > wget http://sourceforge.net/projects/arma/files/armadillo-3.910.0.tar.gz
+    > tar -xf armadillo-3.910.0.tar.gz
+    > cd armadillo-3.910.0
+    > mkdir build
+    > cd build
+    > cmake ../
+    > sudo make install
 
-    git clone https://github.com/fadern/libplinkio.git
-    cd libplinkio
-    mkdir build
-    cd build
-    ../configure --disable-tests
-    sudo make install
-
-    git clone https://github.com/fadern/bayesic
-    mkdir build
-    cd build
-    cmake ../
+    > git clone --recursive https://github.com/fadern/bayesic
+    > cd bayesic
+    > mkdir build
+    > cd build
+    > cmake ../
 
 ## Running
 
