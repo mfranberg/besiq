@@ -22,6 +22,8 @@ set( PLINKIO_LIBRARIES libplinkio-static )
 
 enable_testing( )
 
+set( DISABLE_TESTS ON CACHE BOOL "Build tests in libplinkio" )
+
 add_subdirectory( libs )
 add_subdirectory( src )
 add_subdirectory( tests )
