@@ -67,7 +67,7 @@ arma::vec pheno_count(const snp_row &row1, const snp_row &row2, const arma::vec 
 arma::mat single_count(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight);
 
 /**
- * Estimates the minor allele frequency for a snp.
+ * Estimates the probabilities for 0, 1 and 2 for a snp.
  * 
  * @param row A snp.
  * 
@@ -75,5 +75,15 @@ arma::mat single_count(const snp_row &row1, const snp_row &row2, const arma::vec
  *         of each allele, i.e. it sums to 1.0.
  */
 arma::vec compute_maf(const snp_row &row);
+
+/**
+ * Estimates the minor allele frequency.
+ *
+ * @param row A snp.
+ *
+ * @return The frequency of the minor allele, i.e. the allele
+ *         that has the lowest frequency in this population.
+ */
+float compute_real_maf(const snp_row &row);
 
 #endif /* End of __SNP_COUNT_H__ */

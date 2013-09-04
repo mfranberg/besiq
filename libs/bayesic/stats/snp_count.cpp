@@ -69,6 +69,19 @@ single_count(const snp_row &row1, const snp_row &row2, const arma::vec &phenotyp
 arma::vec
 compute_maf(const snp_row &row)
 {
+    double p = compute_real_maf( row );
+    
+    arma::vec counts = zeros<vec>( 3 );
+    counts[ 0 ] = (1 - p)*(1 - p);
+    counts[ 1 ] = 2 * p * ( 1 - p );
+    counts[ 2 ] = p * p;
+
+    return counts;
+}
+
+float
+compute_real_maf(const snp_row &row)
+{
     arma::vec counts = zeros<vec>( 3 );
     for(int i = 0; i < row.size( ); i++)
     {
@@ -78,10 +91,13 @@ compute_maf(const snp_row &row)
         }
     }
 
-    double p = ( counts[ 1 ] + 2.0 * counts[ 2 ] ) / ( 2.0 * sum( counts ) );
-    counts[ 0 ] = (1 - p)*(1 - p);
-    counts[ 1 ] = 2 * p * ( 1 - p );
-    counts[ 2 ] = p * p;
-
-    return counts;
+    unsigned int total_count = sum( counts );
+    if( total_count != 0 )
+    {
+        return ( counts[ 1 ] + 2.0 * counts[ 2 ] ) / ( 2.0 * total_count );
+    }
+    else
+    {
+        return 0.0;
+    }
 }

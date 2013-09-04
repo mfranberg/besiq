@@ -10,6 +10,6 @@ include_directories( ${ARMADILLO_INCLUDE_DIR} )
 add_executable( bayesic bayesic.cpp )
 target_link_libraries( bayesic libdcdf libglm libbayesic libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
-add_executable( generate_pairs generate_pairs.cpp )
-target_link_libraries( generate_pairs libplink libcpp-argparse ${PLINKIO_LIBRARIES} )
+add_executable( bayesic-pairs bayesic_pairs.cpp )
+target_link_libraries( bayesic-pairs libplink libcpp-argparse libbayesic ${PLINKIO_LIBRARIES} )
 
