@@ -9,5 +9,5 @@ file( GLOB_RECURSE SRC_LIST "*.cpp" "." )
 
 add_library( libbayesic ${SRC_LIST} )
 
-target_link_libraries( libbayesic )
+target_link_libraries( libbayesic libglm )
 SET_TARGET_PROPERTIES( libbayesic PROPERTIES OUTPUT_NAME bayesic )
