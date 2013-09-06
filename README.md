@@ -58,6 +58,9 @@ If you install them locally (as on a cluster) just specify -DCMAKE_PREFIX_PATH t
 
 ## Installing
 
+Before starting it is important to note when building armadillo you need to edit the config.hpp, and add support for
+blas and lapack, otherwise you may experience linking errors when building bayesic.
+
 To build with dependencies without root access (note --recursive flag to get submodules):
 
     > mkdir ~/prefix
