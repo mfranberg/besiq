@@ -36,8 +36,8 @@ public:
     }
 
     /**
-     * Computes the likelihood of the snps and phenotypes under this
-     * model. 
+     * Computes the likelihood of the phenotype under this
+     * model.
      *
      * @param row1 The first snp.
      * @param row2 The second snp.

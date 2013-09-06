@@ -50,9 +50,10 @@ void bayesic_method::run(const snp_row &row1, const snp_row &row2, std::ostream 
 {
     log_double denominator = 0.0;
     std::vector<log_double> prior_likelihood( m_models.size( ), 0.0 );
+    log_double snp_null = null::snp_prob( row1, row2, get_data( )->phenotype, m_weight );
     for(int i = 0; i < m_models.size( ); i++)
     {
-        prior_likelihood[ i ] = m_models[ i ]->prior( ) * m_models[ i ]->prob( row1, row2, get_data( )->phenotype, m_weight );
+        prior_likelihood[ i ] = m_models[ i ]->prior( ) * snp_null * m_models[ i ]->prob( row1, row2, get_data( )->phenotype, m_weight );
         denominator += prior_likelihood[ i ];
     }
     log_double posterior = prior_likelihood[ 0 ] / denominator;

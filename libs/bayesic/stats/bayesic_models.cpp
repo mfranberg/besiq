@@ -22,7 +22,7 @@ saturated::prob(const snp_row &row1, const snp_row &row2, const arma::vec &pheno
         likelihood *= log_double::from_log( ldirmult( row_count, alpha ) );
     }
 
-    return likelihood * null::snp_prob( row1, row2, phenotype, weight );
+    return likelihood;
 }
 
 null::null(log_double prior)
@@ -34,7 +34,7 @@ null::null(log_double prior)
 log_double
 null::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight)
 {
-    return snp_prob( row1, row2, phenotype, weight ) * pheno_prob( row1, row2, phenotype, weight );
+    return pheno_prob( row1, row2, phenotype, weight );
 }
 
 log_double
@@ -96,5 +96,5 @@ ld_assoc::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenot
         likelihood *= log_double::from_log( ldirmult( row_count, alpha ) );
     }
 
-    return likelihood * null::snp_prob( snp1, snp2, phenotype, weight );
+    return likelihood;
 }
