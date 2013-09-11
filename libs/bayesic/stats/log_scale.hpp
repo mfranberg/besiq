@@ -69,8 +69,16 @@ public:
     {
         if( !m_is_zero && !other.m_is_zero )
         {
-            T diff = other.m_log_value - m_log_value;
-            m_log_value += log( 1.0 + exp( diff ) );
+            if( m_log_value > other.m_log_value )
+            {
+                T diff = other.m_log_value - m_log_value;
+                m_log_value += log( 1.0 + exp( diff ) );
+            }
+            else
+            {
+                T diff = m_log_value - other.m_log_value;
+                m_log_value = other.m_log_value + log( 1.0 + exp( diff ) );
+            }
         }
         else if( m_is_zero )
         {

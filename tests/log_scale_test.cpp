@@ -30,6 +30,12 @@ TEST(log_scale_test, Add)
 
     c += 0.4;
     ASSERT_NEAR( c.value( ), 2.0, 0.00001 );
+
+
+    a = log_double::from_log( -6542.0 );
+    b = log_double::from_log( -5312.0 );
+    c = a + b;
+    ASSERT_NEAR( c.log_value( ), -5312.0, 0.00001 );
 }
 
 TEST(log_scale_test, Sub)
