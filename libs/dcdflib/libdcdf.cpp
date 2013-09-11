@@ -29,3 +29,27 @@ chi_square_cdf(double x, unsigned int df)
         throw std::runtime_error( "chi_square_cdf: Could not compute chi^2 p-value." );
     }
 }
+
+double
+gamma_cdf_inv(double p, double a, double b)
+{
+    int which = 2;
+    double p_gam = p;
+    double q = 1.0 - p;
+    double x;
+    double shape = a;
+    double scale = b;
+    double bound;
+    int status;
+
+    cdfgam( &which, &p_gam, &q, &x, &shape, &scale, &status, &bound );
+
+    if( status == 0 )
+    {
+        return x;
+    }
+    else
+    {
+        throw std::runtime_error( "gamma_cdf_inv: Could not compute inverse." );
+    }
+}

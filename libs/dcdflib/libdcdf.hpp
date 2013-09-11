@@ -12,4 +12,16 @@
  */
 double chi_square_cdf(double x, unsigned int df);
 
+/**
+ * Computes f^-1(p) where f^-1 is the inverse of the cumulative
+ * distribution function for a gamma distributed variable.
+ *
+ * @param p Is the probability Pr[X <= x] for some x.
+ * @param a Shape parameter.
+ * @param b Scale parameter.
+ *
+ * @return The x such that Pr[X <= x] = p.
+ */
+double gamma_cdf_inv(double p, double a, double b);
+
 #endif /* End of __LIBDCDF_H__ */
