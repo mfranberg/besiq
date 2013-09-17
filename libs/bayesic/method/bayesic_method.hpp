@@ -26,7 +26,16 @@ public:
      *             covariates.
      */
     bayesic_method(method_data_ptr data);
-    
+    virtual ~bayesic_method();
+
+    /**
+     * Sets the models that should be compared. Memory will be
+     * managed by this class.
+     *
+     * @param models A list of models.
+     */
+    void set_models(const std::vector<model *> &models);
+
     /**
      * @see method_type::init.
      */

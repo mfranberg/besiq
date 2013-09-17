@@ -11,6 +11,28 @@ bayesic_method::bayesic_method(method_data_ptr data)
     m_models.push_back( new null( 1.0 - ( 3.0 / ( 4.0 * data->num_interactions ) ) ) );
 }
 
+bayesic_method::~bayesic_method()
+{
+    for(int i = 0; i < m_models.size( ); i++)
+    {
+        delete m_models[ i ];
+    }
+
+    m_models.clear( );
+}
+
+void
+bayesic_method::set_models(const std::vector<model *> &models)
+{
+    for(int i = 0; i < m_models.size( ); i++)
+    {
+        delete m_models[ i ];
+    }
+
+    m_models.clear( );
+    m_models.assign( models.begin( ), models.end( ) );
+}
+
 void
 bayesic_method::init(std::ostream &output)
 {

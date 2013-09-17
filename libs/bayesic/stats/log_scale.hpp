@@ -72,12 +72,12 @@ public:
             if( m_log_value > other.m_log_value )
             {
                 T diff = other.m_log_value - m_log_value;
-                m_log_value += log( 1.0 + exp( diff ) );
+                m_log_value += log1p( exp( diff ) );
             }
             else
             {
                 T diff = m_log_value - other.m_log_value;
-                m_log_value = other.m_log_value + log( 1.0 + exp( diff ) );
+                m_log_value = other.m_log_value + log1p( exp( diff ) );
             }
         }
         else if( m_is_zero )

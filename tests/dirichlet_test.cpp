@@ -27,3 +27,10 @@ TEST(DirichletTest, Advanced)
 
     ASSERT_NEAR( ldirmult( x, alpha ), -201.48, 0.01 );
 }
+
+TEST(DirichletTest, Binomial)
+{
+    ASSERT_NEAR( exp( lbinomial( 1, 1 ) ), 1.0, 0.0001 );
+    ASSERT_NEAR( exp( lbinomial( 4, 2 ) ), 6.0, 0.0001 );
+    ASSERT_NEAR( exp( lbinomial( 14, 3 ) ), 364.0, 0.0001 );
+}

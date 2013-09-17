@@ -31,8 +31,13 @@ ldirmult(const arma::vec &x, const arma::vec &alpha)
 double
 lbinomial(double n, double k)
 {
-    assert( k > 0.0 );
+    assert( k >= 0.0 );
     assert( n >= k );
+
+    if( k == 0.0 )
+    {
+        return 0.0;
+    }
 
     return lgamma( n + 1.0 ) - lgamma( n - k + 1.0 ) - lgamma( k + 1.0 );
 }

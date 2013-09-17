@@ -165,4 +165,38 @@ private:
     bool m_is_first;
 };
 
+/**
+ * This class represents a model where two snps are independently
+ * associated to the phenotype.
+ *
+ * The posterior of this model takes significantly longer than the
+ * other models and should only be used on a small subset of
+ * snp pairs.
+ */
+class sindependent
+: public model
+{
+public:
+    /**
+     * Constructor.
+     *
+     * @param prior The prior probability for the model.
+     * @param num_mc_iterations The number of monte carlo iterations.
+     */
+    sindependent(log_double prior, int num_mc_iterations);
+
+    /**
+     * @see model::prob.
+     */
+    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight);
+
+private:
+    dir_generator m_rdir;
+
+    /**
+     * Number of monte carlo iterations.
+     */
+    int m_num_mc_iterations;
+};
+
 #endif /* End of __BAYESIC_MODELS_H__ */

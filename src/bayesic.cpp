@@ -12,6 +12,7 @@
 #include <plink_file.hpp>
 #include <pair_iter.hpp>
 #include <method/bayesic_method.hpp>
+#include <method/bayesic_fine_method.hpp>
 #include <method/logistic_method.hpp>
 #include <method/loglinear_method.hpp>
 #include <method/method.hpp>
@@ -79,11 +80,12 @@ main(int argc, char *argv[])
     
     parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
     
-    char const* const choices[] = { "bayes", "logistic", "loglinear" };
-    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 3 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'logistic' or 'loglinear'." );
+    char const* const choices[] = { "bayes", "logistic", "loglinear", "fine" };
+    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 4 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'logistic' or 'loglinear'." );
 
     parser.add_option( "-n" ).type( "int" ).help( "The number of interactions to correct for." );
     parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
+    parser.add_option( "-i", "--mc-iterations" ).type( "int" ).help( "The number of monte carlo iterations to use in the fine method." ).set_default( 50000 );
 
     Values options = parser.parse_args( argc, argv );
     std::vector<std::string> args = parser.args( );
@@ -141,6 +143,11 @@ main(int argc, char *argv[])
     {
         loglinear_method loglinear( data );
         run_method( loglinear, genotype_matrix, locus_names, pairs );
+    }
+    if( options[ "method" ] == "fine" )
+    {
+        bayesic_fine_method bayesic_fine( data, (int) options.get( "mc_iterations" ) );
+        run_method( bayesic_fine, genotype_matrix, locus_names, pairs );
     }
 
     return 0;
