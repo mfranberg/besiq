@@ -54,7 +54,7 @@ dir_generator::sample(const arma::vec &alpha)
     arma::vec x = arma::zeros<arma::vec>( alpha.n_elem );
     for(int i = 0; i < alpha.n_elem; i++)
     {
-        double runif =((double) m_generator( )) / ( m_generator.max( ) - m_generator.min( ) );
+        double runif = m_generator( ) / ( m_generator.max( ) - m_generator.min( ) + 1.0 );
         x[ i ] = gamma_cdf_inv( runif, alpha[ i ], 1.0 );
     }
 

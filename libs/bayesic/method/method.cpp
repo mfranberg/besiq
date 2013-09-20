@@ -20,5 +20,4 @@ void run_method(method_type &method, const std::vector<snp_row> &genotype_matrix
         method.run( row1, row2, std::cout );
         std::cout << "\t" << method.num_usable_samples( row1, row2 ) << std::endl;
     }
-
 }
