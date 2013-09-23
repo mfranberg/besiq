@@ -2,6 +2,8 @@
 #include <string>
 #include <vector>
 
+#include <gzstream.hpp>
+
 #include <plink_file.hpp>
 #include <OptionParser.h>
 
@@ -154,10 +156,11 @@ struct output_options
 /**
  * For each gene, outputs all pairs of snps in that gene.
  *
+ * @param output Output stream.
  * @param oo Output options.
  * @param gene_locus Map from gene to the loci belonging to that gene.
  */
-void output_within(const output_options &oo, const std::map< std::string, std::vector<size_t> > &gene_locus)
+void output_within(std::ostream &output, const output_options &oo, const std::map< std::string, std::vector<size_t> > &gene_locus)
 {
     std::map< std::string, std::vector<size_t> >::const_iterator it;
     for(it = gene_locus.begin( ); it != gene_locus.end( ); ++it)
@@ -176,7 +179,7 @@ void output_within(const output_options &oo, const std::map< std::string, std::v
                 int snp2 = indices[ j ];
                 if( oo.maf_vec[ snp2 ] >= oo.maf_threshold && (oo.maf_vec[ snp1 ] * oo.maf_vec[ snp2 ]) >= oo.combined_threshold )
                 {
-                    printf( "%s %s\n", oo.loci[ snp1 ].c_str( ), oo.loci[ snp2 ].c_str( ) );
+                    output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << std::endl;
                 }
             }
         }
@@ -186,10 +189,11 @@ void output_within(const output_options &oo, const std::map< std::string, std::v
 /**
  * For each pair of genes, outputs all pair of snps in those genes.
  *
+ * @param output Output stream.
  * @param oo Output options.
  * @param gene_locus Map from gene to the loci belonging to that gene.
  */
-void output_between(const output_options &oo, std::map< std::string, std::vector<size_t> > &gene_locus)
+void output_between(std::ostream &output, const output_options &oo, std::map< std::string, std::vector<size_t> > &gene_locus)
 {
     std::vector<std::string> genes;
     std::map< std::string, std::vector<size_t> >::const_iterator it;
@@ -218,6 +222,7 @@ void output_between(const output_options &oo, std::map< std::string, std::vector
                     int snp2 = indices2[ j ];
                     if( oo.maf_vec[ snp2 ] >= oo.maf_threshold && (oo.maf_vec[ snp1 ] * oo.maf_vec[ snp2 ]) >= oo.combined_threshold )
                     {
+                        output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << std::endl;
                         printf( "%s %s\n", oo.loci[ snp1 ].c_str( ), oo.loci[ snp2 ].c_str( ) );
                     }
                 }
@@ -229,11 +234,12 @@ void output_between(const output_options &oo, std::map< std::string, std::vector
 /**
  * For each pair of genes in the given list, outputs all pair of snps in those genes.
  *
+ * @param output Output stream.
  * @param oo Output options.
  * @param gene_locus Map from gene to the loci belonging to that gene.
  * @param gene_gene A list of pairs of genes to be considered.
  */
-void output_between_restrict(const output_options &oo, std::map< std::string, std::vector<size_t> > &gene_locus, const pair_vector &gene_gene)
+void output_between_restrict(std::ostream &output, const output_options &oo, std::map< std::string, std::vector<size_t> > &gene_locus, const pair_vector &gene_gene)
 {
     for(int g = 0; g < gene_gene.size( ); g++)
     {
@@ -255,7 +261,7 @@ void output_between_restrict(const output_options &oo, std::map< std::string, st
                 int snp2 = indices2[ j ];
                 if( oo.maf_vec[ snp2 ] >= oo.maf_threshold && (oo.maf_vec[ snp1 ] * oo.maf_vec[ snp2 ]) >= oo.combined_threshold )
                 {
-                    printf( "%s %s\n", oo.loci[ snp1 ].c_str( ), oo.loci[ snp2 ].c_str( ) );
+                    output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << std::endl;
                 }
             }
         }
@@ -266,9 +272,10 @@ void output_between_restrict(const output_options &oo, std::map< std::string, st
 /**
  * Outputs all pairs of snps.
  *
+ * @param output Output stream.
  * @param oo Output options.
  */
-void output_all(const output_options &oo)
+void output_all(std::ostream &output, const output_options &oo)
 {
     for(int i = 0; i < oo.loci.size( ); i++)
     {
@@ -281,7 +288,7 @@ void output_all(const output_options &oo)
         {
             if( oo.maf_vec[ j ] >= oo.maf_threshold && (oo.maf_vec[ i ] * oo.maf_vec[ j ]) >= oo.combined_threshold )
             {
-                printf( "%s %s\n", oo.loci[ i ].c_str( ), oo.loci[ j ].c_str( ) );
+                output << oo.loci[ i ] << " " << oo.loci[ j ] << std::endl;
             }
         }
     }
@@ -300,6 +307,7 @@ main(int argc, char *argv[])
     parser.add_option( "-w", "--within" ).help( "Only output pairs of snps within the genes given by this file." );
     parser.add_option( "-b", "--between" ).help( "Only output pairs of snps between pairs of genes as specified by this file." );
     parser.add_option( "-r", "--restrict" ).help( "Used with --between to only check the pair of genes in this list." );
+    parser.add_option( "-o", "--out" ).help( "Name of the output file, will be gzipped." ).set_default( "" );
 
     Values options = parser.parse_args( argc, argv );
     std::vector<std::string> args = parser.args( );
@@ -309,6 +317,9 @@ main(int argc, char *argv[])
         parser.print_help( );
         exit( 1 );
     }
+
+    gz::ogzstream output_file( ( (std::string) options.get( "out" ) ).c_str( ) );
+    std::ostream &output = options.is_set( "out" ) ? output_file : std::cout;
 
     output_options oo;
     oo.maf_threshold = (double) options.get( "maf" );
@@ -320,24 +331,24 @@ main(int argc, char *argv[])
     if( options.is_set( "within" ) )
     {
         std::map< std::string, std::vector<size_t> > gene_locus = parse_gene_locus( options[ "within" ].c_str( ), oo.loci );
-        output_within( oo, gene_locus );
+        output_within( output, oo, gene_locus );
     }
     else if( options.is_set( "between" ) )
     {
         std::map< std::string, std::vector<size_t> > gene_locus = parse_gene_locus( options[ "between" ].c_str( ), oo.loci );
         if( !options.is_set( "restrict" ) )
         {
-            output_between( oo, gene_locus );
+            output_between( output, oo, gene_locus );
         }
         else
         {
             pair_vector gene_pairs = parse_genes( options[ "restrict" ].c_str( ) );
-            output_between_restrict( oo, gene_locus, gene_pairs );
+            output_between_restrict( output, oo, gene_locus, gene_pairs );
         }
     }
     else
     {
-        output_all( oo );
+        output_all( output, oo );
     }
 
     return 1;

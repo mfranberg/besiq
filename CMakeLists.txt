@@ -16,9 +16,12 @@ set( LIBCPPARGPARSE_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/cpp-argparse/" )
 set( LIBGLM_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/glm/" )
 set( GTEST_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/gtest/include/" )
 set( DCDFLIB_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/dcdflib/" )
+set( GZSTREAM_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/gzstream/" )
 
 set( PLINKIO_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/libplinkio/src/" )
 set( PLINKIO_LIBRARIES libplinkio-static )
+
+add_definitions( -DGZSTREAM_NAMESPACE=gz )
 
 enable_testing( )
 

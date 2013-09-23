@@ -42,3 +42,4 @@ Directory/File              License
 libs/cpp-argparse           Revised BSD License
 libs/dcdflib                Public domain
 libs/gtest                  Revised BSD License
+libs/gzstream               GPL v. 2
