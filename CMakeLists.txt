@@ -17,6 +17,7 @@ set( LIBGLM_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/glm/" )
 set( GTEST_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/gtest/include/" )
 set( DCDFLIB_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/dcdflib/" )
 set( GZSTREAM_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/gzstream/" )
+set( SHAREDPTR_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/shared_ptr/" )
 
 set( PLINKIO_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/libplinkio/src/" )
 set( PLINKIO_LIBRARIES libplinkio-static )

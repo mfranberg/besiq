@@ -4,6 +4,7 @@
 
 #include <plinkio/plinkio.h>
 
+#include <gzutil.hpp>
 #include <covariates.hpp>
 #include <irls.hpp>
 #include <models/binomial.hpp>
@@ -58,8 +59,8 @@ create_phenotype_vector(plink_file_ptr genotype_file, uvec &missing)
 unsigned int
 count_interactions(const char *pair_file_path, const std::vector<std::string> &loci)
 {
-    std::ifstream pair_file( pair_file_path );
-    pair_iter pairs( pair_file, loci );
+    shared_ptr<std::istream> pair_file = open_possible_gz( pair_file_path );
+    pair_iter pairs( *pair_file, loci );
     unsigned int num_interactions = 0;
     std::pair<size_t, size_t> pair;
     while( pairs.get_pair( &pair ) )
@@ -83,7 +84,7 @@ main(int argc, char *argv[])
     char const* const choices[] = { "bayes", "logistic", "loglinear", "fine" };
     parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 4 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'logistic' or 'loglinear'." );
 
-    parser.add_option( "-n" ).type( "int" ).help( "The number of interactions to correct for." );
+    parser.add_option( "-n" ).type( "int" ).help( "The number of interactions to correct for." ).set_default( 1 );
     parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
     parser.add_option( "-i", "--mc-iterations" ).type( "int" ).help( "The number of monte carlo iterations to use in the fine method." ).set_default( 50000 );
 
@@ -101,9 +102,9 @@ main(int argc, char *argv[])
     std::vector<snp_row> genotype_matrix = create_genotype_matrix( genotype_file );
     
     /* Create pair iterator */
-    std::ifstream pair_file( args[ 0 ].c_str( ) );
+    shared_ptr<std::istream> pair_file = open_possible_gz( args[ 0 ].c_str( ) );
     std::vector<std::string> locus_names = genotype_file->get_locus_names( );
-    pair_iter pairs( pair_file, locus_names );
+    pair_iter pairs( *pair_file, locus_names );
     
     /* Read additional data  */
     method_data_ptr data( new method_data( ) );
