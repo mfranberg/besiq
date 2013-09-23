@@ -1,4 +1,4 @@
-#include <stats/loglinear_models.hpp>
+#include <bayesic/stats/loglinear_models.hpp>
 
 using namespace arma;
 

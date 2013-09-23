@@ -1,4 +1,4 @@
-#include <snp_row.hpp>
+#include <plink/snp_row.hpp>
 
 snp_row::snp_row()
 {

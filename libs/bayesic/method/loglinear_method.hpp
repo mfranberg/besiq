@@ -6,9 +6,9 @@
 
 #include <armadillo>
 
-#include <method/method.hpp>
-#include <stats/log_scale.hpp>
-#include <stats/loglinear_models.hpp>
+#include <bayesic/method/method.hpp>
+#include <bayesic/stats/log_scale.hpp>
+#include <bayesic/stats/loglinear_models.hpp>
 
 /**
  * This class is responsible for intializing and repeatedly

@@ -1,4 +1,4 @@
-#include <method/bayesic_fine_method.hpp>
+#include <bayesic/method/bayesic_fine_method.hpp>
 
 bayesic_fine_method::bayesic_fine_method(method_data_ptr data, int num_mc_iterations)
     : bayesic_method::bayesic_method( data )

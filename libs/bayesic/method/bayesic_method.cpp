@@ -1,6 +1,6 @@
-#include <method/bayesic_method.hpp>
-#include <models/binomial.hpp>
-#include <irls.hpp>
+#include <bayesic/method/bayesic_method.hpp>
+#include <glm/models/binomial.hpp>
+#include <glm/irls.hpp>
 
 bayesic_method::bayesic_method(method_data_ptr data)
 : method_type::method_type( data )

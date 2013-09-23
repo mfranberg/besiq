@@ -1,4 +1,4 @@
-#include <gzutil.hpp>
+#include <gzstream/gzutil.hpp>
 
 bool
 ends_with(const std::string &str, const std::string &end)

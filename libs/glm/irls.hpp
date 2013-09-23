@@ -3,7 +3,7 @@
 
 #include <armadillo>
 
-#include <models/glm_model.hpp>
+#include <glm/models/glm_model.hpp>
 
 /**
  * Contains additional statistics about the estimated betas.

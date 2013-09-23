@@ -3,10 +3,9 @@
 
 #include <armadillo>
 
-#include <snp_row.hpp>
-#include <stats/dirichlet.hpp>
-#include <stats/log_scale.hpp>
-#include <stats/snp_count.hpp>
+#include <plink/snp_row.hpp>
+#include <bayesic/stats/log_scale.hpp>
+#include <bayesic/stats/snp_count.hpp>
 
 /**
  * This class represents a general model that can compute a

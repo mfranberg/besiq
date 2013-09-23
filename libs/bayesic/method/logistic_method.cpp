@@ -1,4 +1,4 @@
-#include <method/logistic_method.hpp>
+#include <bayesic/method/logistic_method.hpp>
 
 logistic_method::logistic_method(method_data_ptr data)
 : method_type::method_type( data ),

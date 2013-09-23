@@ -1,4 +1,4 @@
-#include <stats/bayesic_models.hpp>
+#include <bayesic/stats/bayesic_models.hpp>
 
 using namespace arma;
 

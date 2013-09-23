@@ -3,7 +3,7 @@
 
 #include <armadillo>
 
-#include <snp_row.hpp>
+#include <plink/snp_row.hpp>
 
 /**
  * Counts the number of cases and controls with each genotype. The

@@ -1,6 +1,4 @@
-include_directories( ${LIBBAYESIC_INCLUDE_DIR} )
-include_directories( ${LIBGLM_INCLUDE_DIR} )
-include_directories( ${LIBPLINK_INCLUDE_DIR} )
+include_directories( ${LIBS_INCLUDE_DIR} )
 include_directories( ${GTEST_INCLUDE_DIR} )
 include_directories( ${ARMADILLO_INCLUDE_DIR} )
 

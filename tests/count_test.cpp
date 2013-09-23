@@ -4,7 +4,7 @@
 #include <cmath>
 #include <stdexcept>
 
-#include <stats/snp_count.hpp>
+#include <bayesic/stats/snp_count.hpp>
 
 class snp_count_test
 : public ::testing::Test

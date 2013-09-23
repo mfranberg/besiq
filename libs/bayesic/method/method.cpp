@@ -1,4 +1,4 @@
-#include <method/method.hpp>
+#include <bayesic/method/method.hpp>
 
 void run_method(method_type &method, const std::vector<snp_row> &genotype_matrix, const std::vector<std::string> &loci, pair_iter &pairs)
 {

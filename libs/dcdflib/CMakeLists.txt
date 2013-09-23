@@ -1,4 +1,4 @@
-include_directories( "." )
+include_directories( ${LIBS_INCLUDE_DIR} )
 
 file( GLOB_RECURSE C_SRC_LIST "*.c" "." )
 file( GLOB_RECURSE CPP_SRC_LIST "*.cpp" "." )

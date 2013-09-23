@@ -1,4 +1,4 @@
-#include <plink_file.hpp>
+#include <plink/plink_file.hpp>
 
 plink_file::plink_file(const pio_file_t &file, const std::vector<pio_sample_t> &samples, const std::vector<pio_locus_t> &loci)
     : m_file( file ),

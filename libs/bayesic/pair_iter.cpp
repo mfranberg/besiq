@@ -2,7 +2,7 @@
 #include <utility>
 #include <iostream>
 
-#include <pair_iter.hpp>
+#include <bayesic/pair_iter.hpp>
 
 pair_iter::pair_iter(std::istream &pair_stream, const std::vector<std::string> &loci)
     : m_pair_stream( pair_stream )

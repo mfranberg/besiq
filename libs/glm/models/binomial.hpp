@@ -1,7 +1,7 @@
 #ifndef __BINOMIAL_H__
 #define __BINOMIAL_H__
 
-#include <models/glm_model.hpp>
+#include <glm/models/glm_model.hpp>
 
 /**
  * Implements the binomial or logistic regression model.

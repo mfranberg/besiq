@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
-#include <shared_ptr.hpp>
-#include <gzstream.hpp>
+#include <shared_ptr/shared_ptr.hpp>
+#include <gzstream/gzstream.hpp>
 
 /**
  * Returns true if the given string ends with given suffix.

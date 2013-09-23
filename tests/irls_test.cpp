@@ -1,8 +1,8 @@
 #include <armadillo>
 #include <gtest/gtest.h>
 
-#include <irls.hpp>
-#include <models/binomial.hpp>
+#include <glm/irls.hpp>
+#include <glm/models/binomial.hpp>
 
 using namespace arma;
 

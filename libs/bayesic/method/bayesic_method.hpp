@@ -6,10 +6,10 @@
 
 #include <armadillo>
 
-#include <method/method.hpp>
-#include <stats/bayesic_models.hpp>
-#include <stats/log_scale.hpp>
-#include <snp_row.hpp>
+#include <bayesic/method/method.hpp>
+#include <bayesic/stats/bayesic_models.hpp>
+#include <bayesic/stats/log_scale.hpp>
+#include <plink/snp_row.hpp>
 
 /**
  * This class is responsible for intializing and repeatedly

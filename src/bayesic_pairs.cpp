@@ -2,12 +2,12 @@
 #include <string>
 #include <vector>
 
-#include <gzstream.hpp>
+#include <gzstream/gzstream.hpp>
 
-#include <plink_file.hpp>
-#include <OptionParser.h>
+#include <plink/plink_file.hpp>
+#include <cpp-argparse/OptionParser.h>
 
-#include <stats/snp_count.hpp>
+#include <bayesic/stats/snp_count.hpp>
 
 using namespace optparse;
 

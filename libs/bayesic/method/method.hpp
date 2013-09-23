@@ -6,9 +6,9 @@
 
 #include <armadillo>
 
-#include <snp_row.hpp>
-#include <shared_ptr.hpp>
-#include <pair_iter.hpp>
+#include <plink/snp_row.hpp>
+#include <shared_ptr/shared_ptr.hpp>
+#include <bayesic/pair_iter.hpp>
 
 /**
  * Represents additional data that is required by the method.

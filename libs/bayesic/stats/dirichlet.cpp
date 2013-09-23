@@ -1,7 +1,7 @@
 #include <assert.h>
 
-#include <stats/dirichlet.hpp>
-#include <libdcdf.hpp>
+#include <bayesic/stats/dirichlet.hpp>
+#include <dcdflib/libdcdf.hpp>
 
 double
 dirmult(const arma::vec &x, const arma::vec &alpha)

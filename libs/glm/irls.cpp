@@ -3,9 +3,9 @@
 
 #include <armadillo>
 
-#include <models/glm_model.hpp>
-#include <irls.hpp>
-#include <libdcdf.hpp>
+#include <glm/models/glm_model.hpp>
+#include <glm/irls.hpp>
+#include <dcdflib/libdcdf.hpp>
 
 using namespace arma;
 

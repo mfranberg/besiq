@@ -1,6 +1,6 @@
-#include <libdcdf.hpp>
-#include <method/loglinear_method.hpp>
-#include <stats/snp_count.hpp>
+#include <dcdflib/libdcdf.hpp>
+#include <bayesic/method/loglinear_method.hpp>
+#include <bayesic/stats/snp_count.hpp>
 
 loglinear_method::loglinear_method(method_data_ptr data)
 : method_type::method_type( data )

@@ -4,9 +4,9 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <shared_ptr.hpp>
+#include <shared_ptr/shared_ptr.hpp>
 
-#include <snp_row.hpp>
+#include <plink/snp_row.hpp>
 #include <plinkio/plinkio.h>
 
 /**

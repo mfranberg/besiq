@@ -10,7 +10,7 @@
 
 #include <armadillo>
 
-#include <covariates.hpp>
+#include <bayesic/covariates.hpp>
 
 using namespace arma;
 

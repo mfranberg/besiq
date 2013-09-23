@@ -1,4 +1,4 @@
-#include <models/binomial.hpp>
+#include <glm/models/binomial.hpp>
 
 #include <armadillo>
 

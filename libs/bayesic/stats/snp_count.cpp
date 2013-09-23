@@ -1,4 +1,4 @@
-#include <stats/snp_count.hpp>
+#include <bayesic/stats/snp_count.hpp>
 
 using namespace arma;
 

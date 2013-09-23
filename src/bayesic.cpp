@@ -4,19 +4,19 @@
 
 #include <plinkio/plinkio.h>
 
-#include <gzutil.hpp>
-#include <covariates.hpp>
-#include <irls.hpp>
-#include <models/binomial.hpp>
-#include <OptionParser.h>
+#include <gzstream/gzutil.hpp>
+#include <bayesic/covariates.hpp>
+#include <glm/irls.hpp>
+#include <glm/models/binomial.hpp>
+#include <cpp-argparse/OptionParser.h>
 
-#include <plink_file.hpp>
-#include <pair_iter.hpp>
-#include <method/bayesic_method.hpp>
-#include <method/bayesic_fine_method.hpp>
-#include <method/logistic_method.hpp>
-#include <method/loglinear_method.hpp>
-#include <method/method.hpp>
+#include <plink/plink_file.hpp>
+#include <bayesic/pair_iter.hpp>
+#include <bayesic/method/bayesic_method.hpp>
+#include <bayesic/method/bayesic_fine_method.hpp>
+#include <bayesic/method/logistic_method.hpp>
+#include <bayesic/method/loglinear_method.hpp>
+#include <bayesic/method/method.hpp>
 
 using namespace arma;
 using namespace optparse;

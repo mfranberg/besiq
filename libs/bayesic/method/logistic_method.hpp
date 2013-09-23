@@ -6,10 +6,10 @@
 
 #include <armadillo>
 
-#include <models/binomial.hpp>
-#include <irls.hpp>
-#include <method/method.hpp>
-#include <stats/log_scale.hpp>
+#include <glm/models/binomial.hpp>
+#include <glm/irls.hpp>
+#include <bayesic/method/method.hpp>
+#include <bayesic/stats/log_scale.hpp>
 
 /**
  * This class is responsible for initializing and repeatedly

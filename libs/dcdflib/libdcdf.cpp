@@ -1,10 +1,10 @@
 #include <stdexcept>
 
-#include <libdcdf.hpp>
+#include <dcdflib/libdcdf.hpp>
 
 extern "C"
 {
-    #include <cdflib.h>
+    #include <dcdflib/cdflib.h>
 }
 
 double

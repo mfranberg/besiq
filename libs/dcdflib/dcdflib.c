@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "cdflib.h"
+#include <dcdflib/cdflib.h>
 /*
  * A comment about ints and longs - whether ints or longs are used should
  * make no difference, but where double r-values are assigned to ints the
