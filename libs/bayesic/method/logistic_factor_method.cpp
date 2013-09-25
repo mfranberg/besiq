@@ -113,7 +113,7 @@ void logistic_factor_method::run(const snp_row &row1, const snp_row &row2, std::
         double LR = -2 * ( null_info.logl - alt_info.logl );
         double p = 1.0 - chi_square_cdf( LR, 4 );
 
-        output << LR << p;
+        output << LR << "\t" << p;
     }
     else
     {

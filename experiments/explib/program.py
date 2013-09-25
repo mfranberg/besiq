@@ -71,6 +71,28 @@ class LogisticMethod:
     def compute_power(self, output_path, num_tests):
         return power.compute_from_file( output_path, 4, float.__le__, 0.05 / num_tests )
 
+##
+# Wrapper for running logistic method.
+#
+class LogisticFactorMethod:
+    def __init__(self, name, path):
+        self.name = name
+        self.path = path
+
+    def run(self, data_prefix, num_tests, output_file, include_covariates = False):
+        cmd = [ self.path,
+                "-m", "factor",
+                "-n", str( num_tests ),
+                data_prefix + ".pair",
+                data_prefix ]
+
+        if include_covariates:
+            cmd.extend( [ "-c", data_prefix + ".cov" ] )
+        
+        subprocess.call( cmd, stdout = output_file )
+
+    def compute_power(self, output_path, num_tests):
+        return power.compute_from_file( output_path, 3, float.__le__, 0.05 / num_tests )
 
 ##
 # Returns a list of methods that can run plink files.
@@ -80,7 +102,7 @@ class LogisticMethod:
 def get_methods( ):
     return [ BayesicMethod( "Bayesic", "../build/src/bayesic" ),
              LogLinearMethod( "Log-linear", "../build/src/bayesic" ),
-             LogisticMethod( "Logistic", "../build/src/bayesic" ) ]
+             LogisticFactorMethod( "Logistic", "../build/src/bayesic" ) ]
 
 ##
 # Runs all defined methods on the given plink file.
