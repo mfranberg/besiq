@@ -100,6 +100,7 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, ir
         output.num_iters = num_iter;
         output.converged = true;
         output.mu = mu;
+        output.logl = logl;
     }
     else
     {   

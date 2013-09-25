@@ -15,6 +15,7 @@
 #include <bayesic/method/bayesic_method.hpp>
 #include <bayesic/method/bayesic_fine_method.hpp>
 #include <bayesic/method/logistic_method.hpp>
+#include <bayesic/method/logistic_factor_method.hpp>
 #include <bayesic/method/loglinear_method.hpp>
 #include <bayesic/method/method.hpp>
 
@@ -81,8 +82,8 @@ main(int argc, char *argv[])
     
     parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
     
-    char const* const choices[] = { "bayes", "logistic", "loglinear", "fine" };
-    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 4 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'logistic' or 'loglinear'." );
+    char const* const choices[] = { "bayes", "logistic", "factor", "loglinear", "fine" };
+    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 5 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'logistic' or 'loglinear'." );
 
     parser.add_option( "-n" ).type( "int" ).help( "The number of interactions to correct for." ).set_default( 1 );
     parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
@@ -138,6 +139,11 @@ main(int argc, char *argv[])
     else if( options[ "method" ] == "logistic" )
     {
         logistic_method logistic( data );
+        run_method( logistic, genotype_matrix, locus_names, pairs );
+    }
+    else if( options[ "method" ] == "factor" )
+    {
+        logistic_factor_method logistic( data );
         run_method( logistic, genotype_matrix, locus_names, pairs );
     }
     else if( options[ "method" ] == "loglinear" )

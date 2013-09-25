@@ -31,6 +31,11 @@ struct irls_info
     arma::vec mu;
 
     /**
+     * Log likelihood of the model.
+     */
+    double logl;
+
+    /**
     * True if converged, false otherwise.
     */
     bool converged;
