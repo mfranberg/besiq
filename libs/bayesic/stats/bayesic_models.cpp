@@ -112,7 +112,7 @@ sindependent::prob(const snp_row &row1, const snp_row &row2, const arma::vec &ph
 {
     mat counts = joint_count( row1, row2, phenotype, weight );
 
-    vec alpha = ones<vec>( 2 );
+    vec alpha = 2.0 * ones<vec>( 2 );
     log_double likelihood = 0.0;
     for(int k = 0; k < m_num_mc_iterations; k++)
     {
