@@ -130,6 +130,10 @@ main(int argc, char *argv[])
         data->num_interactions = count_interactions( args[ 0 ].c_str( ), locus_names );
     }
 
+    /* XXX: Implement proper log file. */
+    std::ostream nullstream( 0 );
+    arma::set_stream_err2( nullstream );
+
     /* Run method */
     if( options[ "method" ] == "bayes" )
     {

@@ -93,14 +93,22 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, ir
 
     if( num_iter <= IRLS_MAX_ITERS )
     {
-        mat C = inv( X.t( ) *  diagmat( w ) * X );
-        output.se_beta = sqrt( diagvec( C ) );
-        vec wald_z = b / output.se_beta;
-        output.p_value = 1.0 - chi_square_cdf( wald_z % wald_z, 1 );
-        output.num_iters = num_iter;
-        output.converged = true;
-        output.mu = mu;
-        output.logl = logl;
+        mat C( b.n_elem, b.n_elem );
+        bool inverted = inv( C, X.t( ) *  diagmat( w ) * X );
+        if( inverted )
+        {
+            output.se_beta = sqrt( diagvec( C ) );
+            vec wald_z = b / output.se_beta;
+            output.p_value = 1.0 - chi_square_cdf( wald_z % wald_z, 1 );
+            output.num_iters = num_iter;
+            output.converged = true;
+            output.mu = mu;
+            output.logl = logl;
+        }
+        else
+        {
+            output.converged = false;
+        }
     }
     else
     {   
