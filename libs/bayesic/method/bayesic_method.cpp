@@ -5,10 +5,12 @@
 bayesic_method::bayesic_method(method_data_ptr data)
 : method_type::method_type( data )
 {
-    m_models.push_back( new saturated( 1.0 / ( 4.0 * data->num_interactions ) ) );
-    m_models.push_back( new ld_assoc( 1.0 / ( 4.0 * data->num_interactions ), true ) );
-    m_models.push_back( new ld_assoc( 1.0 / ( 4.0 * data->num_interactions ), false ) );
-    m_models.push_back( new null( 1.0 - ( 3.0 / ( 4.0 * data->num_interactions ) ) ) );
+    double prior = 1.0 / ( 4.0 * data->num_interactions );
+
+    m_models.push_back( new saturated( prior ) );
+    m_models.push_back( new ld_assoc( prior, true ) );
+    m_models.push_back( new ld_assoc( prior, false ) );
+    m_models.push_back( new null( 1.0 - 3 * prior ) );
 }
 
 bayesic_method::~bayesic_method()

@@ -8,17 +8,17 @@ saturated::saturated(log_double prior)
 
 }
 
-
 log_double
 saturated::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight)
 {
     mat counts = joint_count( row1, row2, phenotype, weight );
+
+    vec alpha = 2.0 * ones<vec>( 2 );
     
     log_double likelihood = 1.0;
     for(int i = 0; i < counts.n_rows; i++)
     {
         vec row_count = counts.row( i ).t( );
-        vec alpha = ones<vec>( 2 );
         likelihood *= log_double::from_log( ldirmult( row_count, alpha ) );
     }
 
@@ -50,7 +50,7 @@ log_double
 null::pheno_prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight)
 {
     vec counts = pheno_count( row1, row2, phenotype, weight );
-    vec alpha = ones<vec>( 2 );
+    vec alpha = 2.0 * ones<vec>( 2 );
 
     return log_double::from_log( ldirmult( counts, alpha ) );
 }
@@ -87,12 +87,13 @@ ld_assoc::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenot
     const snp_row &snp2 = m_is_first ? row2 : row1;
 
     mat counts = single_count( snp1, snp2, phenotype, weight );
+    
+    vec alpha = 2.0 * ones<vec>( 2 );
 
     log_double likelihood = 1.0;
     for(int i = 0; i < counts.n_rows; i++)
     {
         vec row_count = counts.row( i ).t( );
-        vec alpha = ones<vec>( 2 );
         likelihood *= log_double::from_log( ldirmult( row_count, alpha ) );
     }
 
