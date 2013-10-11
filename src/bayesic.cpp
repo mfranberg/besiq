@@ -114,12 +114,12 @@ main(int argc, char *argv[])
     std::vector<std::string> order = genotype_file->get_sample_iids( );
     if( options.is_set( "pheno" ) )
     {
-        std::ifstream phenotype_file( options[ "p" ].c_str( ) );
+        std::ifstream phenotype_file( options[ "pheno" ].c_str( ) );
         data->phenotype = parse_phenotypes( phenotype_file, data->missing, order );
     }
     if( options.is_set( "cov" ) )
     {
-        std::ifstream covariate_file( options[ "c" ].c_str( ) );
+        std::ifstream covariate_file( options[ "cov" ].c_str( ) );
         data->covariate_matrix = parse_covariate_matrix( covariate_file, data->missing, order );
     }
 

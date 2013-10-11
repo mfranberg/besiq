@@ -32,7 +32,7 @@ get_fields(const std::string &header)
                std::istream_iterator<std::string>( ),
                std::back_inserter< std::vector<std::string> >( fields ) );
 
-    if( fields[ 0 ] != "FID" or fields[ 1 ] != "IID" )
+    if( fields.size( ) <= 0 || fields[ 0 ] != "FID" || fields[ 1 ] != "IID" )
     {
         throw std::runtime_error( "get_fields: The first two fields must be named FID and IID." );
     }
