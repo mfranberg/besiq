@@ -34,26 +34,50 @@ class ExperimentParams:
         #
         self.num_tests = num_tests
 
+        ##
+        # The false positive rate.
+        #
+        self.threshold = 0.05
+
 def updated_params(params, json_object):
     new_params = ExperimentParams( params.maf, params.sample_size, params.num_pairs, params.num_tests )
     
-    maf = json_object.get( "maf", None )
-    if maf:
-        new_params.maf = maf
-
-    sample_size = json_object.get( "sample_size", None )
-    if sample_size:
-        new_params.sample_size = sample_size
-
-    num_pairs = json_object.get( "num_pairs", None )
-    if num_pairs:
-        new_params.num_pairs = num_pairs
-
-    num_tests = json_object.get( "num_tests", None )
-    if num_tests:
-        new_params.num_tests = num_tests
+    new_params.maf = json_object.get( "maf", params.maf )
+    new_params.sample_size = json_object.get( "sample_size", params.sample_size )
+    new_params.num_pairs = json_object.get( "num_pairs", params.num_pairs )
+    new_params.num_tests = json_object.get( "num_tests", params.num_tests )
+    new_params.threshold = json_object.get( "threshold", params.threshold )
 
     return new_params
+
+##
+# Computes the heritability V(P|G) / V(P).
+#
+# @param penetrance The probability of disease for each genotype as a vector.
+# @param maf The minor allele frequency for both locus.
+#
+# @return The heritability.
+#
+def heritability(penetrance, maf):
+    maf1 = maf[ 0 ]
+    maf2 = maf[ 1 ]
+
+    p = [ ( 1 - maf[ 0 ] )**2, 2 * maf[ 0 ] * ( 1 - maf[ 0 ] ), ( maf[ 0 ] )**2 ]
+    q = [ ( 1 - maf[ 1 ] )**2, 2 * maf[ 1 ] * ( 1 - maf[ 1 ] ), ( maf[ 1 ] )**2 ]
+
+    joint_maf =  [ p[ 0 ] * q[ 0 ], p[ 0 ] * q[ 1 ], p[ 0 ] * q[ 2 ],
+                   p[ 1 ] * q[ 0 ], p[ 1 ] * q[ 1 ], p[ 1 ] * q[ 2 ],
+                   p[ 2 ] * q[ 0 ], p[ 2 ] * q[ 1 ], p[ 2 ] * q[ 2 ] ]
+
+    pop_p = sum( p * m for p, m in zip( penetrance, maf ) )
+
+    h = 0.0
+    for i in range( 3 ):
+        for j in range( 3 ):
+            cell = 3 * i + j
+            h += ( penetrance[ cell ] - pop_p )**2 * joint_maf[ cell ]
+
+    return h / ( pop_p * ( 1 - pop_p ) )
 
 ##
 # Main class for simulating data for a set of parameter
@@ -179,7 +203,7 @@ class NoCovariateStrategy(ExperimentStrategy):
 
             xvalue = model.get( 'xvalue', None )
             if not xvalue:
-                xvalue = model_id
+                xvalue = str( heritability( model[ 'params' ], params.maf ) )
 
             method_power = program.calculate_power( params, self.method_handler )
             for method_name, power_data in method_power.iteritems( ):

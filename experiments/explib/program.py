@@ -1,6 +1,6 @@
 import subprocess
 
-from . import power
+from . import fdr_power
 
 ##
 # Wrapper for running Bayesic.
@@ -22,8 +22,8 @@ class BayesicMethod:
 
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests):
-        return power.compute_from_file( output_path, 2, float.__ge__, 0.95 )
+    def compute_power(self, output_path, num_tests, threshold = 0.05):
+        return fdr_power.compute_from_file( output_path, 2, threshold, num_tests, False )
 
 ##
 # Wrapper for running log-linear method.
@@ -45,8 +45,8 @@ class LogLinearMethod:
 
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests):
-        return power.compute_from_file( output_path, 2, float.__le__, 0.05 / num_tests )
+    def compute_power(self, output_path, num_tests, threshold = 0.05):
+        return fdr_power.compute_from_file( output_path, 2, threshold, num_tests, True )
 
 ##
 # Wrapper for running logistic method.
@@ -68,8 +68,8 @@ class LogisticMethod:
         
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests):
-        return power.compute_from_file( output_path, 4, float.__le__, 0.05 / num_tests )
+    def compute_power(self, output_path, num_tests, threshold = 0.05):
+        return fdr_power.compute_from_file( output_path, 4, threshold, num_tests, True )
 
 ##
 # Wrapper for running logistic method.
@@ -91,8 +91,8 @@ class LogisticFactorMethod:
         
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests):
-        return power.compute_from_file( output_path, 3, float.__le__, 0.05 / num_tests )
+    def compute_power(self, output_path, num_tests, threshold = 0.05):
+        return fdr_power.compute_from_file( output_path, 3, threshold, num_tests, True )
 
 ##
 # Returns a list of methods that can run plink files.
@@ -134,7 +134,7 @@ def calculate_power(params, method_handler):
     method_list = get_methods( )
     for method in method_list:
         method_output_file = method_handler.get_output_file( method.name )
-        power, lower, upper = method.compute_power( method_output_file, params.num_tests )
+        power, lower, upper = method.compute_power( method_output_file, params.num_tests, params.threshold )
 
         method_power[ method.name ] = ( power, lower, upper )
 
