@@ -22,7 +22,7 @@ logistic_factor_method::logistic_factor_method(method_data_ptr data)
     m_alt_design_matrix.col( 8 ) = arma::ones<arma::vec>( data->phenotype.n_elem );
     for(int i = 0; i < data->covariate_matrix.n_cols; i++)
     {
-        m_null_design_matrix.col( i + 9 ) = data->covariate_matrix.col( i );
+        m_alt_design_matrix.col( i + 9 ) = data->covariate_matrix.col( i );
     }
 }
 
