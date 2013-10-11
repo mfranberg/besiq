@@ -214,6 +214,35 @@
         },
         {
             "type" : "genetic",
+            "name" : "Single",
+            "title" : "Power under Single model",
+            "xlabel" : "Heritability",
+            "ylabel" : "False positive rate",
+            "models" : [
+                {
+                    "params" : [ 0.10, 0.15, 0.20,
+                                 0.10, 0.15, 0.20,
+                                 0.10, 0.15, 0.20 ]
+                },
+                {
+                    "params" : [ 0.10, 0.20, 0.30,
+                                 0.10, 0.20, 0.30,
+                                 0.10, 0.20, 0.30 ]
+                },
+                {
+                    "params" : [ 0.10, 0.25, 0.40,
+                                 0.10, 0.25, 0.40,
+                                 0.10, 0.25, 0.40 ]
+                },
+                {
+                    "params" : [ 0.10, 0.30, 0.50,
+                                 0.10, 0.30, 0.50,
+                                 0.10, 0.30, 0.50 ]
+                }
+            ] 
+        },
+        {
+            "type" : "genetic",
             "name" : "LD",
             "title" : "Power under LD model",
             "xlabel" : "Heritability",
