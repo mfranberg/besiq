@@ -5,7 +5,7 @@
             "type" : "genetic",
             "name" : "Homozygot",
             "title" : "Power under Homozygot model",
-            "xlabel" : "Effect size",
+            "xlabel" : "Heritability",
             "ylabel" : "Power",
             "models" : [
                 {
@@ -34,7 +34,7 @@
             "type" : "genetic",
             "name" : "Side",
             "title" : "Power under Side model",
-            "xlabel" : "Effect size",
+            "xlabel" : "Heritability",
             "ylabel" : "Power",
             "models" : [
                 {
@@ -63,7 +63,7 @@
             "type" : "genetic",
             "name" : "XOR",
             "title" : "Power under XOR model",
-            "xlabel" : "Effect size",
+            "xlabel" : "Heritability",
             "ylabel" : "Power",
             "models" : [
                 {
@@ -92,7 +92,7 @@
             "type" : "genetic",
             "name" : "Dominant",
             "title" : "Power under Dominant model",
-            "xlabel" : "Effect size",
+            "xlabel" : "Heritability",
             "ylabel" : "Power",
             "models" : [
                 {
@@ -121,7 +121,7 @@
             "type" : "genetic",
             "name" : "Additive",
             "title" : "Power under additive model",
-            "xlabel" : "Effect size",
+            "xlabel" : "Heritability",
             "ylabel" : "False positive rate",
             "models" : [
                 {
@@ -150,28 +150,36 @@
             "type" : "genetic",
             "name" : "Null",
             "title" : "Power under Null model",
-            "xlabel" : "Effect size",
+            "xlabel" : "Alpha",
             "ylabel" : "False positive rate",
             "models" : [
                 {
                     "params" : [ 0.1, 0.1, 0.1,
                                  0.1, 0.1, 0.1,
-                                 0.1, 0.1, 0.1 ]
+                                 0.1, 0.1, 0.1 ],
+                    "threshold" : 0.05,
+                    "xvalue" : 0.05
                 },
                 {
                     "params" : [ 0.1, 0.1, 0.1,
                                  0.1, 0.1, 0.1,
-                                 0.1, 0.1, 0.1 ]
+                                 0.1, 0.1, 0.1 ],
+                    "threshold" : 0.10,
+                    "xvalue" : 0.10
                 },
                 {
                     "params" : [ 0.1, 0.1, 0.1,
                                  0.1, 0.1, 0.1,
-                                 0.1, 0.1, 0.1 ]
+                                 0.1, 0.1, 0.1 ],
+                    "threshold" : 0.15,
+                    "xvalue" : 0.15
                 },
                 {
                     "params" : [ 0.1, 0.1, 0.1,
                                  0.1, 0.1, 0.1,
-                                 0.1, 0.1, 0.1 ]
+                                 0.1, 0.1, 0.1 ],
+                    "threshold" : 0.20,
+                    "xvalue" : 0.20
                 }
             ] 
         },
@@ -179,7 +187,7 @@
             "type" : "genetic",
             "name" : "S-independent",
             "title" : "Power under S-independent model",
-            "xlabel" : "Effect size",
+            "xlabel" : "Heritability",
             "ylabel" : "False positive rate",
             "models" : [
                 {
@@ -206,9 +214,38 @@
         },
         {
             "type" : "genetic",
+            "name" : "Single",
+            "title" : "Power under Single model",
+            "xlabel" : "Heritability",
+            "ylabel" : "False positive rate",
+            "models" : [
+                {
+                    "params" : [ 0.10, 0.15, 0.20,
+                                 0.10, 0.15, 0.20,
+                                 0.10, 0.15, 0.20 ]
+                },
+                {
+                    "params" : [ 0.10, 0.20, 0.30,
+                                 0.10, 0.20, 0.30,
+                                 0.10, 0.20, 0.30 ]
+                },
+                {
+                    "params" : [ 0.10, 0.25, 0.40,
+                                 0.10, 0.25, 0.40,
+                                 0.10, 0.25, 0.40 ]
+                },
+                {
+                    "params" : [ 0.10, 0.30, 0.50,
+                                 0.10, 0.30, 0.50,
+                                 0.10, 0.30, 0.50 ]
+                }
+            ] 
+        },
+        {
+            "type" : "genetic",
             "name" : "LD",
             "title" : "Power under LD model",
-            "xlabel" : "Effect size",
+            "xlabel" : "Heritability",
             "ylabel" : "False positive rate",
             "ld" : 0.8,
             "models" : [

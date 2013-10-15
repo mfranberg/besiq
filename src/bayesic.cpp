@@ -12,6 +12,7 @@
 
 #include <plink/plink_file.hpp>
 #include <bayesic/pair_iter.hpp>
+#include <bayesic/prior.hpp>
 #include <bayesic/method/bayesic_method.hpp>
 #include <bayesic/method/bayesic_fine_method.hpp>
 #include <bayesic/method/logistic_method.hpp>
@@ -80,14 +81,19 @@ main(int argc, char *argv[])
                                          .description( DESCRIPTION )
                                          .epilog( EPILOG );
     
+    
+    char const* const choices[] = { "bayes", "bayes-fine", "logistic", "logistic-factor", "loglinear" };
+    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 5 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'logistic' or 'loglinear'." );
+    parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
     parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
     
-    char const* const choices[] = { "bayes", "logistic", "factor", "loglinear", "fine" };
-    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 5 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'logistic' or 'loglinear'." );
-
-    parser.add_option( "-n" ).type( "int" ).help( "The number of interactions to correct for." ).set_default( 1 );
-    parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
-    parser.add_option( "-i", "--mc-iterations" ).type( "int" ).help( "The number of monte carlo iterations to use in the fine method." ).set_default( 50000 );
+    OptionGroup group = OptionGroup( parser, "Options for bayes", "These options will change the behaviour of bayes and fine." );
+    group.add_option( "-n", "--num-interactions" ).type( "int" ).help( "The number of interactions to correct for, this is used as the prior (default: all)." ).set_default( 1 );
+    group.add_option( "-i", "--mc-iterations" ).type( "int" ).help( "The number of monte carlo iterations to use in the fine method (default: %default)." ).set_default( 4000000 );
+    group.add_option( "-a", "--beta-prior-param1" ).type( "float" ).help( "First shape parameter of beta prior (default: %default)." ).set_default( 2.0 );
+    group.add_option( "-b", "--beta-prior-param2" ).type( "float" ).help( "Second shape parameter of beta prior (default: %default)." ).set_default( 2.0 );
+    group.add_option( "-e", "--estimate-prior-params" ).action( "store_true" ).help( "Estimate prior parameters from data by permuting phenotype (default: off)." );
+    parser.add_option_group( group );
 
     Values options = parser.parse_args( argc, argv );
     std::vector<std::string> args = parser.args( );
@@ -123,9 +129,18 @@ main(int argc, char *argv[])
         data->covariate_matrix = parse_covariate_matrix( covariate_file, data->missing, order );
     }
 
+    /* Read prior parameters */
+    arma::vec alpha = arma::ones<arma::vec>( 2 );
+    alpha[ 0 ] = (float) options.get( "beta_prior_param1" );
+    alpha[ 1 ] = (float) options.get( "beta_prior_param2" );
+    if( options.is_set( "estimate_prior_params" ) )
+    {
+        alpha = estimate_prior_parameters( genotype_matrix, data->phenotype, data->missing, 5000 );
+    }
+
     /* Count the number of interactions to adjust for */
-    data->num_interactions = (unsigned int) options.get( "n" );
-    if( !options.is_set( "n" ) )
+    data->num_interactions = (unsigned int) options.get( "num_interactions" );
+    if( !options.is_set( "num_interactions" ) )
     {
         data->num_interactions = count_interactions( args[ 0 ].c_str( ), locus_names );
     }
@@ -137,7 +152,7 @@ main(int argc, char *argv[])
     /* Run method */
     if( options[ "method" ] == "bayes" )
     {
-        bayesic_method bayesic( data );
+        bayesic_method bayesic( data, alpha );
         run_method( bayesic, genotype_matrix, locus_names, pairs );
     }
     else if( options[ "method" ] == "logistic" )
@@ -157,7 +172,7 @@ main(int argc, char *argv[])
     }
     if( options[ "method" ] == "fine" )
     {
-        bayesic_fine_method bayesic_fine( data, (int) options.get( "mc_iterations" ) );
+        bayesic_fine_method bayesic_fine( data, (int) options.get( "mc_iterations" ), alpha );
         run_method( bayesic_fine, genotype_matrix, locus_names, pairs );
     }
 
