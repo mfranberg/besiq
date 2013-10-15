@@ -79,3 +79,29 @@ TEST(CovariateTest, ParseFail)
 
     ASSERT_THROW( parse_covariate_matrix( cov_file, missing, order ), std::runtime_error );
 }
+
+TEST(CovariateTest, ParsePhenos)
+{
+    std::stringstream cov_file;
+    cov_file << "FID IID pheno\n";
+    cov_file << "1 1 1\n";
+    cov_file << "2 2 2\n";
+    cov_file << "3 3 2\n";
+    cov_file << "4 4 1\n";
+
+    std::vector<std::string> order;
+    order.push_back( "1" );
+    order.push_back( "2" );
+    order.push_back( "3" );
+    order.push_back( "4" );
+
+    arma::uvec missing = arma::zeros<arma::uvec>( 4 );
+
+    arma::vec pheno = parse_phenotypes( cov_file, missing, order );
+
+    ASSERT_EQ( pheno.n_elem, 4 );
+    ASSERT_NEAR( pheno[ 0 ], 1.0, 0.0001 );
+    ASSERT_NEAR( pheno[ 1 ], 2.0, 0.0001 );
+    ASSERT_NEAR( pheno[ 2 ], 2.0, 0.0001 );
+    ASSERT_NEAR( pheno[ 3 ], 1.0, 0.0001 );
+}
