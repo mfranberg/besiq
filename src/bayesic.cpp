@@ -88,7 +88,7 @@ main(int argc, char *argv[])
     parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
     
     OptionGroup group = OptionGroup( parser, "Options for bayes", "These options will change the behaviour of bayes and fine." );
-    group.add_option( "-n", "--num-interactions" ).type( "int" ).help( "The number of interactions to correct for, this is used as the prior (default: all)." ).set_default( 1 );
+    group.add_option( "-n", "--num-interactions" ).type( "int" ).help( "The number of interactions to correct for, this is used in the model prior (default: all)." ).set_default( 1 );
     group.add_option( "-i", "--mc-iterations" ).type( "int" ).help( "The number of monte carlo iterations to use in the fine method (default: %default)." ).set_default( 4000000 );
     group.add_option( "-a", "--beta-prior-param1" ).type( "float" ).help( "First shape parameter of beta prior (default: %default)." ).set_default( 2.0 );
     group.add_option( "-b", "--beta-prior-param2" ).type( "float" ).help( "Second shape parameter of beta prior (default: %default)." ).set_default( 2.0 );
@@ -99,8 +99,13 @@ main(int argc, char *argv[])
     std::vector<std::string> args = parser.args( );
     if( args.size( ) != 2 )
     {
-        printf( "bayesic: error: Pairs or genotypes is missing.\n" );
+        std::cerr << "bayesic: error: Pairs or genetypes is missing." << std::endl;
         parser.print_help( );
+        exit( 1 );
+    }
+    else if( !options.is_set( "method" ) )
+    {
+        std::cerr << "bayesic:error: No method selected." << std::endl;
         exit( 1 );
     }
 
@@ -155,12 +160,17 @@ main(int argc, char *argv[])
         bayesic_method bayesic( data, alpha );
         run_method( bayesic, genotype_matrix, locus_names, pairs );
     }
+    else if( options[ "method" ] == "bayes-fine" )
+    {
+        bayesic_fine_method bayesic_fine( data, (int) options.get( "mc_iterations" ), alpha );
+        run_method( bayesic_fine, genotype_matrix, locus_names, pairs );
+    }
     else if( options[ "method" ] == "logistic" )
     {
         logistic_method logistic( data );
         run_method( logistic, genotype_matrix, locus_names, pairs );
     }
-    else if( options[ "method" ] == "factor" )
+    else if( options[ "method" ] == "logistic-factor" )
     {
         logistic_factor_method logistic( data );
         run_method( logistic, genotype_matrix, locus_names, pairs );
@@ -169,11 +179,6 @@ main(int argc, char *argv[])
     {
         loglinear_method loglinear( data );
         run_method( loglinear, genotype_matrix, locus_names, pairs );
-    }
-    if( options[ "method" ] == "fine" )
-    {
-        bayesic_fine_method bayesic_fine( data, (int) options.get( "mc_iterations" ), alpha );
-        run_method( bayesic_fine, genotype_matrix, locus_names, pairs );
     }
 
     return 0;
