@@ -19,9 +19,11 @@ public:
      * Constructor.
      *
      * @param prior The prior for the model.
+     * @param alpha The prior parameters.
      */
-    model(log_double prior)
-    : m_prior( prior )
+    model(log_double prior, const arma::vec &alpha)
+    : m_prior( prior ),
+      m_alpha( alpha )
     {
     }
     
@@ -33,6 +35,16 @@ public:
     log_double prior( )
     {
         return m_prior;
+    }
+
+    /**
+     * Returns the prior parameters.
+     *
+     * @return the prior parameters.
+     */
+    arma::vec get_alpha()
+    {
+        return m_alpha;
     }
 
     /**
@@ -53,6 +65,11 @@ private:
      * The prior probability for the model.
      */
     log_double m_prior;
+
+    /**
+     * The beta prior parameters.
+     */
+    arma::vec m_alpha;
 };
 
 /**
@@ -69,7 +86,7 @@ public:
      *
      * @param prior The prior probability for the model.
      */
-    saturated(log_double prior);
+    saturated(log_double prior, const arma::vec &alpha);
     
     /**
      * @see model::prob.
@@ -90,7 +107,7 @@ public:
      *
      * @param prior The prior probability for the model.
      */
-    null(log_double prior);
+    null(log_double prior, const arma::vec &alpha);
 
     /**
      * Computes a sensible prior alpha based on the minor allele frequencies
@@ -150,7 +167,7 @@ public:
      * @param prior The prior probability for the model.
      * @param is_first If true the first snp is associated, otherwise the second.
      */
-    ld_assoc(log_double prior, bool is_first);
+    ld_assoc(log_double prior, const arma::vec &alpha, bool is_first);
 
     /**
      * @see model::prob.
@@ -183,7 +200,7 @@ public:
      * @param prior The prior probability for the model.
      * @param num_mc_iterations The number of monte carlo iterations.
      */
-    sindependent(log_double prior, int num_mc_iterations);
+    sindependent(log_double prior, const arma::vec &alpha, int num_mc_iterations);
 
     /**
      * @see model::prob.

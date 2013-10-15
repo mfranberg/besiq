@@ -2,8 +2,8 @@
 
 using namespace arma;
 
-saturated::saturated(log_double prior)
-: model::model( prior )
+saturated::saturated(log_double prior, const arma::vec &alpha)
+: model::model( prior, alpha )
 {
 
 }
@@ -13,7 +13,7 @@ saturated::prob(const snp_row &row1, const snp_row &row2, const arma::vec &pheno
 {
     mat counts = joint_count( row1, row2, phenotype, weight );
 
-    vec alpha = 2.0 * ones<vec>( 2 );
+    vec alpha = get_alpha( );
     
     log_double likelihood = 1.0;
     for(int i = 0; i < counts.n_rows; i++)
@@ -25,8 +25,8 @@ saturated::prob(const snp_row &row1, const snp_row &row2, const arma::vec &pheno
     return likelihood;
 }
 
-null::null(log_double prior)
-: model::model( prior )
+null::null(log_double prior, const arma::vec &alpha)
+: model::model( prior, alpha )
 {
 
 }
@@ -34,47 +34,14 @@ null::null(log_double prior)
 log_double
 null::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight)
 {
-    return pheno_prob( row1, row2, phenotype, weight );
-}
-
-log_double
-null::snp_prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight)
-{
-    vec counts = joint_count( row1, row2 );
-    vec alpha = compute_alpha( row1, row2 );
-
-    return log_double::from_log( ldirmult( counts, alpha ) );
-}
-
-log_double
-null::pheno_prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight)
-{
     vec counts = pheno_count( row1, row2, phenotype, weight );
-    vec alpha = 2.0 * ones<vec>( 2 );
+    vec alpha = get_alpha( );
 
     return log_double::from_log( ldirmult( counts, alpha ) );
 }
 
-vec
-null::compute_alpha(const snp_row &row1, const snp_row &row2)
-{
-    vec maf1 = compute_maf( row1 );
-    vec maf2 = compute_maf( row2 );
-
-    vec alpha = zeros<vec>( 9 );
-    for(int i = 0; i < 3; i++)
-    {
-        for(int j = 0; j < 3; j++)
-        {
-            alpha[ 3 * i + j ] = maf1[ i ] * maf2[ j ];
-        }
-    }
-
-    return alpha;
-}
-
-ld_assoc::ld_assoc(log_double prior, bool is_first)
-: model::model( prior ),
+ld_assoc::ld_assoc(log_double prior, const arma::vec &alpha, bool is_first)
+: model::model( prior, alpha ),
   m_is_first( is_first )
 {
 
@@ -88,7 +55,7 @@ ld_assoc::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenot
 
     mat counts = single_count( snp1, snp2, phenotype, weight );
     
-    vec alpha = 2.0 * ones<vec>( 2 );
+    vec alpha = get_alpha( );
 
     log_double likelihood = 1.0;
     for(int i = 0; i < counts.n_rows; i++)
@@ -100,12 +67,11 @@ ld_assoc::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenot
     return likelihood;
 }
 
-sindependent::sindependent(log_double prior, int num_mc_iterations)
-: model::model( prior ),
+sindependent::sindependent(log_double prior, const arma::vec &alpha, int num_mc_iterations)
+: model::model( prior, alpha ),
   m_rdir( 0 ),
   m_num_mc_iterations( num_mc_iterations )
 {
-
 }
 
 log_double
@@ -113,7 +79,7 @@ sindependent::prob(const snp_row &row1, const snp_row &row2, const arma::vec &ph
 {
     mat counts = joint_count( row1, row2, phenotype, weight );
 
-    vec alpha = 2.0 * ones<vec>( 2 );
+    vec alpha = model::get_alpha( );
     log_double likelihood = 0.0;
     for(int k = 0; k < m_num_mc_iterations; k++)
     {
@@ -133,8 +99,10 @@ sindependent::prob(const snp_row &row1, const snp_row &row2, const arma::vec &ph
                 double n_ij0 = counts( 3 * i + j, 0 );
                 double n_ij1 = counts( 3 * i + j, 1 );
 
-                log_double fac1 = log_double::from_log( n_ij0 * log( p[ i ] * q[ j ] ) );
-                log_double fac2 = log_double::from_log( n_ij1 * log( 1.0 - p[ i ] * q[ j ] ) );
+                double risk = p[ i ] * q[ j ] + ( 1.0 - p[ i ] ) * q[ j ] + p[ i ] * ( 1.0 - q[ j ] );
+
+                log_double fac1 = log_double::from_log( n_ij1 * log( risk ) );
+                log_double fac2 = log_double::from_log( n_ij0 * log( 1.0 - risk ) );
                 factors *= fac1 * fac2;
             }
         }

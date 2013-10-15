@@ -25,7 +25,7 @@ public:
      * @param data Additional data required by all methods, such as
      *             covariates.
      */
-    bayesic_method(method_data_ptr data);
+    bayesic_method(method_data_ptr data, arma::vec alpha = arma::ones<arma::vec>( 2 ));
     virtual ~bayesic_method();
 
     /**
