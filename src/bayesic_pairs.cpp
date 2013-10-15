@@ -179,7 +179,7 @@ void output_within(std::ostream &output, const output_options &oo, const std::ma
                 int snp2 = indices[ j ];
                 if( oo.maf_vec[ snp2 ] >= oo.maf_threshold && (oo.maf_vec[ snp1 ] * oo.maf_vec[ snp2 ]) >= oo.combined_threshold )
                 {
-                    output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << std::endl;
+                    output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << "\n";
                 }
             }
         }
@@ -222,8 +222,7 @@ void output_between(std::ostream &output, const output_options &oo, std::map< st
                     int snp2 = indices2[ j ];
                     if( oo.maf_vec[ snp2 ] >= oo.maf_threshold && (oo.maf_vec[ snp1 ] * oo.maf_vec[ snp2 ]) >= oo.combined_threshold )
                     {
-                        output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << std::endl;
-                        printf( "%s %s\n", oo.loci[ snp1 ].c_str( ), oo.loci[ snp2 ].c_str( ) );
+                        output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << "\n";
                     }
                 }
             }
@@ -261,7 +260,7 @@ void output_between_restrict(std::ostream &output, const output_options &oo, std
                 int snp2 = indices2[ j ];
                 if( oo.maf_vec[ snp2 ] >= oo.maf_threshold && (oo.maf_vec[ snp1 ] * oo.maf_vec[ snp2 ]) >= oo.combined_threshold )
                 {
-                    output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << std::endl;
+                    output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << "\n";
                 }
             }
         }
@@ -288,7 +287,7 @@ void output_all(std::ostream &output, const output_options &oo)
         {
             if( oo.maf_vec[ j ] >= oo.maf_threshold && (oo.maf_vec[ i ] * oo.maf_vec[ j ]) >= oo.combined_threshold )
             {
-                output << oo.loci[ i ] << " " << oo.loci[ j ] << std::endl;
+                output << oo.loci[ i ] << " " << oo.loci[ j ] << "\n";
             }
         }
     }
@@ -318,6 +317,7 @@ main(int argc, char *argv[])
         exit( 1 );
     }
 
+    std::ios_base::sync_with_stdio( false );
     gz::ogzstream output_file( ( (std::string) options.get( "out" ) ).c_str( ) );
     std::ostream &output = options.is_set( "out" ) ? output_file : std::cout;
 
