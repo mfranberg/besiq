@@ -147,7 +147,8 @@ class GeneticExperiment:
     def create_strategies(self, method_handler):
         return { "genetic" : NoCovariateStrategy( method_handler ),
                  "covariate" : CovariateStrategy( method_handler ),
-                 "sufficient" : SufficientCovariateStrategy( method_handler ) }
+                 "sufficient" : SufficientCovariateStrategy( method_handler ),
+                 "mixed" : MixedStrategy( method_handler ) }
 
     ##
     # Runs the experiments defined by the given json array of
@@ -218,6 +219,43 @@ class NoCovariateStrategy(ExperimentStrategy):
                          experiment[ 'ylabel' ],
                          params,
                          plot_path )
+
+
+class MixedStrategy(ExperimentStrategy):
+    def __init__(self, method_handler):
+        self.method_handler = method_handler
+    
+    def calculate_power(self, params, experiment, plink_path, power_file):
+        all_model_params = list( )
+        for model_id, model in enumerate( experiment[ 'models' ] ):
+            params = updated_params( params, model )
+
+            all_model_params.append( ( params.num_pairs, model[ 'is_case' ], model[ 'params' ] ) )
+
+        plinkdata.generate_mixed_data( params, all_model_params, plink_path )
+        
+        self.method_handler.start_experiment( experiment[ 'name' ], 0 )
+        program.run_methods( params, plink_path, self.method_handler )
+        self.method_handler.reset_files( )
+
+        is_case_map = dict( )
+        with open( plink_path + ".case", "r" ) as case_file:
+            for line in case_file:
+                snp1, snp2, is_case = line.strip( ).split( )
+                is_case_map[ ( snp1, snp2 ) ] = is_case
+
+        method_rank = program.get_ranks( params, self.method_handler )
+        for method_name, snp_rank_data in method_rank.iteritems( ):
+            for snp1, snp2, rank in snp_rank_data:
+                is_case = is_case_map.get( ( snp1, snp2 ), -1 )
+                if is_case == -1:
+                    continue
+
+                line = "{0}\t{1}\t\"{2}\"\t{3}\t{4}\n".format( snp1, snp2, method_name, rank, is_case )
+                power_file.write( line )
+
+    def plot_power(self, params, experiment, power_path, plot_path):
+        plot.plot_roc( power_path, experiment[ 'title' ], plot_path )
 
 ##
 # Handles experiments that contains covariates
