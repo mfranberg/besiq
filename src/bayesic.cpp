@@ -88,7 +88,9 @@ main(int argc, char *argv[])
     parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
     
     OptionGroup group = OptionGroup( parser, "Options for bayes", "These options will change the behaviour of bayes and fine." );
-    group.add_option( "-n", "--num-interactions" ).type( "int" ).help( "The number of interactions to correct for, this is used in the model prior (default: all)." ).set_default( 1 );
+    group.add_option( "-n", "--num-interactions" ).type( "int" ).help( "The number of interactions to correct for, this is used in the model prior (default: all)." );
+    group.add_option( "-s", "--num-single" ).type( "int" ).help( "The number of snps to consider when correcting (default: proportional to square of the number of interactions)." );
+    group.add_option( "-t", "--single-prior" ).type( "float" ).help( "The probability that a single snp is associated (default: %default)." ).set_default( 0.0 );
     group.add_option( "-i", "--mc-iterations" ).type( "int" ).help( "The number of monte carlo iterations to use in the fine method (default: %default)." ).set_default( 4000000 );
     group.add_option( "-a", "--beta-prior-param1" ).type( "float" ).help( "First shape parameter of beta prior (default: %default)." ).set_default( 2.0 );
     group.add_option( "-b", "--beta-prior-param2" ).type( "float" ).help( "Second shape parameter of beta prior (default: %default)." ).set_default( 2.0 );
@@ -144,10 +146,16 @@ main(int argc, char *argv[])
     }
 
     /* Count the number of interactions to adjust for */
+    data->single_prior = (float) options.get( "single_prior" );
+    data->num_single = (unsigned int) options.get( "num_single" );
     data->num_interactions = (unsigned int) options.get( "num_interactions" );
     if( !options.is_set( "num_interactions" ) )
     {
         data->num_interactions = count_interactions( args[ 0 ].c_str( ), locus_names );
+    }
+    if( !options.is_set( "num_single" ) )
+    {
+        data->num_single = 0.5*(sqrt( 8*data->num_interactions + 1 ) + 1);
     }
 
     /* XXX: Implement proper log file. */

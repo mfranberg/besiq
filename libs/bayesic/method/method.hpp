@@ -34,6 +34,16 @@ struct method_data
     * The number of interactions to correct for.
     */
     unsigned int num_interactions;
+
+    /**
+     * The number of single snps.
+     */
+    unsigned int num_single;
+
+    /**
+     * The probability that any one snp is associated.
+     */
+    float single_prior;
 };
 
 /**
