@@ -55,3 +55,17 @@ def plot_cov_power(power_path, title, xlabel, ylabel, params, output_path):
 
     subprocess.call( cmd )
 
+##
+# Plots a roc curve showing how well interaction models
+# are separated from non-interaction models.
+#
+# @param roc_path Path to a file containg pairs of snps, their rank,
+#                 and whether they are an interaction or not.
+# @param title Title of the plot.
+# @param output_path The path to the output pdf.
+#
+def plot_roc(roc_path, title, output_path):
+    cmd = [ "Rscript", os.path.join( get_script_path( ), "plot_roc.r" ),
+            title, roc_path, output_path ]
+
+    subprocess.call( cmd )

@@ -11,7 +11,7 @@ class TPedFile:
     #
     def __init__(self, path):
         self.file = open( path, "w" )
-        self.snp_id = 0
+        self.snp_id = 1
 
     ##
     # Write a loci, the name of the loci will be snp followed

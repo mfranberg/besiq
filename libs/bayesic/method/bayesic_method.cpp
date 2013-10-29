@@ -5,12 +5,20 @@
 bayesic_method::bayesic_method(method_data_ptr data, arma::vec alpha)
 : method_type::method_type( data )
 {
-    double prior = 1.0 / ( 4.0 * data->num_interactions );
+    double int_prior = 1.0 / ( 4.0 * data->num_interactions );
+    double single_prior = 1.0 / ( 2.0 * data->num_single );
 
-    m_models.push_back( new saturated( prior, alpha ) );
-    m_models.push_back( new ld_assoc( prior, alpha, true ) );
-    m_models.push_back( new ld_assoc( prior, alpha, false ) );
-    m_models.push_back( new null( 1.0 - 3 * prior, alpha ) );
+    if( data->single_prior > 0.0 )
+    {
+        double p = data->single_prior;
+        int_prior = p*p;
+        single_prior = p*(1-p);
+    }
+
+    m_models.push_back( new saturated( int_prior, alpha ) );
+    m_models.push_back( new ld_assoc( single_prior, alpha, true ) );
+    m_models.push_back( new ld_assoc( single_prior, alpha, false ) );
+    m_models.push_back( new null( 1.0 - int_prior - 2*single_prior, alpha ) );
 }
 
 bayesic_method::~bayesic_method()

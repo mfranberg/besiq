@@ -25,6 +25,32 @@ def generate_data(params, model_params, ld, output_prefix):
     subprocess.call( cmd )
 
 ##
+# Generates data for a mix of models.
+#
+# @param parms General experiment parameters.
+# @param model_params A list of tuples containing: the number
+#                     of models to generate, whether it is an interaction,
+#                     the parameters of the model as in generate_data.
+# @param output_prefix Path prefix of the plink files to generate.
+#
+def generate_mixed_data(params, model_params, output_prefix):
+    model_file_path = output_prefix + ".models"
+    with open( model_file_path, "w" ) as model_file:
+        for num_tests, is_case, m_params in model_params:
+            param_str = " ".join( map( str, m_params ) )
+            model_file.write( "{0} {1} {2}\n".format( num_tests, is_case, param_str ) )
+    
+    script_path = "../tools/generate_ped/generate_mixed_ped.py"
+    cmd = [ "python", script_path,
+            "--maf", str( params.maf[ 0 ] ), str( params.maf[ 1 ] ),
+            "--ncases", str( params.sample_size[ 1 ] ),
+            "--ncontrols", str( params.sample_size[ 0 ] ),
+            "--model", model_file_path,
+            "--out", output_prefix ]
+
+    subprocess.call( cmd )
+
+##
 # Generates data for a model with covariates that
 # are sufficient for generating the disease.
 #

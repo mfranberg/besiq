@@ -1,4 +1,4 @@
-from math import sqrt
+from math import sqrt, log
 
 def compute_from_file(csv_file, column, threshold, num_tests, is_pvalue = True):
     probs = read_from_file( csv_file, column, threshold )
@@ -54,9 +54,27 @@ def compute_from_posterior(posterior, threshold):
 def compute_from_pvalues(pvalues, threshold, num_tests):
     significant = 0.0
     for i, p in enumerate( sorted( pvalues ) ):
-        if p > ( (i + 1.0 ) / num_tests) * threshold:
+        if p > min( ( (i + 1.0 ) / num_tests) * threshold, threshold ):
             break
         else:
             significant += 1
 
     return significant
+
+def get_ranks(csv_file, column, is_pvalue = True):
+    ranks = list( )
+    for line in csv_file:
+        column_list = line.strip( ).split( )
+
+        value = 0.0
+        try:
+            value =  float( column_list[ column ] )
+        except:
+            continue
+
+        if value >= 0.0 and value <= 1.0:
+            if is_pvalue:
+                value = -value
+            ranks.append( ( column_list[ 0 ], column_list[ 1 ], value ) )
+
+    return ranks

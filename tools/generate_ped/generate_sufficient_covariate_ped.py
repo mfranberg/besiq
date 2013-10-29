@@ -212,7 +212,7 @@ def write_genotypes(args, ped_file, map_file, pair_file, cov_file):
         if covariates:
             cov_file.write( covariates )
     
-    pair_file.write( 0, 1 )
+    pair_file.write( )
     map_file.write( )
     map_file.write( )
 
