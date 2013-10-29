@@ -1,4 +1,5 @@
 #include <iostream>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -93,6 +94,31 @@ create_loci_index(const std::vector<std::string> &loci)
     }
 
     return index;
+}
+
+/**
+ * Parses a file in which each lines contains a snp name.
+ *
+ * @param path Path of the file.
+ *
+ * @return The index of the parsed snps.
+ */
+std::set<size_t>
+parse_set(const std::string &path, const std::vector<std::string> &loci)
+{
+    std::ifstream set_file( path.c_str( ) );
+    std::map< std::string, size_t > index = create_loci_index( loci );
+    std::set< size_t > snp_set;
+    while( set_file.good( ) )
+    {
+        std::string snp_name;
+        if( ( set_file >> snp_name ) && index.count( snp_name ) > 0 )
+        {
+            snp_set.insert( index[ snp_name ] );
+        }
+    }
+
+    return snp_set;
 }
 
 /**
@@ -269,6 +295,38 @@ void output_between_restrict(std::ostream &output, const output_options &oo, std
 }
 
 /**
+ * Outputs all pairs where one of the snps are in the given set.
+ * 
+ * @param output Output stream.
+ * @param oo Output options.
+ */
+void output_set(std::ostream &output, const output_options &oo, const std::set<size_t> &snp_set)
+{
+    std::set<size_t>::const_iterator it;
+    for( it = snp_set.begin( ); it != snp_set.end( ); ++it )
+    {
+        int snp1 = *it;
+        if( oo.maf_vec[ snp1 ] < oo.maf_threshold )
+        {
+            continue;
+        }
+
+        for(int snp2 = 0; snp2 < oo.loci.size( ); snp2++)
+        {
+            if( snp_set.count( snp2 ) > 0 )
+            {
+                continue;
+            }
+
+            if( oo.maf_vec[ snp2 ] >= oo.maf_threshold && (oo.maf_vec[ snp1 ] * oo.maf_vec[ snp2 ]) >= oo.combined_threshold )
+            {
+                output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << "\n";
+            }
+        }
+    }
+}
+
+/**
  * Outputs all pairs of snps.
  *
  * @param output Output stream.
@@ -306,6 +364,7 @@ main(int argc, char *argv[])
     parser.add_option( "-w", "--within" ).help( "Only output pairs of snps within the genes given by this file." );
     parser.add_option( "-b", "--between" ).help( "Only output pairs of snps between pairs of genes as specified by this file." );
     parser.add_option( "-r", "--restrict" ).help( "Used with --between to only check the pair of genes in this list." );
+    parser.add_option( "-s", "--set" ).help( "Output pairs in this set with all others, but ignore pairs when both are in this set." );
     parser.add_option( "-o", "--out" ).help( "Name of the output file, will be gzipped." ).set_default( "" );
 
     Values options = parser.parse_args( argc, argv );
@@ -332,6 +391,11 @@ main(int argc, char *argv[])
     {
         std::map< std::string, std::vector<size_t> > gene_locus = parse_gene_locus( options[ "within" ].c_str( ), oo.loci );
         output_within( output, oo, gene_locus );
+    }
+    else if( options.is_set( "set" ) )
+    {
+        std::set<size_t> snp_set = parse_set( options[ "set" ].c_str( ), oo.loci );
+        output_set( output, oo, snp_set );
     }
     else if( options.is_set( "between" ) )
     {
