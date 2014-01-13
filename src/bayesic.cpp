@@ -18,6 +18,8 @@
 #include <bayesic/method/logistic_method.hpp>
 #include <bayesic/method/logistic_factor_method.hpp>
 #include <bayesic/method/loglinear_method.hpp>
+#include <bayesic/method/caseonly_method.hpp>
+#include <bayesic/method/stepwise_method.hpp>
 #include <bayesic/method/method.hpp>
 
 using namespace arma;
@@ -82,8 +84,8 @@ main(int argc, char *argv[])
                                          .epilog( EPILOG );
     
     
-    char const* const choices[] = { "bayes", "bayes-fine", "logistic", "logistic-factor", "loglinear" };
-    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 5 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'bayes-fine', 'logistic', 'logistic-factor' or 'loglinear'." );
+    char const* const choices[] = { "bayes", "bayes-fine", "logistic", "logistic-factor", "loglinear", "caseonly", "stepwise" };
+    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 7 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'bayes-fine', 'logistic', 'logistic-factor', 'loglinear', 'caseonly' or 'stepwise'." );
     parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
     parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
     
@@ -187,6 +189,16 @@ main(int argc, char *argv[])
     {
         loglinear_method loglinear( data );
         run_method( loglinear, genotype_matrix, locus_names, pairs );
+    }
+    else if( options[ "method" ] == "caseonly" )
+    {
+        caseonly_method caseonly( data );
+        run_method( caseonly, genotype_matrix, locus_names, pairs );
+    }
+    else if( options[ "method" ] == "stepwise" )
+    {
+        stepwise_method stepwise( data );
+        run_method( stepwise, genotype_matrix, locus_names, pairs );
     }
 
     return 0;
