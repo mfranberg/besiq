@@ -22,7 +22,7 @@ stepwise_method::num_ok_samples(const snp_row &row1, const snp_row &row2, const 
 void
 stepwise_method::init(std::ostream &output)
 {
-    output << "P\tP_null\tP_snp1\tP_snp2";
+    output << "P_null\tP_snp1\tP_snp2";
 }
 
 void
@@ -39,6 +39,7 @@ stepwise_method::run(const snp_row &row1, const snp_row &row2, std::ostream &out
     for(int i = 1; i < m_models.size( ); i++)
     {
         double LR = -2.0*(likelihood[ i ].log_value( ) - likelihood[ 0 ].log_value( ));
-        output << 1.0 - chi_square_cdf( LR, m_models[ i ]->df( ) );
+        const char *end = (i < m_models.size( ) - 1) ? "\t" : "";
+        output << 1.0 - chi_square_cdf( LR, m_models[ i ]->df( ) ) << end;
     }
 }
