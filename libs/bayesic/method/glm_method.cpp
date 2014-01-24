@@ -1,8 +1,9 @@
-#include <bayesic/method/logistic_method.hpp>
+#include <bayesic/method/glm_method.hpp>
 
-logistic_method::logistic_method(method_data_ptr data)
+glm_method::glm_method(method_data_ptr data, const glm_model &model)
 : method_type::method_type( data ),
-  m_design_matrix( data->phenotype.n_elem, data->covariate_matrix.n_cols + 4 )
+  m_design_matrix( data->phenotype.n_elem, data->covariate_matrix.n_cols + 4 ),
+  m_model( model )
 {
     /*
      * First three columns are snp1, snp2, snp1 x snp2 and intercept.
@@ -15,12 +16,12 @@ logistic_method::logistic_method(method_data_ptr data)
 }
 
 void
-logistic_method::init(std::ostream &output)
+glm_method::init(std::ostream &output)
 {
     output << "Beta" << "\t" << "SE" << "\t" << "P";
 }
 
-void logistic_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
+void glm_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
 {
     arma::uvec missing = get_data( )->missing;
 

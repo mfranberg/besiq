@@ -1,11 +1,12 @@
-#include <bayesic/method/logistic_factor_method.hpp>
+#include <bayesic/method/glm_factor_method.hpp>
 
 #include <dcdflib/libdcdf.hpp>
 
-logistic_factor_method::logistic_factor_method(method_data_ptr data)
+glm_factor_method::glm_factor_method(method_data_ptr data, const glm_model &model)
 : method_type::method_type( data ),
   m_null_design_matrix( data->phenotype.n_elem, data->covariate_matrix.n_cols + 5 ),
-  m_alt_design_matrix( data->phenotype.n_elem, data->covariate_matrix.n_cols + 9 )
+  m_alt_design_matrix( data->phenotype.n_elem, data->covariate_matrix.n_cols + 9 ),
+  m_model( model )
 {
     /*
      * Null matrix.
@@ -27,13 +28,13 @@ logistic_factor_method::logistic_factor_method(method_data_ptr data)
 }
 
 void
-logistic_factor_method::init(std::ostream &output)
+glm_factor_method::init(std::ostream &output)
 {
     output << "LR" << "\t" << "P";
 }
 
 void
-logistic_factor_method::init_alt(const snp_row &row1, const snp_row &row2, arma::mat &design_matrix, arma::uvec &missing)
+glm_factor_method::init_alt(const snp_row &row1, const snp_row &row2, arma::mat &design_matrix, arma::uvec &missing)
 {
     for(int i = 0; i < row1.size( ); i++)
     {
@@ -69,7 +70,7 @@ logistic_factor_method::init_alt(const snp_row &row1, const snp_row &row2, arma:
 }
 
 void
-logistic_factor_method::init_null(const snp_row &row1, const snp_row &row2, arma::mat &design_matrix, arma::uvec &missing)
+glm_factor_method::init_null(const snp_row &row1, const snp_row &row2, arma::mat &design_matrix, arma::uvec &missing)
 {
     for(int i = 0; i < row1.size( ); i++)
     {
@@ -96,7 +97,7 @@ logistic_factor_method::init_null(const snp_row &row1, const snp_row &row2, arma
     }
 }
 
-void logistic_factor_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
+void glm_factor_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
 {
     arma::uvec missing = get_data( )->missing;
 

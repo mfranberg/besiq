@@ -8,6 +8,7 @@
 #include <bayesic/covariates.hpp>
 #include <glm/irls.hpp>
 #include <glm/models/binomial.hpp>
+#include <glm/models/logcomplement.hpp>
 #include <cpp-argparse/OptionParser.h>
 
 #include <plink/plink_file.hpp>
@@ -15,8 +16,8 @@
 #include <bayesic/prior.hpp>
 #include <bayesic/method/bayesic_method.hpp>
 #include <bayesic/method/bayesic_fine_method.hpp>
-#include <bayesic/method/logistic_method.hpp>
-#include <bayesic/method/logistic_factor_method.hpp>
+#include <bayesic/method/glm_method.hpp>
+#include <bayesic/method/glm_factor_method.hpp>
 #include <bayesic/method/loglinear_method.hpp>
 #include <bayesic/method/caseonly_method.hpp>
 #include <bayesic/method/stepwise_method.hpp>
@@ -84,8 +85,8 @@ main(int argc, char *argv[])
                                          .epilog( EPILOG );
     
     
-    char const* const choices[] = { "bayes", "bayes-fine", "logistic", "logistic-factor", "loglinear", "caseonly", "stepwise" };
-    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 7 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'bayes-fine', 'logistic', 'logistic-factor', 'loglinear', 'caseonly' or 'stepwise'." );
+    char const* const choices[] = { "bayes", "bayes-fine", "logistic", "logistic-factor", "logcomplement-factor", "loglinear", "caseonly", "stepwise" };
+    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 8 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'bayes-fine', 'logistic', 'logistic-factor', 'loglinear', 'caseonly' or 'stepwise'." );
     parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
     parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
     
@@ -177,12 +178,20 @@ main(int argc, char *argv[])
     }
     else if( options[ "method" ] == "logistic" )
     {
-        logistic_method logistic( data );
+        binomial logit;
+        glm_method logistic( data, logit );
         run_method( logistic, genotype_matrix, locus_names, pairs );
     }
     else if( options[ "method" ] == "logistic-factor" )
     {
-        logistic_factor_method logistic( data );
+        binomial logit;
+        glm_factor_method logistic( data, logit );
+        run_method( logistic, genotype_matrix, locus_names, pairs );
+    }
+    else if( options[ "method" ] == "logcomplement-factor" )
+    {
+        logcomplement logcomp;
+        glm_factor_method logistic( data, logcomp );
         run_method( logistic, genotype_matrix, locus_names, pairs );
     }
     else if( options[ "method" ] == "loglinear" )

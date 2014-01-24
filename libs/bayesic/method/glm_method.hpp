@@ -1,21 +1,21 @@
-#ifndef __LOGISTIC_METHOD_H__
-#define __LOGISTIC_METHOD_H__
+#ifndef __GLM_METHOD_H__
+#define __GLM_METHOD_H__
 
 #include <string>
 #include <vector>
 
 #include <armadillo>
 
-#include <glm/models/binomial.hpp>
+#include <glm/models/glm_model.hpp>
 #include <glm/irls.hpp>
 #include <bayesic/method/method.hpp>
 #include <bayesic/stats/log_scale.hpp>
 
 /**
  * This class is responsible for initializing and repeatedly
- * executing the logistic regression on pairs of snps.
+ * executing the glm regression on pairs of snps.
  */
-class logistic_method
+class glm_method
 : public method_type
 {
 public:
@@ -24,7 +24,7 @@ public:
      *
      * @param data Additional data required by all methods.
      */
-    logistic_method(method_data_ptr data);
+    glm_method(method_data_ptr data, const glm_model &model);
     
     /**
      * @see method_type::init.
@@ -46,7 +46,7 @@ private:
     /**
      * The glm model used, in this case a binomial model with logit link.
      */
-    binomial m_model;
+    const glm_model &m_model;
 };
 
-#endif /* End of __LOGISTIC_METHOD_H__ */
+#endif /* End of __GLM_METHOD_H__ */

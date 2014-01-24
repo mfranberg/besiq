@@ -6,18 +6,18 @@
 
 #include <armadillo>
 
-#include <glm/models/binomial.hpp>
+#include <glm/models/glm_model.hpp>
 #include <glm/irls.hpp>
 #include <bayesic/method/method.hpp>
 #include <bayesic/stats/log_scale.hpp>
 
 /**
  * This class is responsible for initializing and repeatedly
- * executing the logistic regression on pairs of snps, this
+ * executing the glm regression on pairs of snps, this
  * versions treats the SNPs as factor variables instead of
  * ordinals.
  */
-class logistic_factor_method
+class glm_factor_method
 : public method_type
 {
 public:
@@ -26,7 +26,7 @@ public:
      *
      * @param data Additional data required by all methods.
      */
-    logistic_factor_method(method_data_ptr data);
+    glm_factor_method(method_data_ptr data, const glm_model &model);
     
     /**
      * @see method_type::init.
@@ -59,7 +59,7 @@ private:
     /**
      * The glm model used, in this case a binomial model with logit link.
      */
-    binomial m_model;
+    const glm_model &m_model;
 
     /**
      * Updates the design matrix for the alternative (saturated) model.
