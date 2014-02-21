@@ -10,6 +10,9 @@ def compute_from_file(csv_file, column, threshold, num_tests, is_pvalue = True):
     else:
         num_significant = compute_from_posterior( probs, threshold )
 
+    return get_confidence_interval( total, num_significant )
+
+def get_confidence_interval(total, num_significant):
     if total != 0:
         # Approximate 95% Wilson score interval
         power = ( num_significant + 2.0 ) / ( total + 4.0 )
@@ -22,7 +25,7 @@ def compute_from_file(csv_file, column, threshold, num_tests, is_pvalue = True):
     else:
         return ( 0.0, 0.0, 0.0 )
 
-def read_from_file(csv_file, column, threshold):
+def read_from_file(csv_file, column):
     value_list = list( )
     for line in csv_file:
         column_list = line.strip( ).split( )
@@ -35,6 +38,35 @@ def read_from_file(csv_file, column, threshold):
 
         if value >= 0.0 and value <= 1.0:
             value_list.append( value )
+
+    return value_list
+
+def read_from_file_stepwise(csv_file, column_indices, pairs = []):
+    value_list = list( )
+    for i in range( len( column_indices ) ):
+        value_list.append( [ ] )
+
+    for line in csv_file:
+        column_list = line.strip( ).split( )
+
+        no_exception = True
+        line_values = [ ]
+        for column in column_indices:
+            value = 0.0
+            try:
+                value =  float( column_list[ column ] )
+            except:
+                no_exception = False
+                break
+
+            if value >= 0.0 and value <= 1.0:
+                line_values.append( value )
+        
+        if no_exception:
+            for i, value in enumerate( line_values ):
+                value_list[ i ].append( value )
+
+            pairs.append( ( column_list[ 0 ], column_list[ 1 ] ) )
 
     return value_list
 

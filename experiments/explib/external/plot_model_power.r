@@ -17,7 +17,7 @@ names( model_power ) = c( "method", "effect", "power", "lower", "upper" )
 
 output_file = argv[ 5 ]
 
-pdf( output_file )
+pdf( output_file, width = 6.7, height = 6.7 / 1.618 )
 
 dodge_width = 0.15 * ( max( model_power$effect ) - min( model_power$effect ) )
 error_width = dodge_width / 3.0

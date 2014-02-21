@@ -1,0 +1,20 @@
+{
+    "experiments" :
+    [
+        {
+            "type" : "genetic",
+            "name" : "Anril",
+            "title" : "Shows the power for finding anril interaction.",
+            "xlabel" : "Effect",
+            "ylabel" : "Power",
+            "models" : [
+                {
+                    "params" : [ 0.5555556, 0.4697721, 0.4409091,
+                                 0.5955882, 0.4785942, 0.3926129,
+                                 0.4472934, 0.4879090, 0.4759207 ],
+                    "threshold" : 0.05
+                }
+            ] 
+        }
+    ] 
+}

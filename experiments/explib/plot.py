@@ -35,6 +35,8 @@ def plot_power(power_path, title, xlabel, ylabel, params, output_path):
     cmd = [ "Rscript", os.path.join( get_script_path( ), "plot_model_power.r" ),
             xlabel, ylabel, full_title, power_path, output_path ]
 
+    print " ".join( cmd )
+
     subprocess.call( cmd )
 
 ##

@@ -1,0 +1,38 @@
+{
+    "experiments" :
+    [
+        {
+            "type" : "genetic",
+            "name" : "Null",
+            "title" : "FPR under single association.",
+            "xlabel" : "Heritability",
+            "ylabel" : "False positive rate",
+            "models" : [
+                {
+                    "params" : [ 0.1, 0.15, 0.20,
+                                 0.1, 0.15, 0.20,
+                                 0.1, 0.15, 0.20 ],
+                    "threshold" : 0.05
+                },
+                {
+                    "params" : [ 0.1, 0.20, 0.30,
+                                 0.1, 0.20, 0.30,
+                                 0.1, 0.20, 0.30 ],
+                    "threshold" : 0.10
+                },
+                {
+                    "params" : [ 0.1, 0.25, 0.40,
+                                 0.1, 0.25, 0.40,
+                                 0.1, 0.25, 0.40 ],
+                    "threshold" : 0.15
+                },
+                {
+                    "params" : [ 0.1, 0.30, 0.50,
+                                 0.1, 0.30, 0.50,
+                                 0.1, 0.30, 0.50 ],
+                    "threshold" : 0.20
+                }
+            ] 
+        }
+    ] 
+}
