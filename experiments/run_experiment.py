@@ -3,6 +3,7 @@ import json
 import os
 import tempfile
 import subprocess
+from collections import defaultdict
 
 from explib import program, plot, plinkdata, util, expfile
 
@@ -145,7 +146,8 @@ class GeneticExperiment:
         return { "genetic" : NoCovariateStrategy( method_handler ),
                  "covariate" : CovariateStrategy( method_handler ),
                  "sufficient" : SufficientCovariateStrategy( method_handler ),
-                 "mixed" : MixedStrategy( method_handler ) }
+                 "mixed" : MixedStrategy( method_handler ),
+                 "all" : AllStrategy( method_handler ) }
 
     ##
     # Runs the experiments defined by the given json array of
@@ -217,6 +219,34 @@ class NoCovariateStrategy(ExperimentStrategy):
                          params,
                          plot_path )
 
+class AllStrategy(ExperimentStrategy):
+    def __init__(self, method_handler):
+        self.method_handler = method_handler
+    
+    def calculate_power(self, params, experiment, plink_path, power_file):
+        all_model_params = list( )
+        for h in experiment[ 'heritability' ]:
+            plinkdata.generate_all_data( params, h, experiment[ 'base_risk' ], plink_path )
+            
+            self.method_handler.start_experiment( experiment[ 'name' ], 0 )
+            program.run_methods( params, plink_path, self.method_handler )
+            self.method_handler.reset_files( )
+
+            model_to_index = defaultdict( set )
+            with open( plink_path + ".model", "r" ) as model_file:
+                for line in model_file:
+                    snp1, snp2, model_index = line.strip( ).split( )
+                    model_to_index[ model_index ].add( ( snp1, snp2 ) )
+            
+            for model_index, model_pairs in model_to_index.iteritems( ):
+                method_power = program.calculate_power( params, self.method_handler, model_pairs )
+                for method_name, power_data in method_power.iteritems( ):
+                    power, lower, upper = power_data
+                    line = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n".format( method_name, model_index, h, power, upper, lower )
+                    power_file.write( line )
+            
+    def plot_power(self, params, experiment, power_path, plot_path):
+        plot.plot_all( power_path, experiment[ 'title' ], "Model", "Power", params, plot_path )
 
 class MixedStrategy(ExperimentStrategy):
     def __init__(self, method_handler):

@@ -1,7 +1,7 @@
 from math import sqrt, log
 
-def compute_from_file(csv_file, column, threshold, num_tests, is_pvalue = True):
-    probs = read_from_file( csv_file, column, threshold )
+def compute_from_file(csv_file, column, threshold, num_tests, is_pvalue = True, include = None):
+    probs = read_from_file( csv_file, column, threshold, include )
     
     total = len( probs )
     num_significant = 0.0
@@ -25,10 +25,14 @@ def get_confidence_interval(total, num_significant):
     else:
         return ( 0.0, 0.0, 0.0 )
 
-def read_from_file(csv_file, column):
+def read_from_file(csv_file, column, include = None):
+    csv_file.seek( 0 )
     value_list = list( )
     for line in csv_file:
         column_list = line.strip( ).split( )
+
+        if include and not ( column_list[ 0 ], column_list[ 1 ] ) in include:
+            continue
 
         value = 0.0
         try:
@@ -41,13 +45,17 @@ def read_from_file(csv_file, column):
 
     return value_list
 
-def read_from_file_stepwise(csv_file, column_indices, pairs = []):
+def read_from_file_stepwise(csv_file, column_indices, pairs = [], include = None):
+    csv_file.seek( 0 )
     value_list = list( )
     for i in range( len( column_indices ) ):
         value_list.append( [ ] )
 
     for line in csv_file:
         column_list = line.strip( ).split( )
+       
+        if include and not ( column_list[ 0 ], column_list[ 1 ] ) in include:
+            continue
 
         no_exception = True
         line_values = [ ]

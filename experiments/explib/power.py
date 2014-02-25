@@ -1,8 +1,8 @@
 from math import sqrt, log
 from . import fdr_power
 
-def compute_from_file(csv_file, column, threshold, num_tests, is_pvalue = True):
-    probs = fdr_power.read_from_file( csv_file, column )
+def compute_from_file(csv_file, column, threshold, num_tests, is_pvalue = True, include = None):
+    probs = fdr_power.read_from_file( csv_file, column, include )
     
     total = len( probs )
     num_significant = 0.0
@@ -13,8 +13,8 @@ def compute_from_file(csv_file, column, threshold, num_tests, is_pvalue = True):
 
     return fdr_power.get_confidence_interval( total, num_significant )
 
-def compute_from_file_stepwise(csv_file, column, threshold, num_tests):
-    probs = fdr_power.read_from_file_stepwise( csv_file, column )
+def compute_from_file_stepwise(csv_file, column, threshold, num_tests, include = None):
+    probs = fdr_power.read_from_file_stepwise( csv_file, column, include = include )
 
     total = len( probs[ 0 ] )
     num_significant = compute_from_pvalues_stepwise( probs, threshold, num_tests )

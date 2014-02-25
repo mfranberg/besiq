@@ -1,0 +1,14 @@
+{
+    "experiments" :
+    [
+        {
+            "type" : "all",
+            "name" : "all",
+            "title" : "Power under all models.",
+            "xlabel" : "Heritability",
+            "ylabel" : "Power",
+            "heritability" : [ 0.01, 0.02, 0.03 ],
+            "base_risk" : 0.5
+        }
+    ] 
+}

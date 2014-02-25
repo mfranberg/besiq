@@ -39,8 +39,8 @@ class BayesicMethodFirstStep:
         print " ".join( cmd )
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests, threshold = 0.05):
-        return fdr_power.compute_from_file( output_path, 2, threshold, num_tests, False )
+    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
+        return fdr_power.compute_from_file( output_path, 2, threshold, num_tests, False, include )
 
     def get_ranks(self, output_path):
         return fdr_power.get_ranks( output_path, 2, False )
@@ -104,8 +104,8 @@ class BayesicMethod:
         print " ".join( cmd )
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests, threshold = 0.05):
-        return fdr_power.compute_from_file( output_path, 2, threshold, num_tests, False )
+    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
+        return fdr_power.compute_from_file( output_path, 2, threshold, num_tests, False, include )
 
     def get_ranks(self, output_path):
         return fdr_power.get_ranks( output_path, 2, False )
@@ -132,8 +132,8 @@ class LogLinearMethod:
         print " ".join( cmd )
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests, threshold = 0.05):
-        return fdr_power.compute_from_file( output_path, 2, threshold, num_tests, True )
+    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
+        return fdr_power.compute_from_file( output_path, 2, threshold, num_tests, True, include )
     
     def get_ranks(self, output_path):
         return fdr_power.get_ranks( output_path, 2, True )
@@ -178,8 +178,8 @@ class ClosedMethod:
         print " ".join( cmd )
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests, threshold = 0.05):
-        return fdr_power.compute_from_file_stepwise( output_path, [2,3,4,9], threshold, num_tests )
+    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
+        return fdr_power.compute_from_file_stepwise( output_path, [2,3,4,9], threshold, num_tests, include )
     
     def get_ranks(self, output_path):
         return fdr_power.get_ranks_stepwise( output_path, [2,3,4,9] )
@@ -204,8 +204,8 @@ class LogisticMethod:
         print " ".join( cmd )
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests, threshold = 0.05):
-        return fdr_power.compute_from_file( output_path, 4, threshold, num_tests, True )
+    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
+        return fdr_power.compute_from_file( output_path, 4, threshold, num_tests, True, include )
     
     def get_ranks(self, output_path):
         return fdr_power.get_ranks( output_path, 4, True )
@@ -231,8 +231,8 @@ class LogisticFactorMethod:
         print " ".join( cmd )
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests, threshold = 0.05):
-        return fdr_power.compute_from_file( output_path, 3, threshold, num_tests, True )
+    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
+        return fdr_power.compute_from_file( output_path, 3, threshold, num_tests, True, include )
     
     def get_ranks(self, output_path):
         return fdr_power.get_ranks( output_path, 3, True )
@@ -258,8 +258,8 @@ class CaseOnlyMethod:
         print " ".join( cmd )
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests, threshold = 0.05):
-        return fdr_power.compute_from_file( output_path, 3, threshold, num_tests, True )
+    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
+        return fdr_power.compute_from_file( output_path, 3, threshold, num_tests, True, include )
     
     def get_ranks(self, output_path):
         return fdr_power.get_ranks( output_path, 3, True )
@@ -316,7 +316,7 @@ class StepwiseRegression:
             output_file.write( "\t".join( column ) + "\n" )
 
 
-    def compute_power(self, output_path, num_tests, threshold = 0.05):
+    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
         return fdr_power.compute_from_file( output_path, 3, threshold, max( self.num_significant, 1 ), True )
     
     def get_ranks(self, output_path):
@@ -354,15 +354,16 @@ def run_methods(params, plink_path, method_handler, include_covariates = False):
 #
 # @param param General experiment parameters.
 # @param method_handler Object that handles method output.
+# @param include Only include the given pairs in the power calculation.
 #
 # @return A dict containing power estimates for each method.
 #
-def calculate_power(params, method_handler):
+def calculate_power(params, method_handler, include = None):
     method_power = dict( )
     method_list = get_methods( )
     for method in method_list:
         method_output_file = method_handler.get_output_file( method.name )
-        power, lower, upper = method.compute_power( method_output_file, params.num_tests, params.threshold )
+        power, lower, upper = method.compute_power( method_output_file, params.num_tests, params.threshold, include )
 
         method_power[ method.name ] = ( power, lower, upper )
 

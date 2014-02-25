@@ -71,3 +71,23 @@ def plot_roc(roc_path, title, output_path):
             title, roc_path, output_path ]
 
     subprocess.call( cmd )
+
+##
+# Plots the power of all interaction models.
+#
+# @param power_path Path to the file containing power estimates.
+# @param title Title of the plot.
+# @param xlabel Label on the x-axis.
+# @param ylabel Label on the y-axis.
+# @param params General experiment parameters.
+# @param output_path Output path of plot.
+#
+def plot_all(power_path, title, xlabel, ylabel, params, output_path):
+    full_title = create_title( title, params )
+
+    cmd = [ "Rscript", os.path.join( get_script_path( ), "plot_all.r" ),
+            xlabel, ylabel, full_title, power_path, output_path ]
+
+    print " ".join( cmd )
+
+    subprocess.call( cmd )

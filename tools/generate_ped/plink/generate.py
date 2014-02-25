@@ -136,9 +136,10 @@ def generate_genotypes(joint_prob, num_samples):
 # @param penetrance The model penetrance.
 # @param is_case Determines whether this is an interaction or not.
 # @param fixed_params The simulation parameters.
+# @param model_index Index of the model.
 # @param output_file The output files.
 #
-def write_genotypes(num_pairs, penetrance, is_case, fixed_params, output_files):
+def write_genotypes(num_pairs, penetrance, is_case, fixed_params, model_index, output_files):
     sick_prob, healthy_prob = joint_snp( penetrance, fixed_params.maf, fixed_params.ld )
 
     for i in range( num_pairs ):
@@ -149,6 +150,7 @@ def write_genotypes(num_pairs, penetrance, is_case, fixed_params, output_files):
         output_files.tped_file.write( snp2_sick + snp2_healthy )
         output_files.pair_file.write( )
         output_files.case_file.write( is_case )
+        output_files.model_file.write( model_index )
 
 ##
 # Writes the indivduals to the given .tfam file, assuming that
@@ -173,9 +175,11 @@ def write_individuals(ncases, ncontrols, tfam_file):
 def write_data(fixed_params, models, output_prefix):
     path, ext = os.path.splitext( output_prefix )
     output_files = OutputFiles( path )
-   
+  
+    model_index = 1
     for num_pairs, params, is_case in models:
-        write_genotypes( num_pairs, params, is_case, fixed_params, output_files )
+        write_genotypes( num_pairs, params, is_case, fixed_params, model_index, output_files )
+        model_index += 1
     
     write_individuals( fixed_params.ncases, fixed_params.ncontrols, output_files.tfam_file )
     output_files.close( )
