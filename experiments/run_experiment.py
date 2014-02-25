@@ -59,9 +59,6 @@ def updated_params(params, json_object):
 # @return The heritability.
 #
 def heritability(penetrance, maf):
-    maf1 = maf[ 0 ]
-    maf2 = maf[ 1 ]
-
     p = [ ( 1 - maf[ 0 ] )**2, 2 * maf[ 0 ] * ( 1 - maf[ 0 ] ), ( maf[ 0 ] )**2 ]
     q = [ ( 1 - maf[ 1 ] )**2, 2 * maf[ 1 ] * ( 1 - maf[ 1 ] ), ( maf[ 1 ] )**2 ]
 
@@ -69,7 +66,7 @@ def heritability(penetrance, maf):
                    p[ 1 ] * q[ 0 ], p[ 1 ] * q[ 1 ], p[ 1 ] * q[ 2 ],
                    p[ 2 ] * q[ 0 ], p[ 2 ] * q[ 1 ], p[ 2 ] * q[ 2 ] ]
 
-    pop_p = sum( p * m for p, m in zip( penetrance, maf ) )
+    pop_p = sum( p * m for p, m in zip( penetrance, joint_maf ) )
 
     h = 0.0
     for i in range( 3 ):
