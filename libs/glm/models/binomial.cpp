@@ -19,6 +19,20 @@ binomial::mu(const arma::vec &eta) const
     return 1.0 / ( 1.0 + exp( -eta ) );
 }
 
+bool
+binomial::valid_mu(const arma::vec &mu) const
+{
+    for(int i = 0; i < mu.n_elem; i++)
+    {
+        if( mu[ i ] < 0.0 || mu[ i ] > 1.0 )
+        {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
 vec
 binomial::mu_eta(const arma::vec &mu) const
 {

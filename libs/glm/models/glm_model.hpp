@@ -28,6 +28,17 @@ class glm_model
          * @return The mean value parameter.
          */
         virtual arma::vec mu(const arma::vec &eta) const = 0;
+    
+        /**
+        * Checks that mu is in the allowed range. Should return false
+        * if this is not the case, the irls algorithm will terminate
+        * in this case.
+        *
+        * @param mu The mean value parameter.
+        *
+        * @return True if mu is in range, false otherwise.
+        */
+        virtual bool valid_mu(const arma::vec &mu) const = 0;
         
         /**
          * The derivative of mu with respect to eta. It is often good to

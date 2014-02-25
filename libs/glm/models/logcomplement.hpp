@@ -20,6 +20,11 @@ public:
     virtual arma::vec mu(const arma::vec &eta) const;
 
     /**
+     * @see glm_model.valid_mu.
+     */
+    virtual bool valid_mu(const arma::vec &mu) const;
+
+    /**
      * @see glm_model.mu_eta.
      */
     virtual arma::vec mu_eta(const arma::vec &mu) const;

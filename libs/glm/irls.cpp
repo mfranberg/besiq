@@ -74,6 +74,7 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, ir
     int num_iter = 0;
     double old_logl = -DBL_MAX;
     double logl = model.likelihood( mu, y, missing );
+    bool invalid_mu = false;
     while( num_iter < IRLS_MAX_ITERS && ! ( fabs( logl - old_logl ) < IRLS_TOLERANCE ) )
     {
         w = compute_w( model.var( mu ), mu_eta );
@@ -85,13 +86,19 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, ir
         mu = model.mu( eta );
         mu_eta = model.mu_eta( mu );
 
+        if( !model.valid_mu( mu ) )
+        {
+            invalid_mu = true;
+            break;
+        }
+
         old_logl = logl;
         logl = model.likelihood( mu, y, missing );
 
         num_iter++;
     }
 
-    if( num_iter <= IRLS_MAX_ITERS )
+    if( num_iter < IRLS_MAX_ITERS && !invalid_mu )
     {
         mat C( b.n_elem, b.n_elem );
         bool inverted = inv( C, X.t( ) *  diagmat( w ) * X );
