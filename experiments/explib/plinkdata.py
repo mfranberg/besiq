@@ -16,6 +16,9 @@ def generate_data(params, model_params, ld, output_prefix):
             "--ncontrols", str( params.sample_size[ 0 ] ),
             "--npairs", str( params.num_pairs ),
             "--out", output_prefix ]
+
+    if params.sample_maf:
+        cmd.append( "--sample-maf" )
     
     cmd.append( "--model" )
     cmd.extend( list( map( str, model_params ) ) )

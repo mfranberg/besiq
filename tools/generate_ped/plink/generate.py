@@ -9,11 +9,21 @@ from .output import OutputFiles
 # The parameters that does not changed between models.
 # 
 class FixedParams:
-    def __init__(self, maf, ld, ncases, ncontrols):
+    def __init__(self, maf, ld, ncases, ncontrols, sample_maf = False):
         self.maf = maf
         self.ld = ld
         self.ncases = ncases
         self.ncontrols = ncontrols
+        self.sample_maf = sample_maf
+
+    def get_maf(self):
+        if not self.sample_maf:
+            return self.maf
+        else:
+            start = self.maf[ 0 ]
+            end = self.maf[ 1 ] - start
+
+            return start + end * np.random.random( 2 )
 
 ##
 # Converts the given value to a floating point value
@@ -140,9 +150,10 @@ def generate_genotypes(joint_prob, num_samples):
 # @param output_file The output files.
 #
 def write_genotypes(num_pairs, penetrance, is_case, fixed_params, model_index, output_files):
-    sick_prob, healthy_prob = joint_snp( penetrance, fixed_params.maf, fixed_params.ld )
-
     for i in range( num_pairs ):
+        maf = fixed_params.get_maf( )
+        
+        sick_prob, healthy_prob = joint_snp( penetrance, maf, fixed_params.ld )
         snp1_sick, snp2_sick = generate_genotypes( sick_prob, fixed_params.ncases )
         snp1_healthy, snp2_healthy = generate_genotypes( healthy_prob, fixed_params.ncontrols )
     

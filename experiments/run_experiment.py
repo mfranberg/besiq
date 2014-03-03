@@ -14,7 +14,7 @@ class ExperimentParams:
     ##
     # Constructor.
     #
-    def __init__(self, maf = [ 0.0, 0.0 ], sample_size = [ 0, 0 ], num_pairs = 0, num_tests = 0):
+    def __init__(self, maf = [ 0.0, 0.0 ], sample_size = [ 0, 0 ], num_pairs = 0, num_tests = 0, sample_maf = False):
         ##
         # Minor allele frequency.
         #
@@ -40,6 +40,11 @@ class ExperimentParams:
         #
         self.threshold = 0.05
 
+        ##
+        # If true sample the maf in the range given by maf
+        #
+        self.sample_maf = sample_maf
+
 def updated_params(params, json_object):
     new_params = ExperimentParams( params.maf, params.sample_size, params.num_pairs, params.num_tests )
     
@@ -48,6 +53,7 @@ def updated_params(params, json_object):
     new_params.num_pairs = json_object.get( "num_pairs", params.num_pairs )
     new_params.num_tests = json_object.get( "num_tests", params.num_tests )
     new_params.threshold = json_object.get( "threshold", params.threshold )
+    new_params.sample_maf = params.sample_maf
 
     return new_params
 
@@ -406,6 +412,7 @@ if __name__ == "__main__":
     parser.add_argument( 'experiment_file', type=json_file, help='JSON file describing the experiments to run.' )
     parser.add_argument( 'output_dir', type=str, help='Path where all output and temporary files will be placed.' )
     parser.add_argument( '-m', type=float, nargs=2, help="Minor allele frequency of SNPs.", default = [ 0.2, 0.2 ] )
+    parser.add_argument( '--sample-maf',  action="store_true", help='The -m argument is treated as a range and maf is sampled uniformly in this range.', default = False )
     parser.add_argument( '-n', type=int, nargs=2, help="Number of controls and cases.", default = [ 1893, 1525 ] )
     parser.add_argument( '-s', type=int, help="Number of model instances to use when estimating power", default = 200 )
     parser.add_argument( '-i', type=int, help="Number of interactions to adjust for", default = 4000000 )
