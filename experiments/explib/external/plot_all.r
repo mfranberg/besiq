@@ -18,7 +18,9 @@ names( model_power ) = c( "method", "model", "heritability", "power", "lower", "
 
 output_file = argv[ 5 ]
 
-pdf( output_file, width = 2 * 6.7, height = 6.7 / 1.618 )
+pdf( output_file, width = 2 * 6.7, height = 2 * 6.7 / 1.618 )
 
-ggplot( model_power, aes( x = power, group = method, linetype = method ) ) + stat_ecdf( ) + facet_grid( . ~ heritability, scales = "free_x" )
+ggplot( model_power, aes( x = power, group = method, linetype = method ) ) + stat_ecdf( geom = "smooth" ) + facet_grid( . ~ heritability, scales = "free_x" ) +
+    scale_x_continuous( xlabel ) +
+    scale_y_continuous( ylabel, limits = c( 0.0, 1.0 ) )
 dev.off( )
