@@ -56,10 +56,11 @@ public:
      * @param row2 The second snp.
      * @param phenotype The phenotype, discrete 0.0 and 1.0.
      * @param weight A weight for each sample, this will be used instead of 1.0 as a count.
+     * @param is_valid True if model could be estimated, false otherwise.
      *
      * @return The likelihood of the snps.
      */
-    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight) = 0;
+    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid) = 0;
     
 private:
     /**
@@ -89,7 +90,7 @@ public:
     /**
      * @see loglinear_model::prob.
      */
-    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight);
+    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid);
 };
 
 /**
@@ -108,7 +109,7 @@ public:
     /**
      * @see loglinear_model::prob.
      */
-    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight);
+    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid);
 };
 
 /**
@@ -129,7 +130,7 @@ public:
     /**
      * @see loglinear_model::prob.
      */
-    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight);
+    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid);
 
 private:
     /**

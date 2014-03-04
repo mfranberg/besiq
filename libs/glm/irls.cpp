@@ -75,7 +75,7 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, ir
     double old_logl = -DBL_MAX;
     double logl = model.likelihood( mu, y, missing );
     bool invalid_mu = false;
-    while( num_iter < IRLS_MAX_ITERS && ! ( fabs( logl - old_logl ) < IRLS_TOLERANCE ) )
+    while( num_iter < IRLS_MAX_ITERS && ! ( fabs( logl - old_logl ) / ( 0.1 + fabs( logl ) ) < IRLS_TOLERANCE ) )
     {
         w = compute_w( model.var( mu ), mu_eta );
         z = compute_z( eta, mu, mu_eta, y );

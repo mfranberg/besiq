@@ -24,7 +24,7 @@ logcomplement::valid_mu(const arma::vec &mu) const
 {
     for(int i = 0; i < mu.n_elem; i++)
     {
-        if( mu[ i ] < 0.0 || mu[ i ] > 1.0 )
+        if( mu[ i ] <= 0.0 || mu[ i ] >= 1.0 )
         {
             return false;
         }

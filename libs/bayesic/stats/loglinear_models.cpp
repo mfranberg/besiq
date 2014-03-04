@@ -9,11 +9,12 @@ full::full()
 }
 
 log_double
-full::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight)
+full::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid)
 {
     arma::mat count = joint_count( row1, row2, phenotype, weight ) + 1.0;
-    arma::mat p_full = count / accu( count );    
-
+    arma::mat p_full = count / accu( count );
+    
+    *is_valid = arma::min( arma::min( count ) ) >= 5;
     return log_double::from_log( accu( count % arma::log( p_full ) ) );
 }
 
@@ -24,7 +25,7 @@ block::block()
 }
 
 log_double
-block::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight)
+block::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid)
 {
     arma::mat counts = joint_count( row1, row2, phenotype, weight ) + 1.0;
 
@@ -47,6 +48,7 @@ block::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype
         }
     }
 
+    *is_valid = arma::min( snp_snp ) >= 5 && arma::min( pheno ) >= 5;
     return log_double::from_log( likelihood );
 }
 
@@ -58,7 +60,7 @@ partial::partial(bool is_first)
 }
 
 log_double
-partial::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight)
+partial::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid)
 {
     const snp_row &snp1 = m_is_first ? row1 : row2;
     const snp_row &snp2 = m_is_first ? row2 : row1;
@@ -87,5 +89,6 @@ partial::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenoty
         }
     }
 
+    *is_valid = arma::min( snp_snp ) >= 5 && arma::min( arma::min( snp_pheno ) ) >= 5;
     return log_double::from_log( likelihood );
 }

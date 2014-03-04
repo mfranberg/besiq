@@ -28,18 +28,32 @@ stepwise_method::init(std::ostream &output)
 void
 stepwise_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
 {
-    double num_samples = num_ok_samples( row1, row2, get_data( )->phenotype );
     std::vector<log_double> likelihood( m_models.size( ), 0.0 );
     std::vector<double> bic( m_models.size( ), 0.0 );
+    bool all_valid = true;
     for(int i = 0; i < m_models.size( ); i++)
     {
-        likelihood[ i ] = m_models[ i ]->prob( row1, row2, get_data( )->phenotype, m_weight );
+        bool is_valid = false;
+        likelihood[ i ] = m_models[ i ]->prob( row1, row2, get_data( )->phenotype, m_weight, &is_valid );
+        all_valid = is_valid && all_valid;
     }
 
-    for(int i = 1; i < m_models.size( ); i++)
+    if( all_valid )
     {
-        double LR = -2.0*(likelihood[ i ].log_value( ) - likelihood[ 0 ].log_value( ));
-        const char *end = (i < m_models.size( ) - 1) ? "\t" : "";
-        output << 1.0 - chi_square_cdf( LR, m_models[ i ]->df( ) ) << end;
+
+        for(int i = 1; i < m_models.size( ); i++)
+        {
+            double LR = -2.0*(likelihood[ i ].log_value( ) - likelihood[ 0 ].log_value( ));
+            const char *end = (i < m_models.size( ) - 1) ? "\t" : "";
+            output << 1.0 - chi_square_cdf( LR, m_models[ i ]->df( ) ) << end;
+        }
+    }
+    else
+    {
+        for(int i = 1; i < m_models.size( ); i++)
+        {
+            const char *end = (i < m_models.size( ) - 1) ? "\t" : "";
+            output << "NA" << end;
+        }
     }
 }
