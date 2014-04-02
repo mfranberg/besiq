@@ -33,22 +33,26 @@ public:
      * 
      * @return Return the SNP at the given index.
      */
-    const unsigned char & operator[](size_t index) const;
+    unsigned char operator[](size_t index) const;
 
     /**
      * Access operator for assignment.
      *
      * @param index Index of the SNP to modify.
-     *
-     * @return A reference to the SNP to modify.
+     * @param value The value to assign.
      */
-    unsigned char & operator[](size_t index);
+    void assign(size_t index, unsigned char value);
 
 private:
     /**
+     * Size of the row.
+     */
+
+    size_t m_size;
+    /**
      * Internal data structure, as a vector.
      */
-    std::vector<unsigned char> m_genotypes;
+    std::vector<unsigned int> m_genotypes;
 };
 
 #endif /* End of __SNP_ROW_H__ */

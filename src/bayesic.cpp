@@ -21,6 +21,7 @@
 #include <bayesic/method/bayesic_fine_method.hpp>
 #include <bayesic/method/glm_method.hpp>
 #include <bayesic/method/glm_factor_method.hpp>
+#include <bayesic/method/glm_tukey_method.hpp>
 #include <bayesic/method/loglinear_method.hpp>
 #include <bayesic/method/caseonly_method.hpp>
 #include <bayesic/method/stepwise_method.hpp>
@@ -88,9 +89,15 @@ main(int argc, char *argv[])
                                          .epilog( EPILOG );
     
     
-    char const* const choices[] = { "bayes", "bayes-fine", "logistic", "logistic-factor", "logcomplement-factor", "odds-additive-factor", "penetrance-additive-factor", "penetrance-multiplicative-factor", "loglinear", "caseonly", "stepwise" };
-    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 11 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'bayes-fine', 'logistic', 'logistic-factor', 'logcomplement-factor', 'odds-additive-factor', 'penetrance-additive-factor', 'penetrance-multiplicative-factor', 'loglinear', 'caseonly' or 'stepwise'." );
+    char const* const choices[] = { "bayes", "bayes-fine", "glm", "loglinear", "caseonly", "stepwise" };
+    char const* const link_choices[] = { "logistic", "log-complement", "odds-additive", "penetrance-additive", "penetrance-multiplicative" };
+    char const* const factor_choices[] = { "factor", "additive", "tukey" };
+
+    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 6 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'bayes-fine', 'glm', 'loglinear', 'caseonly' or 'stepwise'." );
     parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
+    parser.add_option( "-l", "--link-function" ).choices( &link_choices[ 0 ], &link_choices[ 5 ] ).metavar( "link" ).help( "The link function, or scale, that is used for the penetrance: 'logistic' log(p/(1-p)), 'log-complement' log(1 - p), 'odds-additive' p/(1-p), 'penetrance-additive' p, 'penetrance-multiplicative' log(p)." ).set_default( "logistic" );
+    parser.add_option( "-f", "--factor" ).choices( &factor_choices[ 0 ], &factor_choices[ 3 ] ).help( "Determines how to code the SNPs, in 'factor' no order of the alleles is assumed, in 'additive' the SNPs are coded as the number of minor alleles, in 'tukey' the coding is the same as factor except that a single parameter for the interaction is used." ).set_default( "factor" );
+
     parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
     
     OptionGroup group = OptionGroup( parser, "Options for bayes", "These options will change the behaviour of bayes and fine." );
@@ -179,41 +186,45 @@ main(int argc, char *argv[])
         bayesic_fine_method bayesic_fine( data, (int) options.get( "mc_iterations" ), alpha );
         run_method( bayesic_fine, genotype_matrix, locus_names, pairs );
     }
-    else if( options[ "method" ] == "logistic" )
+    else if( options[ "method" ] == "glm" )
     {
-        binomial logit;
-        glm_method logistic( data, logit );
-        run_method( logistic, genotype_matrix, locus_names, pairs );
-    }
-    else if( options[ "method" ] == "logistic-factor" )
-    {
-        binomial logit;
-        glm_factor_method logistic( data, logit );
-        run_method( logistic, genotype_matrix, locus_names, pairs );
-    }
-    else if( options[ "method" ] == "logcomplement-factor" )
-    {
-        logcomplement logcomp;
-        glm_factor_method logistic( data, logcomp );
-        run_method( logistic, genotype_matrix, locus_names, pairs );
-    }
-    else if( options[ "method" ] == "odds-additive-factor" )
-    {
-        odds_additive oddsadd;
-        glm_factor_method logistic( data, oddsadd );
-        run_method( logistic, genotype_matrix, locus_names, pairs );
-    }
-    else if( options[ "method" ] == "penetrance-additive-factor" )
-    {
-        penetrance_additive penadd;
-        glm_factor_method logistic( data, penadd );
-        run_method( logistic, genotype_matrix, locus_names, pairs );
-    }
-    else if( options[ "method" ] == "penetrance-multiplicative-factor" )
-    {
-        penetrance_multiplicative penmul;
-        glm_factor_method logistic( data, penmul );
-        run_method( logistic, genotype_matrix, locus_names, pairs );
+        glm_model *link_function;
+        if( options[ "link_function" ] == "logistic" )
+        {
+            link_function = new binomial( );
+        }
+        else if( options[ "link_function" ] == "log-complement" )
+        {
+            link_function = new logcomplement( );
+        }
+        else if( options[ "link_function" ] == "odds-additive" )
+        {
+            link_function = new odds_additive( );
+        }
+        else if( options[ "link_function" ] == "penetrance-additive" )
+        {
+            link_function = new penetrance_additive( );
+        }
+        else if( options[ "link_function" ] == "penetrance-multiplicative" )
+        {
+            link_function = new penetrance_multiplicative( );
+        }
+
+        if( options[ "factor" ] == "factor" )
+        {
+            glm_factor_method glm_factor( data, *link_function );
+            run_method( glm_factor, genotype_matrix, locus_names, pairs );
+        }
+        else if( options[ "factor" ] == "additive" )
+        {
+            glm_method glm_additive( data, *link_function );
+            run_method( glm_additive, genotype_matrix, locus_names, pairs );
+        }
+        else if( options[ "factor" ] == "tukey" )
+        {
+            glm_tukey_method glm_tukey( data, *link_function );
+            run_method( glm_tukey, genotype_matrix, locus_names, pairs );
+        }
     }
     else if( options[ "method" ] == "loglinear" )
     {

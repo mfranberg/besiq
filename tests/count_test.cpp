@@ -17,18 +17,18 @@ protected:
          * 0/0 2/0
          */
         row1.resize( 5 );
-        row1[ 0 ] = 0;
-        row1[ 1 ] = 1;
-        row1[ 2 ] = 1;
-        row1[ 3 ] = 0;
-        row1[ 4 ] = 0;
+        row1.assign( 0, 0 );
+        row1.assign( 1, 1 );
+        row1.assign( 2, 1 );
+        row1.assign( 3, 0 );
+        row1.assign( 4, 0 );
 
         row2.resize( 5 );
-        row2[ 0 ] = 0;
-        row2[ 1 ] = 1;
-        row2[ 2 ] = 1;
-        row2[ 3 ] = 0;
-        row2[ 4 ] = 1;
+        row2.assign( 0, 0 );
+        row2.assign( 1, 1 );
+        row2.assign( 2, 1 );
+        row2.assign( 3, 0 );
+        row2.assign( 4, 1 );
 
         phenotype = arma::zeros<arma::vec>( 5 );
         phenotype[ 0 ] = 0;
@@ -113,14 +113,14 @@ TEST(snp_count_maf_test, compute_maf)
     snp_row row;
     row.resize( 8 );
 
-    row[ 0 ] = 0;
-    row[ 1 ] = 0;
-    row[ 2 ] = 0;
-    row[ 3 ] = 1;
-    row[ 4 ] = 1;
-    row[ 5 ] = 2;
-    row[ 6 ] = 2;
-    row[ 7 ] = 2;
+    row.assign( 0, 0 );
+    row.assign( 1, 0 );
+    row.assign( 2, 0 );
+    row.assign( 3, 1 );
+    row.assign( 4, 1 );
+    row.assign( 5, 2 );
+    row.assign( 6, 2 );
+    row.assign( 7, 2 );
 
     
     arma::vec maf = compute_maf( row );

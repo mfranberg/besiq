@@ -52,7 +52,7 @@ plink_file::next_row(snp_row &row)
         row.resize( pio_row_size( &m_file ) );
         for(int i = 0; i < row.size( ); i++)
         {
-            row[ i ] = m_row_buffer[ i ];
+            row.assign( i, m_row_buffer[ i ] );
         }
         return true;
     }

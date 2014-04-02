@@ -163,7 +163,8 @@ class ClosedMethod:
         subprocess.call( cmd, stdout = step1_file )
         
         cmd = [ self.path,
-                "-m", "logcomplement-factor",
+                "-m", "glm",
+                "-l", "log-complement",
                 "-n", str( num_tests ),
                 data_prefix + ".pair",
                 data_prefix ]
@@ -193,7 +194,9 @@ class LogisticMethod:
 
     def run(self, data_prefix, num_tests, output_file, include_covariates = False):
         cmd = [ self.path,
-                "-m", "logistic",
+                "-m", "glm",
+                "-l", "logistic",
+                "-f", "additive",
                 "-n", str( num_tests ),
                 data_prefix + ".pair",
                 data_prefix ]
@@ -220,7 +223,36 @@ class LogisticFactorMethod:
 
     def run(self, data_prefix, num_tests, output_file, include_covariates = False):
         cmd = [ self.path,
-                "-m", "logistic-factor",
+                "-m", "glm",
+                "-l", "logistic",
+                "-n", str( num_tests ),
+                data_prefix + ".pair",
+                data_prefix ]
+
+        if include_covariates:
+            cmd.extend( [ "-c", data_prefix + ".cov" ] )
+        
+        print " ".join( cmd )
+        subprocess.call( cmd, stdout = output_file )
+
+    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
+        return fdr_power.compute_from_file( output_path, 3, threshold, num_tests, True, include )
+    
+    def get_ranks(self, output_path):
+        return fdr_power.get_ranks( output_path, 3, True )
+
+##
+# Wrapper for running logistic method.
+#
+class LogComplementFactorMethod:
+    def __init__(self, name, path):
+        self.name = name
+        self.path = path
+
+    def run(self, data_prefix, num_tests, output_file, include_covariates = False):
+        cmd = [ self.path,
+                "-m", "glm",
+                "-l", "log-complement",
                 "-n", str( num_tests ),
                 data_prefix + ".pair",
                 data_prefix ]
@@ -289,7 +321,8 @@ class StepwiseRegression:
                     continue
 
         cmd = [ self.path,
-                "-m", "logistic-factor",
+                "-m", "glm",
+                "-l", "logistic",
                 "-n", str( num_tests ),
                 data_prefix + ".pair",
                 data_prefix ]
@@ -317,7 +350,7 @@ class StepwiseRegression:
 
 
     def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
-        return fdr_power.compute_from_file( output_path, 3, threshold, max( self.num_significant, 1 ), True )
+        return fdr_power.compute_from_file( output_path, 3, threshold, max( self.num_significant, 1 ), True, include )
     
     def get_ranks(self, output_path):
         return fdr_power.get_ranks( output_path, 3, True )
@@ -330,7 +363,8 @@ class StepwiseRegression:
 def get_methods( ):
     return [ LogLinearMethod( "Log-linear", "../build/src/bayesic" ),
              LogisticFactorMethod( "Logistic", "../build/src/bayesic" ),
-             ClosedMethod( "Closed", "../build/src/bayesic" ) ]
+             ClosedMethod( "Closed", "../build/src/bayesic" ),
+             StepwiseRegression( "Stepwise", "../build/src/bayesic" ) ]
 
 ##
 # Runs all defined methods on the given plink file.
