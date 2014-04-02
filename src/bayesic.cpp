@@ -9,6 +9,9 @@
 #include <glm/irls.hpp>
 #include <glm/models/binomial.hpp>
 #include <glm/models/logcomplement.hpp>
+#include <glm/models/odds_additive.hpp>
+#include <glm/models/penetrance_additive.hpp>
+#include <glm/models/penetrance_multiplicative.hpp>
 #include <cpp-argparse/OptionParser.h>
 
 #include <plink/plink_file.hpp>
@@ -85,8 +88,8 @@ main(int argc, char *argv[])
                                          .epilog( EPILOG );
     
     
-    char const* const choices[] = { "bayes", "bayes-fine", "logistic", "logistic-factor", "logcomplement-factor", "loglinear", "caseonly", "stepwise" };
-    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 8 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'bayes-fine', 'logistic', 'logistic-factor', 'loglinear', 'caseonly' or 'stepwise'." );
+    char const* const choices[] = { "bayes", "bayes-fine", "logistic", "logistic-factor", "logcomplement-factor", "odds-additive-factor", "penetrance-additive-factor", "penetrance-multiplicative-factor", "loglinear", "caseonly", "stepwise" };
+    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 11 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'bayes-fine', 'logistic', 'logistic-factor', 'logcomplement-factor', 'odds-additive-factor', 'penetrance-additive-factor', 'penetrance-multiplicative-factor', 'loglinear', 'caseonly' or 'stepwise'." );
     parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
     parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
     
@@ -192,6 +195,24 @@ main(int argc, char *argv[])
     {
         logcomplement logcomp;
         glm_factor_method logistic( data, logcomp );
+        run_method( logistic, genotype_matrix, locus_names, pairs );
+    }
+    else if( options[ "method" ] == "odds-additive-factor" )
+    {
+        odds_additive oddsadd;
+        glm_factor_method logistic( data, oddsadd );
+        run_method( logistic, genotype_matrix, locus_names, pairs );
+    }
+    else if( options[ "method" ] == "penetrance-additive-factor" )
+    {
+        penetrance_additive penadd;
+        glm_factor_method logistic( data, penadd );
+        run_method( logistic, genotype_matrix, locus_names, pairs );
+    }
+    else if( options[ "method" ] == "penetrance-multiplicative-factor" )
+    {
+        penetrance_multiplicative penmul;
+        glm_factor_method logistic( data, penmul );
         run_method( logistic, genotype_matrix, locus_names, pairs );
     }
     else if( options[ "method" ] == "loglinear" )
