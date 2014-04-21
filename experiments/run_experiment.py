@@ -153,6 +153,7 @@ class GeneticExperiment:
                  "covariate" : CovariateStrategy( method_handler ),
                  "sufficient" : SufficientCovariateStrategy( method_handler ),
                  "mixed" : MixedStrategy( method_handler ),
+                 "null" : NullStrategy( method_handler ),
                  "all" : AllStrategy( method_handler ) }
 
     ##
@@ -224,6 +225,38 @@ class NoCovariateStrategy(ExperimentStrategy):
                          experiment[ 'ylabel' ],
                          params,
                          plot_path )
+
+class NullStrategy(ExperimentStrategy):
+    def __init__(self, method_handler):
+        self.method_handler = method_handler
+
+    def calculate_power(self, params, experiment, plink_path, power_file):
+        ld = experiment.get( "ld", 0.0 )
+        for model_id, model in enumerate( experiment[ 'models' ] ):
+            params = updated_params( params, model )
+
+            method_total_num_significant = defaultdict( int )
+            for i in range( experiment[ 'num_chips' ] ):
+
+                plinkdata.generate_data( params,
+                                         model[ 'params' ],
+                                         ld, plink_path )
+
+                self.method_handler.start_experiment( experiment[ 'name' ], model_id )
+                program.run_methods( params, plink_path, self.method_handler )
+                self.method_handler.reset_files( )
+
+                method_num_significant = program.num_significant( params, self.method_handler )
+                print method_num_significant
+                for method_name, num_significant in method_num_significant.iteritems( ):
+                    method_total_num_significant[ method_name ] += num_significant
+
+            for method_name, total_num_significant in method_total_num_significant.iteritems( ):
+                line = "{0}\t{1}\n".format( method_name, total_num_significant / float( experiment[ 'num_chips' ] ) )
+                power_file.write( line )
+            
+    def plot_power(self, params, experiment, power_path, plot_path):
+        pass
 
 class AllStrategy(ExperimentStrategy):
     def __init__(self, method_handler):

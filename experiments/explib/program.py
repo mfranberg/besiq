@@ -2,8 +2,7 @@ import os
 import subprocess
 
 from math import sqrt
-#from . import fdr_power
-from . import power as fdr_power
+from . import power
 
 class BayesicMethodFirstStep:
     def __init__(self, name, path, alpha = 10.0, beta = 10.0, num_tests = None, num_single = None, p = None):
@@ -15,7 +14,8 @@ class BayesicMethodFirstStep:
         self.num_single = num_single
         self.p = p
 
-    def run(self, data_prefix, num_tests, output_file, include_covariates = False):
+    def run(self, data_prefix, params, output_file, include_covariates = False):
+        num_tests = params.num_tests
         if self.num_tests:
             num_tests = self.num_tests
 
@@ -39,11 +39,11 @@ class BayesicMethodFirstStep:
         print " ".join( cmd )
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
-        return fdr_power.compute_from_file( output_path, 2, threshold, num_tests, False, include )
+    def num_significant(self, output_path, params, include = None):
+        return power.compute_from_file( output_path, 2, params.threshold, params.num_tests, False, include )
 
     def get_ranks(self, output_path):
-        return fdr_power.get_ranks( output_path, 2, False )
+        return power.get_ranks( output_path, 2, False )
 
 ##
 # Wrapper for running Bayesic.
@@ -55,12 +55,12 @@ class BayesicMethod:
         self.alpha = alpha
         self.beta = beta
 
-    def run(self, daa_prefix, num_tests, output_file, include_covariates = False):
+    def run(self, daa_prefix, params, output_file, include_covariates = False):
         tmp_file = open( output_file.name + ".tmp", "w+" )
 
         cmd = [ self.path,
                 "-m", "bayes",
-                "-n", str( num_tests ),
+                "-n", str( params.num_tests ),
                 "-a", str( self.alpha ),
                 "-b", str( self.beta ),
                 data_prefix + ".pair",
@@ -92,7 +92,7 @@ class BayesicMethod:
         # Run bayesic on this pair
         cmd = [ self.path,
                 "-m", "bayes-fine",
-                "-n", str( num_tests ),
+                "-n", str( params.num_tests ),
                 "-a", str( self.alpha ),
                 "-b", str( self.beta ),
                 tmp_pair_path,
@@ -104,11 +104,11 @@ class BayesicMethod:
         print " ".join( cmd )
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
-        return fdr_power.compute_from_file( output_path, 2, threshold, num_tests, False, include )
+    def num_significant(self, output_path, params, include = None):
+        return power.compute_from_file( output_path, 2, params.threshold, params.num_tests, False, include )
 
     def get_ranks(self, output_path):
-        return fdr_power.get_ranks( output_path, 2, False )
+        return power.get_ranks( output_path, 2, False )
 
     
 ##
@@ -119,10 +119,10 @@ class LogLinearMethod:
         self.name = name
         self.path = path
 
-    def run(self, data_prefix, num_tests, output_file, include_covariates = False):
+    def run(self, data_prefix, params, output_file, include_covariates = False):
         cmd = [ self.path,
                 "-m", "loglinear",
-                "-n", str( num_tests ),
+                "-n", str( params.num_tests ),
                 data_prefix + ".pair",
                 data_prefix ]
 
@@ -132,27 +132,27 @@ class LogLinearMethod:
         print " ".join( cmd )
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
-        return fdr_power.compute_from_file( output_path, 2, threshold, num_tests, True, include )
+    def num_significant(self, output_path, params, include = None):
+        return power.compute_from_file( output_path, 2, params.threshold, params.num_tests, True, include )
     
     def get_ranks(self, output_path):
-        return fdr_power.get_ranks( output_path, 2, True )
+        return power.get_ranks( output_path, 2, True )
 
 ##
 # Wrapper for running stepwise log-linear method.
 #
 class ClosedMethod:
-    def __init__(self, name, path):
+    def __init__(self, name, path, correction_tool_path):
         self.name = name
         self.path = path
+        self.correction_tool_path = correction_tool_path
 
-    def run(self, data_prefix, num_tests, output_file, include_covariates = False):
+    def run(self, data_prefix, params, output_file, include_covariates = False):
         step1_file = open( output_file.name + "_step1", "w+" )
-        step2_file = open( output_file.name + "_step2", "w+" )
         
         cmd = [ self.path,
                 "-m", "stepwise",
-                "-n", str( num_tests ),
+                "-n", str( params.num_tests ),
                 data_prefix + ".pair",
                 data_prefix ]
 
@@ -161,29 +161,31 @@ class ClosedMethod:
 
         print " ".join( cmd )
         subprocess.call( cmd, stdout = step1_file )
-        
-        cmd = [ self.path,
-                "-m", "glm",
-                "-l", "log-complement",
-                "-n", str( num_tests ),
-                data_prefix + ".pair",
-                data_prefix ]
+        step1_file.close( )
+       
+        cmd =[ "python",
+               self.correction_tool_path,
+               "--step1-tests", str( params.num_tests ),
+               "--alpha", str( params.threshold ),
+               step1_file.name,
+               data_prefix
+               ]
+
+        num_single = max( int( 0.5 + sqrt( 2 * params.num_tests + 0.25 ) ), 1 )
+        if num_single > 1:
+               cmd.extend( [ "--step2-tests", str( num_single ) ] )
 
         if include_covariates:
             cmd.extend( [ "-c", data_prefix + ".cov" ] )
 
         print " ".join( cmd )
-        subprocess.call( cmd, stdout = step2_file )
-
-        cmd = [ "paste", step1_file.name, step2_file.name ]
-        print " ".join( cmd )
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
-        return fdr_power.compute_from_file_stepwise( output_path, [2,3,4,9], threshold, num_tests, include )
+    def num_significant(self, output_path, params, include = None):
+        return ( params.num_pairs, power.compute_from_file_stepwise( output_path, params.threshold, include ) )
     
     def get_ranks(self, output_path):
-        return fdr_power.get_ranks_stepwise( output_path, [2,3,4,9] )
+        return power.get_ranks_stepwise( output_path, [2,3,4,9] )
 ##
 # Wrapper for running logistic method.
 #
@@ -192,12 +194,12 @@ class LogisticMethod:
         self.name = name
         self.path = path
 
-    def run(self, data_prefix, num_tests, output_file, include_covariates = False):
+    def run(self, data_prefix, params, output_file, include_covariates = False):
         cmd = [ self.path,
                 "-m", "glm",
                 "-l", "logistic",
                 "-f", "additive",
-                "-n", str( num_tests ),
+                "-n", str( params.num_tests ),
                 data_prefix + ".pair",
                 data_prefix ]
 
@@ -207,11 +209,11 @@ class LogisticMethod:
         print " ".join( cmd )
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
-        return fdr_power.compute_from_file( output_path, 4, threshold, num_tests, True, include )
+    def num_significant(self, output_path, params, include = None):
+        return power.compute_from_file( output_path, 4, params.threshold, params.num_tests, True, include )
     
     def get_ranks(self, output_path):
-        return fdr_power.get_ranks( output_path, 4, True )
+        return power.get_ranks( output_path, 4, True )
 
 ##
 # Wrapper for running logistic method.
@@ -221,11 +223,11 @@ class LogisticFactorMethod:
         self.name = name
         self.path = path
 
-    def run(self, data_prefix, num_tests, output_file, include_covariates = False):
+    def run(self, data_prefix, params, output_file, include_covariates = False):
         cmd = [ self.path,
                 "-m", "glm",
                 "-l", "logistic",
-                "-n", str( num_tests ),
+                "-n", str( params.num_tests ),
                 data_prefix + ".pair",
                 data_prefix ]
 
@@ -235,11 +237,11 @@ class LogisticFactorMethod:
         print " ".join( cmd )
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
-        return fdr_power.compute_from_file( output_path, 3, threshold, num_tests, True, include )
+    def num_significant(self, output_path, params, include = None):
+        return power.compute_from_file( output_path, 3, params.threshold, params.num_tests, True, include )
     
     def get_ranks(self, output_path):
-        return fdr_power.get_ranks( output_path, 3, True )
+        return power.get_ranks( output_path, 3, True )
 
 ##
 # Wrapper for running logistic method.
@@ -249,11 +251,11 @@ class LogComplementFactorMethod:
         self.name = name
         self.path = path
 
-    def run(self, data_prefix, num_tests, output_file, include_covariates = False):
+    def run(self, data_prefix, params, output_file, include_covariates = False):
         cmd = [ self.path,
                 "-m", "glm",
                 "-l", "log-complement",
-                "-n", str( num_tests ),
+                "-n", str( params.num_tests ),
                 data_prefix + ".pair",
                 data_prefix ]
 
@@ -263,11 +265,11 @@ class LogComplementFactorMethod:
         print " ".join( cmd )
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
-        return fdr_power.compute_from_file( output_path, 3, threshold, num_tests, True, include )
+    def num_significant(self, output_path, params, include = None):
+        return power.compute_from_file( output_path, 3, params.threshold, params.num_tests, True, include )
     
     def get_ranks(self, output_path):
-        return fdr_power.get_ranks( output_path, 3, True )
+        return power.get_ranks( output_path, 3, True )
 
 ##
 # Wrapper for running case only method.
@@ -277,10 +279,10 @@ class CaseOnlyMethod:
         self.name = name
         self.path = path
 
-    def run(self, data_prefix, num_tests, output_file, include_covariates = False):
+    def run(self, data_prefix, params, output_file, include_covariates = False):
         cmd = [ self.path,
                 "-m", "caseonly",
-                "-n", str( num_tests ),
+                "-n", str( params.num_tests ),
                 data_prefix + ".pair",
                 data_prefix ]
 
@@ -290,23 +292,23 @@ class CaseOnlyMethod:
         print " ".join( cmd )
         subprocess.call( cmd, stdout = output_file )
 
-    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
-        return fdr_power.compute_from_file( output_path, 3, threshold, num_tests, True, include )
+    def num_significant(self, output_path, params, include = None):
+        return power.compute_from_file( output_path, 3, params.threshold, params.num_tests, True, include )
     
     def get_ranks(self, output_path):
-        return fdr_power.get_ranks( output_path, 3, True )
+        return power.get_ranks( output_path, 3, True )
 
 class StepwiseRegression:
     def __init__(self, name, path):
         self.name = name
         self.path = path
-        self.num_significant = 0
+        self.num_single_significant = 0
 
-    def run(self, data_prefix, num_tests, output_file, include_covariates = False):
+    def run(self, data_prefix, params, output_file, include_covariates = False):
         cmd = [ "plink2", "--bfile", data_prefix, "--logistic", "--out", output_file.name ]
         subprocess.check_call( cmd, stdout = open( os.devnull, "w" ) )
 
-        num_single = max( int( 0.5 + sqrt( 2 * num_tests + 0.25 ) ), 1 )
+        num_single = max( int( 0.5 + sqrt( 2 * params.num_tests + 0.25 ) ), 1 )
         significant = set( )
         with open( output_file.name + ".assoc.logistic", "r" ) as assoc_file:
             next( assoc_file )
@@ -323,7 +325,7 @@ class StepwiseRegression:
         cmd = [ self.path,
                 "-m", "glm",
                 "-l", "logistic",
-                "-n", str( num_tests ),
+                "-n", str( params.num_tests ),
                 data_prefix + ".pair",
                 data_prefix ]
 
@@ -338,22 +340,27 @@ class StepwiseRegression:
         output_file.seek( 0 )
         output_file.truncate( 0 )
 
-        self.num_significant = 0
+        self.num_single_significant = 0
         for line in lines:
             column = line.strip( ).split( )
             if not column[ 0 ] in significant and not column[ 1 ] in significant:
                 column[ 3 ] = "1.0"
             else:
-                self.num_significant += 1
+                self.num_single_significant += 1
 
             output_file.write( "\t".join( column ) + "\n" )
 
-
-    def compute_power(self, output_path, num_tests, threshold = 0.05, include = None):
-        return fdr_power.compute_from_file( output_path, 3, threshold, max( self.num_significant, 1 ), True, include )
-    
+    def num_significant(self, output_path, params, include = None):
+        return power.compute_from_file( output_path, 3, params.threshold, max( self.num_single_significant, 1 ), True, include )
+     
     def get_ranks(self, output_path):
-        return fdr_power.get_ranks( output_path, 3, True )
+        return power.get_ranks( output_path, 3, True )
+
+
+g_methods = [ LogLinearMethod( "Log-linear", "bayesic" ),
+             LogisticFactorMethod( "Logistic", "bayesic" ),
+             ClosedMethod( "Closed", "bayesic", "../tools/closed_correction/closed_correction.py" ),
+             StepwiseRegression( "Stepwise", "bayesic" ) ]
 
 ##
 # Returns a list of methods that can run plink files.
@@ -361,10 +368,9 @@ class StepwiseRegression:
 # @return A list of methods that can run plink files.
 #
 def get_methods( ):
-    return [ LogLinearMethod( "Log-linear", "../build/src/bayesic" ),
-             LogisticFactorMethod( "Logistic", "../build/src/bayesic" ),
-             ClosedMethod( "Closed", "../build/src/bayesic" ),
-             StepwiseRegression( "Stepwise", "../build/src/bayesic" ) ]
+    global g_methods
+    return g_methods
+    #return [ ClosedMethod( "Closed", "bayesic", "../tools/closed_correction/closed_correction.py" ) ]
 
 ##
 # Runs all defined methods on the given plink file.
@@ -378,7 +384,20 @@ def run_methods(params, plink_path, method_handler, include_covariates = False):
     method_list = get_methods( )
     for method in method_list:
         method_output_file = method_handler.get_output_file( method.name )
-        method.run( plink_path, params.num_tests, method_output_file, include_covariates )
+        method.run( plink_path, params, method_output_file, include_covariates )
+
+def get_confidence_interval(total, num_significant):
+    if total != 0:
+        # Approximate 95% Wilson score interval
+        power = ( num_significant + 2.0 ) / ( total + 4.0 )
+        err = 1.96 * sqrt( ( 1.0 / total ) * power * ( 1 - power ) )
+
+        lower = max( power - err, 0.0 )
+        upper = min( power + err, 1.0 )
+
+        return ( power, lower, upper )
+    else:
+        return ( 0.0, 0.0, 0.0 )
 
 ##
 # Calculates power for all the output files found
@@ -397,12 +416,26 @@ def calculate_power(params, method_handler, include = None):
     method_list = get_methods( )
     for method in method_list:
         method_output_file = method_handler.get_output_file( method.name )
-        power, lower, upper = method.compute_power( method_output_file, params.num_tests, params.threshold, include )
+        total, num_significant = method.num_significant( method_output_file, params, include )
 
-        method_power[ method.name ] = ( power, lower, upper )
+        method_power[ method.name ] = get_confidence_interval( total, num_significant )
 
     return method_power
 
+##
+# Calculates the number of significant pairs.
+#
+def num_significant(params, method_handler, include = None):
+    method_num_significant = dict( )
+    for method in get_methods( ):
+        method_output_file = method_handler.get_output_file( method.name )
+        method_num_significant[ method.name ] = method.num_significant( method_output_file, params, include )[ 1 ]
+
+    return method_num_significant
+
+##
+# Calculates a ranking of all SNP pairs.
+#
 def get_ranks(params, method_handler):
     method_rank = dict( )
     method_list = get_methods( )
