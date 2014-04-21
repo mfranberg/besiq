@@ -7,8 +7,10 @@ using namespace arma;
 vec
 penetrance_multiplicative::init_beta(const mat &X, const vec &y) const
 {
+    vec mu = (y + 0.5) / 2.0;
+    vec eta = log( mu );
     
-    return -0.4 * arma::ones<arma::vec>( X.n_cols );
+    return pinv( X ) * eta;
 }
 
 vec

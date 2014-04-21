@@ -6,11 +6,11 @@ using namespace arma;
 
 vec
 penetrance_additive::init_beta(const mat &X, const vec &y) const
-{
+{ 
     vec mu = (y + 0.5) / 2.0;
-    vec eta = mu / ( 1.0 - mu );
+    vec eta = mu;
     
-    return 0.1 * arma::ones<arma::vec>( X.n_cols );
+    return pinv( X ) * eta;
 }
 
 vec
