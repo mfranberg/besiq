@@ -11,10 +11,10 @@ full::full()
 log_double
 full::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid)
 {
-    arma::mat count = joint_count( row1, row2, phenotype, weight ) + 1.0;
+    arma::mat count = joint_count( row1, row2, phenotype, weight ) + 0.5;
     arma::mat p_full = count / accu( count );
     
-    *is_valid = arma::min( arma::min( count ) ) >= 5;
+    *is_valid = arma::min( arma::min( count ) ) >= 1;
     return log_double::from_log( accu( count % arma::log( p_full ) ) );
 }
 
@@ -27,7 +27,7 @@ block::block()
 log_double
 block::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid)
 {
-    arma::mat counts = joint_count( row1, row2, phenotype, weight ) + 1.0;
+    arma::mat counts = joint_count( row1, row2, phenotype, weight ) + 0.5;
 
     arma::vec snp_snp = sum( counts, 1 );
     arma::rowvec pheno = sum( counts, 0 );
@@ -48,7 +48,7 @@ block::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype
         }
     }
 
-    *is_valid = arma::min( snp_snp ) >= 5 && arma::min( pheno ) >= 5;
+    *is_valid = arma::min( snp_snp ) >= 5 && arma::min( pheno ) >= 1;
     return log_double::from_log( likelihood );
 }
 
@@ -65,7 +65,7 @@ partial::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenoty
     const snp_row &snp1 = m_is_first ? row1 : row2;
     const snp_row &snp2 = m_is_first ? row2 : row1;
     
-    arma::mat counts = joint_count( snp1, snp2, phenotype, weight ) + 1.0;
+    arma::mat counts = joint_count( snp1, snp2, phenotype, weight ) + 0.5;
     double n = accu( counts );
     arma::vec snp_snp = sum( counts, 1 );
     arma::mat snp_pheno = zeros<mat>( 3, 2 );
@@ -89,6 +89,6 @@ partial::prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenoty
         }
     }
 
-    *is_valid = arma::min( snp_snp ) >= 5 && arma::min( arma::min( snp_pheno ) ) >= 5;
+    *is_valid = arma::min( snp_snp ) >= 1 && arma::min( arma::min( snp_pheno ) ) >= 1;
     return log_double::from_log( likelihood );
 }
