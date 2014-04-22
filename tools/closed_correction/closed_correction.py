@@ -54,17 +54,21 @@ def correct_non_regression_models(result_file, alpha, step1_tests, step2_tests):
 #
 def read_pairs(result_file):
     pairs = [ ]
-    for line in open( result_file, "r" ):
-        column = line.strip( ).split( )
-        snp1 = column[ 0 ]
-        snp2 = column[ 1 ]
 
-        try:
-            pvalue = float( column[ 3 ] )
-            pairs.append( ( snp1, snp2, pvalue ) )
-        except:
-            pairs.append( ( snp1, snp2, -1.0 ) )
-            continue
+    with open( result_file, "r" ) as rf:
+        next( rf ) # Skip header
+
+        for line in rf:
+            column = line.strip( ).split( )
+            snp1 = column[ 0 ]
+            snp2 = column[ 1 ]
+
+            try:
+                pvalue = float( column[ 3 ] )
+                pairs.append( ( snp1, snp2, pvalue ) )
+            except:
+                pairs.append( ( snp1, snp2, -1.0 ) )
+                continue
     
     return pairs
 

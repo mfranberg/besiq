@@ -142,10 +142,12 @@ class LogLinearMethod:
 # Wrapper for running stepwise log-linear method.
 #
 class ClosedMethod:
-    def __init__(self, name, path, correction_tool_path):
+    def __init__(self, name, path, correction_tool_path, pvalue_column = 7, use_single = True):
         self.name = name
         self.path = path
         self.correction_tool_path = correction_tool_path
+        self.pvalue_column = pvalue_column
+        self.use_single = use_single
 
     def run(self, data_prefix, params, output_file, include_covariates = False):
         step1_file = open( output_file.name + "_step1", "w+" )
@@ -172,7 +174,7 @@ class ClosedMethod:
                ]
 
         num_single = max( int( 0.5 + sqrt( 2 * params.num_tests + 0.25 ) ), 1 )
-        if num_single > 1:
+        if self.use_single and num_single > 1:
                cmd.extend( [ "--step2-tests", str( num_single ) ] )
 
         if include_covariates:
@@ -182,7 +184,8 @@ class ClosedMethod:
         subprocess.call( cmd, stdout = output_file )
 
     def num_significant(self, output_path, params, include = None):
-        return ( params.num_pairs, power.compute_from_file_stepwise( output_path, params.threshold, include ) )
+        total, num_sig = power.compute_from_file( output_path, self.pvalue_column, params.threshold, 1, True, include, correction = "B" )
+        return ( params.num_pairs, num_sig )
     
     def get_ranks(self, output_path):
         return power.get_ranks_stepwise( output_path, [2,3,4,9] )
@@ -218,43 +221,16 @@ class LogisticMethod:
 ##
 # Wrapper for running logistic method.
 #
-class LogisticFactorMethod:
-    def __init__(self, name, path):
+class GLMFactorMethod:
+    def __init__(self, name, path, method = "log-complement"):
         self.name = name
         self.path = path
+        self.method = method
 
     def run(self, data_prefix, params, output_file, include_covariates = False):
         cmd = [ self.path,
                 "-m", "glm",
-                "-l", "logistic",
-                "-n", str( params.num_tests ),
-                data_prefix + ".pair",
-                data_prefix ]
-
-        if include_covariates:
-            cmd.extend( [ "-c", data_prefix + ".cov" ] )
-        
-        print " ".join( cmd )
-        subprocess.call( cmd, stdout = output_file )
-
-    def num_significant(self, output_path, params, include = None):
-        return power.compute_from_file( output_path, 3, params.threshold, params.num_tests, True, include )
-    
-    def get_ranks(self, output_path):
-        return power.get_ranks( output_path, 3, True )
-
-##
-# Wrapper for running logistic method.
-#
-class LogComplementFactorMethod:
-    def __init__(self, name, path):
-        self.name = name
-        self.path = path
-
-    def run(self, data_prefix, params, output_file, include_covariates = False):
-        cmd = [ self.path,
-                "-m", "glm",
-                "-l", "log-complement",
+                "-l", self.method,
                 "-n", str( params.num_tests ),
                 data_prefix + ".pair",
                 data_prefix ]
@@ -358,7 +334,7 @@ class StepwiseRegression:
 
 
 g_methods = [ LogLinearMethod( "Log-linear", "bayesic" ),
-             LogisticFactorMethod( "Logistic", "bayesic" ),
+             GLMFactorMethod( "Logistic", "bayesic" ),
              ClosedMethod( "Closed", "bayesic", "../tools/closed_correction/closed_correction.py" ),
              StepwiseRegression( "Stepwise", "bayesic" ) ]
 
@@ -370,7 +346,6 @@ g_methods = [ LogLinearMethod( "Log-linear", "bayesic" ),
 def get_methods( ):
     global g_methods
     return g_methods
-    #return [ ClosedMethod( "Closed", "bayesic", "../tools/closed_correction/closed_correction.py" ) ]
 
 ##
 # Runs all defined methods on the given plink file.
@@ -418,7 +393,7 @@ def calculate_power(params, method_handler, include = None):
         method_output_file = method_handler.get_output_file( method.name )
         total, num_significant = method.num_significant( method_output_file, params, include )
 
-        method_power[ method.name ] = get_confidence_interval( total, num_significant )
+        method_power[ method.name ] = get_confidence_interval( params.num_pairs, num_significant )
 
     return method_power
 
