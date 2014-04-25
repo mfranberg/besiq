@@ -107,9 +107,16 @@ void glm_tukey_method::run(const snp_row &row1, const snp_row &row2, std::ostrea
     if( null_info.converged && alt_info.converged )
     {
         double LR = -2 * ( null_info.logl - alt_info.logl );
-        double p = 1.0 - chi_square_cdf( LR, 1 );
-
-        output << b[ 2 ] << "\t" << alt_info.se_beta[ 2 ] << "\t" << alt_info.p_value[ 2 ] << "\t" << LR << "\t" << p;
+        
+        try
+        {
+            double p = 1.0 - chi_square_cdf( LR, 1 );
+            output << b[ 2 ] << "\t" << alt_info.se_beta[ 2 ] << "\t" << alt_info.p_value[ 2 ] << "\t" << LR << "\t" << p;
+        }
+        catch(bad_domain_value &e)
+        {
+            output << "NA\tNA\tNA\tNA\tNA";
+        }
     }
     else
     {

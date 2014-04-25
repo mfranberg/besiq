@@ -1,6 +1,48 @@
 #ifndef __LIBDCDF_H__
 #define __LIBDCDF_H__
 
+#include <sstream>
+#include <stdexcept>
+
+class bad_domain_value: public std::exception
+{
+public:
+    /**
+     * Constructor.
+     *
+     * @param value The value that caused an error when computing a p-value.
+     */
+    bad_domain_value(double value)
+    {
+        std::ostringstream error_message;
+        error_message << "Could not compute p-value for: " << value << std::endl;
+        m_message = error_message.str( ).c_str( );
+    }
+
+    /**
+     * Destructor.
+     */
+    virtual ~bad_domain_value() throw()
+    {
+    }
+
+    /**
+     * Returns the error message.
+     *
+     * @return the error message.
+     */
+    virtual const char* what() const throw()
+    {
+        return m_message.c_str( );
+    }
+
+private:
+    /**
+     * The error message.
+     */
+    std::string m_message;
+};
+
 /**
  * Computes the probability Pr[ X < x ] where X has a chi^2
  * distribution.

@@ -112,9 +112,16 @@ void glm_factor_method::run(const snp_row &row1, const snp_row &row2, std::ostre
     if( null_info.converged && alt_info.converged )
     {
         double LR = -2 * ( null_info.logl - alt_info.logl );
-        double p = 1.0 - chi_square_cdf( LR, 4 );
 
-        output << LR << "\t" << p;
+        try
+        {
+            double p = 1.0 - chi_square_cdf( LR, 4 );
+            output << LR << "\t" << p;
+        }
+        catch(bad_domain_value &e)
+        {
+            output << "NA\tNA";
+        }
     }
     else
     {

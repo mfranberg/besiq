@@ -105,12 +105,25 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, ir
         if( inverted )
         {
             output.se_beta = sqrt( diagvec( C ) );
-            vec wald_z = b / output.se_beta;
-            output.p_value = 1.0 - chi_square_cdf( wald_z % wald_z, 1 );
             output.num_iters = num_iter;
             output.converged = true;
             output.mu = mu;
             output.logl = logl;
+            
+            vec wald_z = b / output.se_beta;
+            vec chi2_value = wald_z % wald_z;
+            output.p_value = -1.0 * ones<vec>( chi2_value.n_elem );
+            for(int i = 0; i < chi2_value.n_elem; i++)
+            {
+                try
+                {
+                    output.p_value[ i ] = 1.0 - chi_square_cdf( chi2_value[ i ], 1 );
+                }
+                catch(bad_domain_value &e)
+                {
+                    continue;
+                }
+            }
         }
         else
         {

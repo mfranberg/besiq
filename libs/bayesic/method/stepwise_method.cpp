@@ -45,7 +45,16 @@ stepwise_method::run(const snp_row &row1, const snp_row &row2, std::ostream &out
         {
             double LR = -2.0*(likelihood[ i ].log_value( ) - likelihood[ 0 ].log_value( ));
             const char *end = (i < m_models.size( ) - 1) ? "\t" : "";
-            output << 1.0 - chi_square_cdf( LR, m_models[ i ]->df( ) ) << end;
+            double p_value = 1.0 - chi_square_cdf( LR, m_models[ i ]->df( ) );
+
+            try
+            {
+                output << 1.0 - chi_square_cdf( LR, m_models[ i ]->df( ) ) << end;
+            }
+            catch(bad_domain_value &e)
+            {
+                output << "NA" << end;
+            }
         }
     }
     else

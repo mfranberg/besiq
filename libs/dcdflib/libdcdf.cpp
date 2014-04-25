@@ -1,5 +1,3 @@
-#include <stdexcept>
-
 #include <dcdflib/libdcdf.hpp>
 
 extern "C"
@@ -26,7 +24,7 @@ chi_square_cdf(double x, unsigned int df)
     }
     else
     {
-        throw std::runtime_error( "chi_square_cdf: Could not compute chi^2 p-value." );
+        throw bad_domain_value( x );
     }
 }
 
@@ -50,6 +48,6 @@ gamma_cdf_inv(double p, double a, double b)
     }
     else
     {
-        throw std::runtime_error( "gamma_cdf_inv: Could not compute inverse." );
+        throw bad_domain_value( x );
     }
 }

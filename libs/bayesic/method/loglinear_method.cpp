@@ -45,7 +45,15 @@ loglinear_method::run(const snp_row &row1, const snp_row &row2, std::ostream &ou
         unsigned int best_model = std::distance( bic.begin( ), std::min_element( bic.begin( ) + 1, bic.end( ) ) );
         double LR = -2.0*(likelihood[ best_model ].log_value( ) - likelihood[ 0 ].log_value( ));
     
-        output << 1.0 - chi_square_cdf( LR, m_models[ best_model ]->df( ) );
+        try
+        {
+            double p_value = 1.0 - chi_square_cdf( LR, m_models[ best_model ]->df( ) );
+            output << p_value;
+        }
+        catch(bad_domain_value &e)
+        {
+            output << "NA";
+        }
     }
     else
     {

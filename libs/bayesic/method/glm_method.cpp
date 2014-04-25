@@ -45,7 +45,7 @@ void glm_method::run(const snp_row &row1, const snp_row &row2, std::ostream &out
     irls_info info;
     arma::vec b = irls( m_design_matrix, get_data( )->phenotype, missing, m_model, info );   
 
-    if( info.converged )
+    if( info.converged && info.p_value[ 2 ] >= 0.0 )
     {
         output << b[ 2 ] << "\t" << info.se_beta[ 2 ] << "\t" << info.p_value[ 2 ];
     }
