@@ -41,6 +41,11 @@ struct method_data
     unsigned int num_single;
 
     /**
+     * If true print all parameter estimates.
+     */
+    bool print_params;
+
+    /**
      * The probability that any one snp is associated.
      */
     float single_prior;

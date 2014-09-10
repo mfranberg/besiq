@@ -30,6 +30,18 @@ glm_factor_method::glm_factor_method(method_data_ptr data, const glm_model &mode
 void
 glm_factor_method::init(std::ostream &output)
 {
+    if( get_data( )->print_params )
+    {
+        output << "b_00" << "\t";
+        output << "b_01" << "\t";
+        output << "b_02" << "\t";
+        output << "b_10" << "\t";
+        output << "b_20" << "\t";
+        output << "b_11" << "\t";
+        output << "b_12" << "\t";
+        output << "b_21" << "\t";
+        output << "b_22" << "\t";    
+    }
     output << "LR" << "\t" << "P";
 }
 
@@ -107,10 +119,20 @@ void glm_factor_method::run(const snp_row &row1, const snp_row &row2, std::ostre
 
     irls_info alt_info;
     init_alt( row1, row2, m_alt_design_matrix, missing );
-    irls( m_alt_design_matrix, get_data( )->phenotype, missing, m_model, alt_info );
+    arma::vec b = irls( m_alt_design_matrix, get_data( )->phenotype, missing, m_model, alt_info );
 
     if( null_info.converged && alt_info.converged )
     {
+        if( get_data( )->print_params )
+        {
+            output << b[ 8 ] << "\t";
+            for(int i = 0; i < 8; i++)
+            {
+                output << b[ i ] << "\t";
+            }
+        }
+
+
         double LR = -2 * ( null_info.logl - alt_info.logl );
 
         try
@@ -125,6 +147,13 @@ void glm_factor_method::run(const snp_row &row1, const snp_row &row2, std::ostre
     }
     else
     {
+        if( get_data( )->print_params )
+        {
+            for(int i = 0; i < 9; i++)
+            {
+                output << "NA" << "\t";
+            }
+        }
         output << "NA\tNA";
     }
 }

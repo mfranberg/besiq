@@ -99,6 +99,7 @@ main(int argc, char *argv[])
     parser.add_option( "-f", "--factor" ).choices( &factor_choices[ 0 ], &factor_choices[ 3 ] ).help( "Determines how to code the SNPs, in 'factor' no order of the alleles is assumed, in 'additive' the SNPs are coded as the number of minor alleles, in 'tukey' the coding is the same as factor except that a single parameter for the interaction is used." ).set_default( "factor" );
 
     parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
+    parser.add_option( "--print-params" ).action( "store_true" ).set_default( 0 ).help( "Print parameter estimates in factor GLM models." );
     
     OptionGroup group = OptionGroup( parser, "Options for bayes", "These options will change the behaviour of bayes and fine." );
     group.add_option( "-n", "--num-interactions" ).type( "int" ).help( "The number of interactions to correct for, this is used in the model prior (default: all)." );
@@ -135,13 +136,17 @@ main(int argc, char *argv[])
     
     /* Read additional data  */
     method_data_ptr data( new method_data( ) );
+    data->print_params = (bool) options.get( "print_params" );
     data->missing = zeros<uvec>( genotype_file->get_samples( ).size( ) );
-    data->phenotype = create_phenotype_vector( genotype_file, data->missing );
     std::vector<std::string> order = genotype_file->get_sample_iids( );
     if( options.is_set( "pheno" ) )
     {
         std::ifstream phenotype_file( options[ "pheno" ].c_str( ) );
         data->phenotype = parse_phenotypes( phenotype_file, data->missing, order );
+    }
+    else
+    {
+        data->phenotype = create_phenotype_vector( genotype_file, data->missing );
     }
     if( options.is_set( "cov" ) )
     {
