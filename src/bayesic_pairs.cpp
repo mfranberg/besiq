@@ -299,8 +299,10 @@ void output_between_restrict(std::ostream &output, const output_options &oo, std
  * 
  * @param output Output stream.
  * @param oo Output options.
+ * @param snp_set Set of SNPs.
+ * @param ignore_in_set If true, ignore pairs between SNPs in the set.
  */
-void output_set(std::ostream &output, const output_options &oo, const std::set<size_t> &snp_set)
+void output_set(std::ostream &output, const output_options &oo, const std::set<size_t> &snp_set, bool ignore_in_set)
 {
     std::set<size_t>::const_iterator it;
     for( it = snp_set.begin( ); it != snp_set.end( ); ++it )
@@ -311,11 +313,14 @@ void output_set(std::ostream &output, const output_options &oo, const std::set<s
             continue;
         }
 
-        for(int snp2 = 0; snp2 < oo.loci.size( ); snp2++)
+        for( int snp2 = 0; snp2 < oo.loci.size( ); snp2++ )
         {
             if( snp_set.count( snp2 ) > 0 )
             {
-                continue;
+                if( ignore_in_set || snp2 <= snp1 )
+                {
+                    continue;
+                }
             }
 
             if( oo.maf_vec[ snp2 ] >= oo.maf_threshold && (oo.maf_vec[ snp1 ] * oo.maf_vec[ snp2 ]) >= oo.combined_threshold )
@@ -365,6 +370,7 @@ main(int argc, char *argv[])
     parser.add_option( "-b", "--between" ).help( "Only output pairs of snps between pairs of genes as specified by this file." );
     parser.add_option( "-r", "--restrict" ).help( "Used with --between to only check the pair of genes in this list." );
     parser.add_option( "-s", "--set" ).help( "Output pairs in this set with all others, but ignore pairs when both are in this set." );
+    parser.add_option( "-n", "--set-no-ignore" ).help( "Output pairs in this set with all others including pairs in the set." );
     parser.add_option( "-o", "--out" ).help( "Name of the output file, will be gzipped." ).set_default( "" );
 
     Values options = parser.parse_args( argc, argv );
@@ -395,7 +401,12 @@ main(int argc, char *argv[])
     else if( options.is_set( "set" ) )
     {
         std::set<size_t> snp_set = parse_set( options[ "set" ].c_str( ), oo.loci );
-        output_set( output, oo, snp_set );
+        output_set( output, oo, snp_set, true );
+    }
+    else if( options.is_set( "set_no_ignore" ) )
+    {
+        std::set<size_t> snp_set = parse_set( options[ "set_no_ignore" ].c_str( ), oo.loci );
+        output_set( output, oo, snp_set, false );
     }
     else if( options.is_set( "between" ) )
     {
