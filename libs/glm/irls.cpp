@@ -9,10 +9,6 @@
 
 using namespace arma;
 
-/**
-* Sets the weights of missing observations to zero, so that
-* the will not influence the regression.
-*/
 void
 set_missing_to_zero(const uvec &missing, vec &w)
 {   

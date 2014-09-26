@@ -52,6 +52,25 @@ static const int IRLS_MAX_ITERS = 25;
 static double IRLS_TOLERANCE = 10e-8;
 
 /**
+* Sets the weights of missing observations to zero, so that
+* the will not influence the regression.
+*
+* @param missing Missing individuals are indicated by 1.
+* @param w Vector of weights, missing entries will be replaced by 0.
+*/
+void set_missing_to_zero(const arma::uvec &missing, arma::vec &w);
+
+/**
+ * Compute the chisquare cdf for a vector of chi square variables.
+ *
+ * @param x Vector of chi square values.
+ * @param df Degrees of freedom.
+ *
+ * @return Vector of corresponding p-values.
+ */
+arma::vec chi_square_cdf(const arma::vec &x, unsigned int df);
+
+/**
  * Solves the weighted least square problem:
  *   
  *   W*X*W*b = X*W*y
