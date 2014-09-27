@@ -22,6 +22,22 @@
 arma::mat joint_count(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight);
 
 /**
+ * Aggregates the phenotype for each genotype. The
+ * counts are based on the weight, so an individual with weight 0.5 will
+ * get 0.5 * phenotype.
+ *
+ * @param row1 The first snp.
+ * @param row2 The second snp.
+ * @param phenotype The phenotype 0.0 or 1.0.
+ * @param weight The weight of each individual.
+ * 
+ * @return Counts for each genotype. They are represented as a 9x3 matrix,
+ *         so that each row is a cell ordered from left to right and top to bottom,
+ *         and the columns are sum of phenotypes, number of individuals and sum of squared phenotypes.
+ */
+arma::mat joint_count_cont(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight);
+
+/**
  * Counts the number of individuals with each genotype.
  *
  * @param row1 The first snp.

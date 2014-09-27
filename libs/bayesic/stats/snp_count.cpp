@@ -18,6 +18,24 @@ joint_count(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype
     return counts;
 }
 
+arma::mat
+joint_count_cont(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight)
+{
+    arma::mat counts = zeros<mat>( 9, 3 );
+    for(int i = 0; i < row1.size( ); i++)
+    {
+        if( row1[ i ] != 3 && row2[ i ] != 3 )
+        {
+            double pheno = phenotype[ i ];
+            counts( 3 * row1[ i ] + row2[ i ], 0 ) += weight[ i ] * pheno;
+            counts( 3 * row1[ i ] + row2[ i ], 1 ) += weight[ i ] * 1.0;
+            counts( 3 * row1[ i ] + row2[ i ], 2 ) += weight[ i ] * pheno * pheno;
+        }
+    }
+
+    return counts;
+}
+
 arma::vec
 joint_count(const snp_row &row1, const snp_row &row2)
 {
