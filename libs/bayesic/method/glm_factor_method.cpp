@@ -132,7 +132,6 @@ void glm_factor_method::run(const snp_row &row1, const snp_row &row2, std::ostre
             }
         }
 
-
         double LR = -2 * ( null_info.logl - alt_info.logl );
 
         try
@@ -151,7 +150,7 @@ void glm_factor_method::run(const snp_row &row1, const snp_row &row2, std::ostre
         {
             for(int i = 0; i < 9; i++)
             {
-                output << "NA" << "\t";
+                output << "NA\t";
             }
         }
         output << "NA\tNA";

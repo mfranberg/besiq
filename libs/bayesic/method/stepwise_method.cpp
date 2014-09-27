@@ -22,7 +22,30 @@ stepwise_method::num_ok_samples(const snp_row &row1, const snp_row &row2, const 
 void
 stepwise_method::init(std::ostream &output)
 {
-    output << "P_null\tP_snp1\tP_snp2";
+    output << "P_null\tP_snp1\tP_snp2\tLD_LR";
+}
+
+double
+stepwise_method::compute_ld_lr(const snp_row &row1, const snp_row &row2)
+{
+    arma::mat n = joint_count( row1, row2 ) + 1.0;
+    double total = arma::accu( n );
+    double p_a = (2 * (n[ 0 ] + n[ 1 ] + n[ 2 ] ) + n[ 3 ] + n[ 4 ] + n[ 5 ] ) / ( 2 * total );
+    double p_b = (2 * (n[ 0 ] + n[ 3 ] + n[ 6 ] ) + n[ 1 ] + n[ 4 ] + n[ 7 ] ) / ( 2 * total );
+    double p_AA = ( n[ 0 ] + n[ 1 ] + n[ 2 ] ) / total;
+    double p_BB = ( n[ 0 ] + n[ 3 ] + n[ 6 ] ) / total;
+
+    double delta_ab = (1.0 / total) * ( 2 * n[ 0 ] + n[ 1 ] + n[ 3 ] + 0.5 * n[ 4 ] ) - 2 * p_a * p_b;
+
+    double pi_a = p_a * ( 1 - p_a );
+    double pi_b = p_b * ( 1 - p_b );
+
+    double D_a = p_AA - p_a * p_a;
+    double D_b = p_BB - p_b * p_b;
+
+    double LR = total * delta_ab * delta_ab / ( ( pi_a + D_a ) * ( pi_b + D_b ) );
+
+    return LR;
 }
 
 void
@@ -31,6 +54,7 @@ stepwise_method::run(const snp_row &row1, const snp_row &row2, std::ostream &out
     std::vector<log_double> likelihood( m_models.size( ), 0.0 );
     std::vector<double> bic( m_models.size( ), 0.0 );
     bool all_valid = true;
+    
     for(int i = 0; i < m_models.size( ); i++)
     {
         bool is_valid = false;
@@ -44,16 +68,15 @@ stepwise_method::run(const snp_row &row1, const snp_row &row2, std::ostream &out
         for(int i = 1; i < m_models.size( ); i++)
         {
             double LR = -2.0*(likelihood[ i ].log_value( ) - likelihood[ 0 ].log_value( ));
-            const char *end = (i < m_models.size( ) - 1) ? "\t" : "";
             double p_value = 1.0 - chi_square_cdf( LR, m_models[ i ]->df( ) );
 
             try
             {
-                output << 1.0 - chi_square_cdf( LR, m_models[ i ]->df( ) ) << end;
+                output << 1.0 - chi_square_cdf( LR, m_models[ i ]->df( ) ) << "\t";
             }
             catch(bad_domain_value &e)
             {
-                output << "NA" << end;
+                output << "NA\t";
             }
         }
     }
@@ -61,8 +84,9 @@ stepwise_method::run(const snp_row &row1, const snp_row &row2, std::ostream &out
     {
         for(int i = 1; i < m_models.size( ); i++)
         {
-            const char *end = (i < m_models.size( ) - 1) ? "\t" : "";
-            output << "NA" << end;
+            output << "NA\t";
         }
     }
+    
+    output << compute_ld_lr( row1, row2 );
 }

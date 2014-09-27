@@ -44,6 +44,18 @@ public:
     unsigned int num_ok_samples(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype);
 
     /**
+     * Computes a likelihood ratio statistics that measures
+     * whether two SNPs are in linkage disequilibrium or not. It
+     * should follow a chi^2(1) distribution if there is no LD.
+     *
+     * @param row1 The first snp.
+     * @param row2 The second snp.
+     *
+     * @return The estimated likelihood ratio statistic.
+     */
+    double compute_ld_lr(const snp_row &row1, const snp_row &row2);
+
+    /**
      * @see method_type::run.
      */
     virtual void run(const snp_row &row1, const snp_row &row2, std::ostream &output);
