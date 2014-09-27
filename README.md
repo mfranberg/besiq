@@ -4,9 +4,10 @@ Bayesic is an application for analysing pairwise genetic interactions in case/co
 
 The following methods are currently implemented:
 
-* Bayesian model posterior (supports covariates through heuristic, is very fast).
-* Logistic regression with Wald test on cross-term (requires iteration, and is a bit slower).
-* Loglinear model with analytic test (does not support covariates, but is very fast).
+* Stagewise closed testing (efficient and powerful on a genome-wide scale)
+* GLM regression with LR test and Wald test on cross-term (requires iteration, and is a bit slower).
+* Loglinear model with analytic test (does not support covariates or model main effects, but is very fast).
+* Bayesian model posterior (experimental, supports covariates through heuristic, is very fast).
 
 The following things will be added at some point:
 
@@ -78,6 +79,7 @@ To build with dependencies without root access (note --recursive flag to get sub
     > mkdir build
     > cd build
     > cmake ../ -DCMAKE_PREFIX_PATH=$HOME/prefix
+    > make install
 
 To build with dependencies with root access:
     
@@ -94,6 +96,7 @@ To build with dependencies with root access:
     > mkdir build
     > cd build
     > cmake ../
+    > make install
 
 ## Running
 
@@ -104,7 +107,7 @@ Bayesic currently supports three modes *-m bayes*, *-m logistic* and *-m logline
     rs412512    rs516161    0.9602      3418
     rs51512     rs151251    0.1012      3412
     rs51512     rs516163    0.2312      3416
-    > ./src/bayesic -m logistic /data/dataset.pair /data/dataset
+    > ./src/bayesic -m glm -l logistic -f additive /data/dataset.pair /data/dataset
     snp1        snp2        Beta        SE          P       N
     rs412512    rs516161    0.9524      0.2041      0.0301  3418
     rs51512     rs151251    0.2141      0.5120      0.4121  3412

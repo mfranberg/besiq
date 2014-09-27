@@ -162,6 +162,11 @@ struct output_options
     std::vector<std::string> loci;
 
     /**
+     * Info for each loci.
+     */
+    std::vector<pio_locus_t> loci_info;
+
+    /**
      * The list of maf for each snp.
      */
     std::vector<double> maf_vec;
@@ -177,6 +182,11 @@ struct output_options
      * be included or not, based on the product of their mafs.
      */
     double combined_threshold;
+
+    /**
+     * Smallest allowable distance between pairs.
+     */
+    long long pos_threshold;
 };
 
 /**
@@ -203,6 +213,11 @@ void output_within(std::ostream &output, const output_options &oo, const std::ma
             for(int j = i + 1; j < indices.size( ); j++)
             {
                 int snp2 = indices[ j ];
+                if( oo.loci_info[ snp1 ].chromosome == oo.loci_info[ snp2 ].chromosome && !( abs( oo.loci_info[ snp1 ].bp_position - oo.loci_info[ snp2 ].bp_position ) >= oo.pos_threshold ) )
+                {
+                    continue;
+                }
+
                 if( oo.maf_vec[ snp2 ] >= oo.maf_threshold && (oo.maf_vec[ snp1 ] * oo.maf_vec[ snp2 ]) >= oo.combined_threshold )
                 {
                     output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << "\n";
@@ -246,6 +261,12 @@ void output_between(std::ostream &output, const output_options &oo, std::map< st
                 for(int j = 0; j < indices2.size( ); j++)
                 {
                     int snp2 = indices2[ j ];
+
+                    if( oo.loci_info[ snp1 ].chromosome == oo.loci_info[ snp2 ].chromosome && !( abs( oo.loci_info[ snp1 ].bp_position - oo.loci_info[ snp2 ].bp_position ) >= oo.pos_threshold ) )
+                    {
+                        continue;
+                    }
+
                     if( oo.maf_vec[ snp2 ] >= oo.maf_threshold && (oo.maf_vec[ snp1 ] * oo.maf_vec[ snp2 ]) >= oo.combined_threshold )
                     {
                         output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << "\n";
@@ -284,6 +305,11 @@ void output_between_restrict(std::ostream &output, const output_options &oo, std
             for(int j = 0; j < indices2.size( ); j++)
             {
                 int snp2 = indices2[ j ];
+                if( oo.loci_info[ snp1 ].chromosome == oo.loci_info[ snp2 ].chromosome && !( abs( oo.loci_info[ snp1 ].bp_position - oo.loci_info[ snp2 ].bp_position ) >= oo.pos_threshold ) )
+                {
+                    continue;
+                }
+
                 if( oo.maf_vec[ snp2 ] >= oo.maf_threshold && (oo.maf_vec[ snp1 ] * oo.maf_vec[ snp2 ]) >= oo.combined_threshold )
                 {
                     output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << "\n";
@@ -323,6 +349,11 @@ void output_set(std::ostream &output, const output_options &oo, const std::set<s
                 }
             }
 
+            if( oo.loci_info[ snp1 ].chromosome == oo.loci_info[ snp2 ].chromosome && !( abs( oo.loci_info[ snp1 ].bp_position - oo.loci_info[ snp2 ].bp_position ) >= oo.pos_threshold ) )
+            {
+                continue;
+            }
+
             if( oo.maf_vec[ snp2 ] >= oo.maf_threshold && (oo.maf_vec[ snp1 ] * oo.maf_vec[ snp2 ]) >= oo.combined_threshold )
             {
                 output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << "\n";
@@ -348,6 +379,11 @@ void output_all(std::ostream &output, const output_options &oo)
 
         for(int j = i + 1; j < oo.loci.size( ); j++)
         {
+            if( oo.loci_info[ i ].chromosome == oo.loci_info[ j ].chromosome && !( abs( oo.loci_info[ i ].bp_position - oo.loci_info[ j ].bp_position ) >= oo.pos_threshold ) )
+            {
+                continue;
+            }
+
             if( oo.maf_vec[ j ] >= oo.maf_threshold && (oo.maf_vec[ i ] * oo.maf_vec[ j ]) >= oo.combined_threshold )
             {
                 output << oo.loci[ i ] << " " << oo.loci[ j ] << "\n";
@@ -366,6 +402,7 @@ main(int argc, char *argv[])
     
     parser.add_option( "-m", "--maf" ).type( "float" ).set_default( 0.0 ).help( "Remove pairs where one of the SNPs have a maf less than this." );
     parser.add_option( "-c", "--combined-maf" ).type( "float" ).set_default( 0.0 ).help( "Remove pairs where the product of the MAFs is less than this." );
+    parser.add_option( "-d", "--distance" ).type( "long" ).set_default( 0 ).help( "Smallest allowable distance between two pairs" );
     parser.add_option( "-w", "--within" ).help( "Only output pairs of snps within the genes given by this file." );
     parser.add_option( "-b", "--between" ).help( "Only output pairs of snps between pairs of genes as specified by this file." );
     parser.add_option( "-r", "--restrict" ).help( "Used with --between to only check the pair of genes in this list." );
@@ -389,9 +426,11 @@ main(int argc, char *argv[])
     output_options oo;
     oo.maf_threshold = (double) options.get( "maf" );
     oo.combined_threshold = (double) options.get( "combined_maf" );
+    oo.pos_threshold = (long) options.get( "distance" );
 
     plink_file_ptr genotype_file = open_plink_file( args[ 0 ] );
     oo.maf_vec = compute_maf( genotype_file );
+    oo.loci_info = std::vector<pio_locus_t>( genotype_file->get_loci( ) );
     oo.loci = genotype_file->get_locus_names( );
     if( options.is_set( "within" ) )
     {

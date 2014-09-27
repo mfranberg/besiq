@@ -19,12 +19,14 @@
 #include <bayesic/prior.hpp>
 #include <bayesic/method/bayesic_method.hpp>
 #include <bayesic/method/bayesic_fine_method.hpp>
+#include <bayesic/method/lm_factor_method.hpp>
 #include <bayesic/method/glm_method.hpp>
 #include <bayesic/method/glm_factor_method.hpp>
 #include <bayesic/method/glm_tukey_method.hpp>
 #include <bayesic/method/loglinear_method.hpp>
 #include <bayesic/method/caseonly_method.hpp>
 #include <bayesic/method/stepwise_method.hpp>
+#include <bayesic/method/lm_stepwise_method.hpp>
 #include <bayesic/method/method.hpp>
 
 using namespace arma;
@@ -89,11 +91,11 @@ main(int argc, char *argv[])
                                          .epilog( EPILOG );
     
     
-    char const* const choices[] = { "bayes", "bayes-fine", "glm", "loglinear", "caseonly", "stepwise" };
+    char const* const choices[] = { "bayes", "bayes-fine", "lm", "glm", "loglinear", "caseonly", "stepwise", "lm-stepwise" };
     char const* const link_choices[] = { "logistic", "log-complement", "odds-additive", "penetrance-additive", "penetrance-multiplicative" };
     char const* const factor_choices[] = { "factor", "additive", "tukey" };
 
-    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 6 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'bayes-fine', 'glm', 'loglinear', 'caseonly' or 'stepwise'." );
+    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 8 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'bayes-fine', 'lm', 'glm', 'loglinear', 'caseonly', 'stepwise', or 'lm-stepwise'." );
     parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
     parser.add_option( "-l", "--link-function" ).choices( &link_choices[ 0 ], &link_choices[ 5 ] ).metavar( "link" ).help( "The link function, or scale, that is used for the penetrance: 'logistic' log(p/(1-p)), 'log-complement' log(1 - p), 'odds-additive' p/(1-p), 'penetrance-additive' p, 'penetrance-multiplicative' log(p)." ).set_default( "logistic" );
     parser.add_option( "-f", "--factor" ).choices( &factor_choices[ 0 ], &factor_choices[ 3 ] ).help( "Determines how to code the SNPs, in 'factor' no order of the alleles is assumed, in 'additive' the SNPs are coded as the number of minor alleles, in 'tukey' the coding is the same as factor except that a single parameter for the interaction is used." ).set_default( "factor" );
@@ -231,6 +233,16 @@ main(int argc, char *argv[])
             run_method( glm_tukey, genotype_matrix, locus_names, pairs );
         }
     }
+    else if( options[ "method" ] == "lm" )
+    {
+        if( options[ "factor" ] != "factor" )
+        {
+            std::cerr << "bayesic:error: Only factor supported for linear models." << std::endl;
+            exit( 1 );
+        }
+        lm_factor_method lm_factor( data );
+        run_method( lm_factor, genotype_matrix, locus_names, pairs );
+    }
     else if( options[ "method" ] == "loglinear" )
     {
         loglinear_method loglinear( data );
@@ -244,6 +256,11 @@ main(int argc, char *argv[])
     else if( options[ "method" ] == "stepwise" )
     {
         stepwise_method stepwise( data );
+        run_method( stepwise, genotype_matrix, locus_names, pairs );
+    }
+    else if( options[ "method" ] == "lm-stepwise" )
+    {
+        lm_stepwise_method stepwise( data );
         run_method( stepwise, genotype_matrix, locus_names, pairs );
     }
 
