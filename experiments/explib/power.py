@@ -1,6 +1,5 @@
 from math import sqrt, log
 
-
 def read_significance_value_from_file(csv_file, column, include = None):
     csv_file.seek( 0 )
     value_list = list( )
@@ -24,7 +23,6 @@ def read_significance_value_from_file(csv_file, column, include = None):
 def compute_from_file(csv_file, column, threshold, num_tests, is_pvalue = True, include = None, correction = "HB"):
     probs = read_significance_value_from_file( csv_file, column, include )
     
-    total = len( probs )
     num_significant = 0.0
     if is_pvalue:
         if correction == "HB":
@@ -34,7 +32,7 @@ def compute_from_file(csv_file, column, threshold, num_tests, is_pvalue = True, 
     else:
         num_significant = compute_from_posterior( probs, threshold )
 
-    return ( total, num_significant )
+    return num_significant
 
 def compute_from_posterior(posterior, threshold):
     return len( [ p for p in posterior if p >= threshold ] )

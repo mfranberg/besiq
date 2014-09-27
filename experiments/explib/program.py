@@ -1,8 +1,10 @@
 import os
 import subprocess
+import sys
 
 from math import sqrt
 from . import power
+from scipy.stats import chi2
 
 class BayesicMethodFirstStep:
     def __init__(self, name, path, alpha = 10.0, beta = 10.0, num_tests = None, num_single = None, p = None):
@@ -141,13 +143,48 @@ class LogLinearMethod:
 ##
 # Wrapper for running stepwise log-linear method.
 #
+class ScaleInvarianceMethod:
+    def __init__(self, name, path, pvalue_column = 7):
+        self.name = name
+        self.path = path
+        self.pvalue_column = pvalue_column
+
+    def run(self, data_prefix, params, output_file, include_covariates = False):
+       
+        cmd =[ "python",
+               self.path,
+               "--only-glm",
+               "--alpha", str( params.threshold ),
+               data_prefix + ".pair",
+               data_prefix
+               ]
+
+        num_tests = [ params.num_tests, 0, 0, 0 ]
+        cmd.append( "--num-tests" )
+        cmd.extend( map( str, num_tests ) )
+
+        if include_covariates:
+            cmd.extend( [ "-c", data_prefix + ".cov" ] )
+
+        print " ".join( cmd )
+        subprocess.call( cmd, stdout = output_file )
+
+    def num_significant(self, output_path, params, include = None):
+        return power.compute_from_file( output_path, self.pvalue_column, params.threshold, 1, True, include, correction = "B" )
+    
+    def get_ranks(self, output_path):
+        return power.get_ranks_stepwise( output_path, [2,3,4,9] )
+
+##
+# Wrapper for running stepwise log-linear method.
+#
 class ClosedMethod:
-    def __init__(self, name, path, correction_tool_path, pvalue_column = 7, use_single = True):
+    def __init__(self, name, path, correction_tool_path, pvalue_column = 7, weight = [ 0.25, 0.25, 0.25, 0.25 ] ):
         self.name = name
         self.path = path
         self.correction_tool_path = correction_tool_path
         self.pvalue_column = pvalue_column
-        self.use_single = use_single
+        self.weight = weight
 
     def run(self, data_prefix, params, output_file, include_covariates = False):
         step1_file = open( output_file.name + "_step1", "w+" )
@@ -164,18 +201,23 @@ class ClosedMethod:
         print " ".join( cmd )
         subprocess.call( cmd, stdout = step1_file )
         step1_file.close( )
+
+        num_tests = [ n for n in params.closed_num_tests ]
+        if params.closed_num_tests[ 0 ] == 0 and params.num_tests > 1:
+            num_tests[ 0 ] = params.num_tests
        
         cmd =[ "python",
                self.correction_tool_path,
-               "--step1-tests", str( params.num_tests ),
                "--alpha", str( params.threshold ),
                step1_file.name,
                data_prefix
                ]
 
-        num_single = max( int( 0.5 + sqrt( 2 * params.num_tests + 0.25 ) ), 1 )
-        if self.use_single and num_single > 1:
-               cmd.extend( [ "--step2-tests", str( num_single ) ] )
+        cmd.append( "--weight" )
+        cmd.extend( map( str, self.weight ) )
+
+        cmd.append( "--num-tests" )
+        cmd.extend( map( str, num_tests ) )
 
         if include_covariates:
             cmd.extend( [ "-c", data_prefix + ".cov" ] )
@@ -184,11 +226,37 @@ class ClosedMethod:
         subprocess.call( cmd, stdout = output_file )
 
     def num_significant(self, output_path, params, include = None):
-        total, num_sig = power.compute_from_file( output_path, self.pvalue_column, params.threshold, 1, True, include, correction = "B" )
-        return ( params.num_pairs, num_sig )
+        return power.compute_from_file( output_path, self.pvalue_column, params.threshold, 1, True, include, correction = "B" )
     
     def get_ranks(self, output_path):
         return power.get_ranks_stepwise( output_path, [2,3,4,9] )
+
+##
+# Wrapper for running stepwise log-linear method.
+#
+class ClosedPartMethod:
+    def __init__(self, name, path, pvalue_column = 7):
+        self.name = name
+        self.path = path
+        self.pvalue_column = pvalue_column
+
+    def run(self, data_prefix, params, output_file, include_covariates = False): 
+        cmd = [ self.path,
+                "-m", "stepwise",
+                "-n", str( params.num_tests ),
+                data_prefix + ".pair",
+                data_prefix ]
+
+        print " ".join( cmd )
+        subprocess.call( cmd, stdout = output_file )
+
+    def num_significant(self, output_path, params, include = None):
+        print self.pvalue_column
+        return power.compute_from_file( output_path, self.pvalue_column, params.threshold, 1, True, include, correction = "B" )
+    
+    def get_ranks(self, output_path):
+        return power.get_ranks_stepwise( output_path, [2,3,4,9] )
+
 ##
 # Wrapper for running logistic method.
 #
@@ -281,27 +349,29 @@ class StepwiseRegression:
         self.num_single_significant = 0
 
     def run(self, data_prefix, params, output_file, include_covariates = False):
-        cmd = [ "plink2", "--bfile", data_prefix, "--logistic", "--out", output_file.name ]
+        cmd = [ "plink2", "--bfile", data_prefix, "--model", "--out", output_file.name ]
         subprocess.check_call( cmd, stdout = open( os.devnull, "w" ) )
 
-        num_single = max( int( 0.5 + sqrt( 2 * params.num_tests + 0.25 ) ), 1 )
         significant = set( )
-        with open( output_file.name + ".assoc.logistic", "r" ) as assoc_file:
+        with open( output_file.name + ".model", "r" ) as assoc_file:
             next( assoc_file )
 
             for line in assoc_file:
                 column = line.strip( ).split( )
+                if column[ 4 ] != "GENO":
+                    continue
+
                 try:
-                    pvalue = float( column[ 8 ] )
-                    if pvalue < 0.05 / num_single:
+                    pvalue = float( column[ 9 ] )
+                    if pvalue < 0.10:
                         significant.add( column[ 1 ] )
                 except:
                     continue
 
         cmd = [ self.path,
                 "-m", "glm",
+                "-f", "factor",
                 "-l", "logistic",
-                "-n", str( params.num_tests ),
                 data_prefix + ".pair",
                 data_prefix ]
 
@@ -316,14 +386,15 @@ class StepwiseRegression:
         output_file.seek( 0 )
         output_file.truncate( 0 )
 
-        self.num_single_significant = 0
+        num_single = max( int( 0.5 + sqrt( 2 * params.num_tests + 0.25 ) ), 1 )
+        expected_num_single = int( 0.10 * num_single + 0.5 )
+        self.num_single_significant = expected_num_single * ( expected_num_single - 1 ) / 2
         for line in lines:
             column = line.strip( ).split( )
-            if not column[ 0 ] in significant and not column[ 1 ] in significant:
-                column[ 3 ] = "1.0"
-            else:
-                self.num_single_significant += 1
 
+            if not column[ 0 ] in significant or not column[ 1 ] in significant:
+                column[ 3 ] = "1.0"
+            
             output_file.write( "\t".join( column ) + "\n" )
 
     def num_significant(self, output_path, params, include = None):
@@ -332,11 +403,19 @@ class StepwiseRegression:
     def get_ranks(self, output_path):
         return power.get_ranks( output_path, 3, True )
 
+#g_methods = [ ClosedMethod( "ScaleInv equal", "bayesic", "../tools/closed_correction/closed_correction.py" ),
+#              ClosedMethod( "ScaleInv stoh", "bayesic", "../tools/closed_correction/closed_correction.py", weight = [ 0.8, 0.09, 0.09, 0.02 ] ),
+#              ClosedMethod( "ScaleInv htos", "bayesic", "../tools/closed_correction/closed_correction.py" , weight = [ 0.02, 0.09, 0.09, 0.8 ] ),
+#              ClosedMethod( "ScaleInv estoh", "bayesic", "../tools/closed_correction/closed_correction.py", weight = [ 0.799, 0.1, 0.1, 0.001 ] ),
+#              ClosedMethod( "ScaleInv htoes", "bayesic", "../tools/closed_correction/closed_correction.py" , weight = [ 0.001, 0.1, 0.1, 0.799 ] )
+#              ]
 
 g_methods = [ LogLinearMethod( "Log-linear", "bayesic" ),
-             GLMFactorMethod( "Logistic", "bayesic" ),
-             ClosedMethod( "Closed", "bayesic", "../tools/closed_correction/closed_correction.py" ),
-             StepwiseRegression( "Stepwise", "bayesic" ) ]
+             ClosedMethod( "ScaleInv (adaptive)", "bayesic", "../tools/closed_correction/closed_correction.py" ),
+             ScaleInvarianceMethod( "ScaleInv (bon)", "../tools/closed_correction/closed_correction.py" ),
+             StepwiseRegression( "Marginal first", "bayesic" ) ]
+
+#g_methods = [ StepwiseRegression( "Stepwise", "bayesic" ), ClosedMethod( "ScaleInv (closed)", "bayesic", "../tools/closed_correction/closed_correction.py" ) ]
 
 ##
 # Returns a list of methods that can run plink files.
@@ -362,7 +441,7 @@ def run_methods(params, plink_path, method_handler, include_covariates = False):
         method.run( plink_path, params, method_output_file, include_covariates )
 
 def get_confidence_interval(total, num_significant):
-    if total != 0:
+    if total > 0.0:
         # Approximate 95% Wilson score interval
         power = ( num_significant + 2.0 ) / ( total + 4.0 )
         err = 1.96 * sqrt( ( 1.0 / total ) * power * ( 1 - power ) )
@@ -391,7 +470,7 @@ def calculate_power(params, method_handler, include = None):
     method_list = get_methods( )
     for method in method_list:
         method_output_file = method_handler.get_output_file( method.name )
-        total, num_significant = method.num_significant( method_output_file, params, include )
+        num_significant = method.num_significant( method_output_file, params, include )
 
         method_power[ method.name ] = get_confidence_interval( params.num_pairs, num_significant )
 
@@ -404,7 +483,7 @@ def num_significant(params, method_handler, include = None):
     method_num_significant = dict( )
     for method in get_methods( ):
         method_output_file = method_handler.get_output_file( method.name )
-        method_num_significant[ method.name ] = method.num_significant( method_output_file, params, include )[ 1 ]
+        method_num_significant[ method.name ] = method.num_significant( method_output_file, params, include )
 
     return method_num_significant
 

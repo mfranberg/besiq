@@ -14,7 +14,7 @@ class ExperimentParams:
     ##
     # Constructor.
     #
-    def __init__(self, maf = [ 0.0, 0.0 ], sample_size = [ 0, 0 ], num_pairs = 0, num_tests = 0, sample_maf = False):
+    def __init__(self, maf = [ 0.0, 0.0 ], sample_size = [ 0, 0 ], num_pairs = 0, num_tests = 0, sample_maf = False, closed_num_tests = [ 0, 0, 0, 0 ] ):
         ##
         # Minor allele frequency.
         #
@@ -45,6 +45,11 @@ class ExperimentParams:
         #
         self.sample_maf = sample_maf
 
+        ##
+        # Number of tests for closed testing
+        #
+        self.closed_num_tests = closed_num_tests
+
 def updated_params(params, json_object):
     new_params = ExperimentParams( params.maf, params.sample_size, params.num_pairs, params.num_tests )
     
@@ -54,6 +59,7 @@ def updated_params(params, json_object):
     new_params.num_tests = json_object.get( "num_tests", params.num_tests )
     new_params.threshold = json_object.get( "threshold", params.threshold )
     new_params.sample_maf = params.sample_maf
+    new_params.closed_num_tests = params.closed_num_tests
 
     return new_params
 
@@ -215,7 +221,7 @@ class NoCovariateStrategy(ExperimentStrategy):
             method_power = program.calculate_power( params, self.method_handler )
             for method_name, power_data in method_power.iteritems( ):
                 power, lower, upper = power_data
-                line = "{0}\t{1}\t{2}\t{3}\t{4}\n".format( method_name, xvalue, power, lower, upper )
+                line = "\"{0}\"\t{1}\t{2}\t{3}\t{4}\n".format( method_name, xvalue, power, lower, upper )
                 power_file.write( line )
 
     def plot_power(self, params, experiment, power_path, plot_path):
@@ -252,7 +258,7 @@ class NullStrategy(ExperimentStrategy):
                     method_total_num_significant[ method_name ] += num_significant
 
             for method_name, total_num_significant in method_total_num_significant.iteritems( ):
-                line = "{0}\t{1}\n".format( method_name, total_num_significant / float( experiment[ 'num_chips' ] ) )
+                line = "\"{0}\"\t{1}\n".format( method_name, total_num_significant / float( experiment[ 'num_chips' ] ) )
                 power_file.write( line )
             
     def plot_power(self, params, experiment, power_path, plot_path):
@@ -281,7 +287,7 @@ class AllStrategy(ExperimentStrategy):
                 method_power = program.calculate_power( params, self.method_handler, model_pairs )
                 for method_name, power_data in method_power.iteritems( ):
                     power, lower, upper = power_data
-                    line = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n".format( method_name, model_index, h, power, upper, lower )
+                    line = "\"{0}\"\t{1}\t{2}\t{3}\t{4}\t{5}\n".format( method_name, model_index, h, power, upper, lower )
                     power_file.write( line )
             
     def plot_power(self, params, experiment, power_path, plot_path):
@@ -363,7 +369,7 @@ class CovariateStrategy(ExperimentStrategy):
             method_power = program.calculate_power( params, self.method_handler )
             for method_name, power_data in method_power.iteritems( ):
                 power, lower, upper = power_data
-                line = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n".format( method_name, xvalue, power, lower, upper, int( with_cov ) )
+                line = "\"{0}\"\t{1}\t{2}\t{3}\t{4}\t{5}\n".format( method_name, xvalue, power, lower, upper, int( with_cov ) )
                 power_file.write( line )
 
 
@@ -415,7 +421,7 @@ class SufficientCovariateStrategy(ExperimentStrategy):
             method_power = program.calculate_power( params, self.method_handler )
             for method_name, power_data in method_power.iteritems( ):
                 power, lower, upper = power_data
-                line = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n".format( method_name, xvalue, power, lower, upper, int( with_cov ) )
+                line = "\"{0}\"\t{1}\t{2}\t{3}\t{4}\t{5}\n".format( method_name, xvalue, power, lower, upper, int( with_cov ) )
                 power_file.write( line )
 
 
@@ -431,8 +437,6 @@ class SufficientCovariateStrategy(ExperimentStrategy):
                          params,
                          plot_path )
 
-
-
 ##
 # Argparse json file loader.
 #
@@ -442,16 +446,17 @@ def json_file(json_path):
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser( description = 'Runs all methods on the given models.' )
-    parser.add_argument( 'experiment_file', type=json_file, help='JSON file describing the experiments to run.' )
-    parser.add_argument( 'output_dir', type=str, help='Path where all output and temporary files will be placed.' )
     parser.add_argument( '-m', type=float, nargs=2, help="Minor allele frequency of SNPs.", default = [ 0.2, 0.2 ] )
-    parser.add_argument( '--sample-maf',  action="store_true", help='The -m argument is treated as a range and maf is sampled uniformly in this range.', default = False )
+    parser.add_argument( '--sample-maf', action="store_true", help='The -m argument is treated as a range and maf is sampled uniformly in this range.', default = False )
+    parser.add_argument( '--closed-num-tests', type=int, nargs=4, help="Number of tests to adjust for in each step (closed only)", default = [ 0, 0, 0, 0 ] )
     parser.add_argument( '-n', type=int, nargs=2, help="Number of controls and cases.", default = [ 1893, 1525 ] )
     parser.add_argument( '-s', type=int, help="Number of model instances to use when estimating power", default = 200 )
     parser.add_argument( '-i', type=int, help="Number of interactions to adjust for", default = 4000000 )
+    parser.add_argument( 'experiment_file', type=json_file, help='JSON file describing the experiments to run.' )
+    parser.add_argument( 'output_dir', type=str, help='Path where all output and temporary files will be placed.' )
 
     args = parser.parse_args( )
 
-    params = ExperimentParams( args.m, args.n, args.s, args.i )
+    params = ExperimentParams( args.m, args.n, args.s, args.i, closed_num_tests = args.closed_num_tests )
     experiment = GeneticExperiment( params, args.output_dir )
     experiment.run( args.experiment_file[ 'experiments' ] )
