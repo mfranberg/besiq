@@ -10,7 +10,11 @@ odds_additive::init_beta(const mat &X, const vec &y) const
     vec mu = (y + 0.5) / 2.0;
     vec eta = mu / ( 1.0 - mu );
     
-    return pinv( X ) * eta;
+    /* Sometimes the initialization behaves badly for the odds-additive
+     * scale by taking a too large step in the first iteration. Always
+     * shrink the initial betas some to address this.
+    */
+    return pinv( X ) * eta / 4.0;
 }
 
 vec
