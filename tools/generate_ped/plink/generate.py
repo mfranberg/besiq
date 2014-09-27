@@ -1,5 +1,6 @@
 import numpy as np
 import argparse
+import random
 import os
 from math import sqrt
 
@@ -131,7 +132,10 @@ def generate_genotypes(joint_prob, num_samples):
     snp1_list = [ 0 ] * num_samples
     snp2_list = [ 0 ] * num_samples
     i = 0
-    for snp1, snp2 in sample( joint_prob, num_samples ):
+    snps = [ (snp1, snp2) for snp1, snp2 in sample( joint_prob, num_samples ) ]
+    random.shuffle( snps )
+
+    for snp1, snp2 in snps:
         snp1_list[ i ] = TO_ALLELE[ snp1 ]
         snp2_list[ i ] = TO_ALLELE[ snp2 ]
 
@@ -195,7 +199,7 @@ def write_data(fixed_params, models, output_prefix):
     write_individuals( fixed_params.ncases, fixed_params.ncontrols, output_files.tfam_file )
     output_files.close( )
 
-    status = os.system( "plink --tfile {0} --make-bed --out {1} > /dev/null".format( path, path ) )
+    status = os.system( "plink2 --tfile {0} --make-bed --out {1} > /dev/null".format( path, path ) )
     if status == -1:
         print( "Could not run plink, is it installed?" )
         exit( 1 )

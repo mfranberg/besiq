@@ -1,6 +1,8 @@
 import argparse
 import itertools
+import random
 from functools import partial
+from math import sqrt
 
 from plink import generate
 
@@ -154,6 +156,9 @@ def find_penetrance(desired_heritability, base_risk, maf, model):
 
     return penetrance
 
+def random_penetrance(H2, p_d):
+    return [ min( max( random.normalvariate( p_d, sqrt( H2 * p_d * (1 - p_d) ) ), 0.1 ), 0.9 ) for i in range( 9 ) ]
+
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser( description='Generates all possible interaction pairs.' )
     arg_parser.add_argument( '--maf', metavar='maf', nargs=2, type=generate.probability, help='Minor allele frequency of the two snps.', required = True )
@@ -163,19 +168,24 @@ if __name__ == "__main__":
     arg_parser.add_argument( '--num-pairs', metavar='num_pairs', type=int, help='Number of pairs to generate from each model.' )
     arg_parser.add_argument( '--heritability', metavar='heritability', type=float, help='Approximate heritability of each model.', default = 0.02 )
     arg_parser.add_argument( '--base-risk', metavar='base_risk', type=float, help='The base risk of the neutral alleles.', default = 0.5 )
+    arg_parser.add_argument( '--random-penetrance', metavar='random_penetrance', type=int, help='If set will generate this number of random penetrance values.', default = None )
     
     arg_parser.add_argument( '--out', metavar='output_file', help='Output .tped file.', required = True )
 
     args = arg_parser.parse_args( )
     
     # Generate interaction models
-    generator = InteractionGenerator( mat_or )
-    interactions, nulls = generator.generate( )
+    models = [ ]
+    if not args.random_penetrance:
+        generator = InteractionGenerator( mat_or )
+        interactions, nulls = generator.generate( )
 
-    partial_find_penetrance = partial( find_penetrance, args.heritability, args.base_risk, args.maf )
-    interaction_penetrances = list( map( partial_find_penetrance, interactions ) )
+        partial_find_penetrance = partial( find_penetrance, args.heritability, args.base_risk, args.maf )
+        interaction_penetrances = list( map( partial_find_penetrance, interactions ) )
 
-    models = [ ( args.num_pairs, p, 1 ) for p in interaction_penetrances ]
+        models = [ ( args.num_pairs, p, 1 ) for p in interaction_penetrances ]
+    else:
+        models = [ ( args.num_pairs, random_penetrance( args.heritability, args.base_risk ), 1 ) for i in range( args.random_penetrance ) ]
 
     fixed_params = generate.FixedParams( args.maf, args.ld, args.ncases, args.ncontrols )
     generate.write_data( fixed_params, models, args.out )
