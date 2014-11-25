@@ -42,7 +42,15 @@ weighted_least_squares(const mat &X, const vec &y, const vec &w)
     /* ty = sqrt( w ) * y */
     vec ty = y % sqrt( w );
 
-    return pinv( A ) * ty;
+    mat Ainv;
+    if( pinv( Ainv, A ) )
+    {
+        return Ainv * ty;
+    }
+    else
+    {
+        return vec( );
+    }
 }
 
 vec
@@ -71,12 +79,18 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, ir
     double old_logl = -DBL_MAX;
     double logl = model.likelihood( mu, y, missing );
     bool invalid_mu = false;
+    bool inverse_fail = false;
     while( num_iter < IRLS_MAX_ITERS && ! ( fabs( logl - old_logl ) / ( 0.1 + fabs( logl ) ) < IRLS_TOLERANCE ) )
     {
         w = compute_w( model.var( mu ), mu_eta );
         z = compute_z( eta, mu, mu_eta, y );
         set_missing_to_zero( missing, w );
         b = weighted_least_squares( X, z, w );
+        if( b.n_elem <= 0 )
+        {
+            inverse_fail = true;
+            break;
+        }
         
         eta = X * b;
         mu = model.mu( eta );
@@ -94,7 +108,7 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, ir
         num_iter++;
     }
 
-    if( num_iter < IRLS_MAX_ITERS && !invalid_mu )
+    if( num_iter < IRLS_MAX_ITERS && !invalid_mu && !inverse_fail )
     {
         mat C( b.n_elem, b.n_elem );
         bool inverted = inv( C, X.t( ) *  diagmat( w ) * X );
