@@ -87,6 +87,9 @@ def run_regression_models(method_list, pairs_file, plink_file, pheno_file, resul
     for method in method_list:
         regression_result_file = result_file + "." + method
         cmd = [ "bayesic", "-m", "glm", "-l", method ]
+        if method == "lm":
+            cmd = [ "bayesic", "-m", "lm" ]
+
         if pheno_file:
             cmd.extend( [ "-p", pheno_file ] )
         
@@ -182,6 +185,7 @@ def main():
     parser.add_argument( 'result_file', type=str, help='The output file from bayesic -m stepwise.' )
     parser.add_argument( 'plink_file', type=str, help='The same plink file that was used to create the result file.' )
     parser.add_argument( '--pheno', type=str, help='Phenotype file', default = None )
+    parser.add_argument( '--use-lm', action='store_true', help='Use linear model.', default = False )
     parser.add_argument( '--alpha', type=float, help='The significance level', default = 0.05 )
     parser.add_argument( '--weight', type=float, nargs=4, help='The weight for each hypothesis', default = [1.0, 1.0, 1.0, 1.0] )
     parser.add_argument( '--only-glm', help='Only run the regression models, in this case the result file should only contain the pairs.', action='store_true', default = False )
@@ -212,6 +216,9 @@ def main():
         subprocess.check_call( " ".join( cmd ), shell = True )
     
     method_list = [ "odds-additive", "logistic", "penetrance-additive", "penetrance-multiplicative", "log-complement" ]
+    if args.use_lm:
+        method_list = [ "lm" ]
+
     method_results = run_regression_models( method_list, last_pairs, args.plink_file, args.pheno, last_result_file )
     adjusted_method_results = calculate_adjusted_results( num_tests, args.weight, simple_pvalues, method_results )
     print_significant( method_list, adjusted_method_results, args.alpha )
