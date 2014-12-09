@@ -120,23 +120,30 @@ void lm_factor_method::run(const snp_row &row1, const snp_row &row2, std::ostrea
     init_alt( row1, row2, m_alt_design_matrix, missing );
     arma::vec b = lm( m_alt_design_matrix, get_data( )->phenotype, missing, alt_info );
 
-    if( get_data( )->print_params )
+    if( null_info.success && alt_info.success )
     {
-        output << b[ 8 ] << "\t";
-        for(int i = 0; i < 8; i++)
+        if( get_data( )->print_params )
         {
-            output << b[ i ] << "\t";
+            output << b[ 8 ] << "\t";
+            for(int i = 0; i < 8; i++)
+            {
+                output << b[ i ] << "\t";
+            }
+        }
+
+        double LR = -2 * ( null_info.logl - alt_info.logl );
+
+        try
+        {
+            double p = 1.0 - chi_square_cdf( LR, 4 );
+            output << LR << "\t" << p;
+        }
+        catch(bad_domain_value &e)
+        {
+            output << "NA\tNA";
         }
     }
-
-    double LR = -2 * ( null_info.logl - alt_info.logl );
-
-    try
-    {
-        double p = 1.0 - chi_square_cdf( LR, 4 );
-        output << LR << "\t" << p;
-    }
-    catch(bad_domain_value &e)
+    else
     {
         output << "NA\tNA";
     }

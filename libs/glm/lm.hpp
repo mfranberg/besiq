@@ -27,6 +27,11 @@ struct lm_info
      * Log likelihood of the model.
      */
     double logl;
+
+    /**
+     * Determines whether lm could be performed.
+     */
+    bool success;
 };
 
 /**

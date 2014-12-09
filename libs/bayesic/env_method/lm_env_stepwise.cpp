@@ -88,23 +88,30 @@ void lm_env_stepwise::run(const snp_row &row, std::ostream &output)
     lm_info alt_info;
     lm( m_alt_matrix, get_data( )->phenotype, missing, alt_info );
 
-    try
+    if( null_info.success && snp_info.success && env_info.success && add_info.success && alt_info.success )
     {
-        double LR_null = -2 *( null_info.logl - alt_info.logl );
-        double p_null = 1.0 - chi_square_cdf( LR_null, m_alt_matrix.n_cols - m_null_matrix.n_cols );
+        try
+        {
+            double LR_null = -2 *( null_info.logl - alt_info.logl );
+            double p_null = 1.0 - chi_square_cdf( LR_null, m_alt_matrix.n_cols - m_null_matrix.n_cols );
 
-        double LR_snp = -2 *( snp_info.logl - alt_info.logl );
-        double p_snp = 1.0 - chi_square_cdf( LR_snp, m_alt_matrix.n_cols - m_snp_matrix.n_cols );
+            double LR_snp = -2 *( snp_info.logl - alt_info.logl );
+            double p_snp = 1.0 - chi_square_cdf( LR_snp, m_alt_matrix.n_cols - m_snp_matrix.n_cols );
 
-        double LR_env = -2 *( env_info.logl - alt_info.logl );
-        double p_env = 1.0 - chi_square_cdf( LR_env, m_alt_matrix.n_cols - m_env_matrix.n_cols );
+            double LR_env = -2 *( env_info.logl - alt_info.logl );
+            double p_env = 1.0 - chi_square_cdf( LR_env, m_alt_matrix.n_cols - m_env_matrix.n_cols );
 
-        double LR_add = -2 *( add_info.logl - alt_info.logl );
-        double p_add = 1.0 - chi_square_cdf( LR_add, m_alt_matrix.n_cols - m_add_matrix.n_cols );
+            double LR_add = -2 *( add_info.logl - alt_info.logl );
+            double p_add = 1.0 - chi_square_cdf( LR_add, m_alt_matrix.n_cols - m_add_matrix.n_cols );
 
-        output << p_null << "\t" << p_snp << "\t" << p_env << "\t" << p_add << "\t";
+            output << p_null << "\t" << p_snp << "\t" << p_env << "\t" << p_add << "\t";
+        }
+        catch(bad_domain_value &e)
+        {
+            output << "NA\tNA\tNA\tNA\t";
+        }
     }
-    catch(bad_domain_value &e)
+    else
     {
         output << "NA\tNA\tNA\tNA\t";
     }

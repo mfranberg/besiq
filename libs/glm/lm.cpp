@@ -23,12 +23,22 @@ lm(const mat &X, const vec &y, const uvec &missing, lm_info &output)
     vec mu = X * beta;
     vec residuals = y - mu;
     double sigma_square = as_scalar( trans( residuals ) * ( w % residuals ) / ( n - k ) );
-    vec sd = arma::sqrt( sigma_square * diagvec( inv( trans( X ) * ( diagmat( w ) * X ) ) ) );
+
+    mat cov = trans( X ) * ( diagmat( w ) * X );
+    mat cov_inv;
+    if( !inv( cov_inv, cov ) )
+    {
+        output.success = false;
+        return beta;
+    }
+
+    vec sd = arma::sqrt( sigma_square * diagvec( cov_inv ) );
 
     output.se_beta = sd;
     output.p_value = chi_square_cdf( beta % beta / ( sd % sd ), 1 );
     output.mu = mu;
     output.logl = loglikelihood( residuals % w, sigma_square, n );
+    output.success = true;
 
     return beta;
 }
