@@ -162,3 +162,84 @@ parse_phenotypes(std::istream &stream, arma::uvec &missing, const std::vector<st
     assert( phenotype_matrix.n_cols == 1 );
     return phenotype_matrix.col( 0 );
 }
+
+arma::mat
+parse_environment(std::istream &stream, arma::uvec &missing, const std::vector<std::string> &order, unsigned int levels = 1, const char *missing_string)
+{
+    std::string header;
+    std::getline( stream, header );
+    std::vector<std::string> header_fields = get_fields( header );
+    std::map<std::string, int> level_map;
+    if( header_fields.size( ) != 3 )
+    {
+        throw std::runtime_error( "parse_environment: Environment file must contain exactly 3 columns." );
+    }
+    
+    std::map<std::string, size_t> iid_index = create_iid_map( order );
+    mat X = arma::zeros<arma::mat>( order.size( ), levels );
+
+    std::string line;
+    int row_num = 0;
+    rowvec row( levels );
+    int current_level = 0;
+    while( std::getline( stream, line ) )
+    {
+        std::istringstream line_stream( line );
+        std::string fid;
+        std::string iid;
+        std::string env;
+
+        line_stream >> fid;
+        line_stream >> iid;
+        line_stream >> env;
+        
+        if( iid_index.count( iid ) <= 0 )
+        {
+            continue;
+        }
+
+        if( env == missing_string )
+        {
+            missing[ iid_index[ iid ] ] = 1;
+            row = zeros<rowvec>( levels );
+        }
+
+        if( levels == 1 )
+        {
+            row[ 0 ] = parse_field( env, row_num, 2 );
+        }
+        else
+        {
+            row = zeros<rowvec>( levels );
+            if( level_map.count( env ) == 0 )
+            {
+                level_map[ env ] = current_level;
+                current_level++;
+
+                if( current_level > levels )
+                {
+                    throw std::runtime_error( "parse_environment: The environmental factor has more levels than specified." );
+                }
+            }
+            row[ level_map[ env ] ] = 1.0;
+        }
+
+        X.row( iid_index[ iid ] ) = row;
+        iid_index.erase( iid );
+        
+        row_num++;
+    }
+
+    /* Any missing iids marked as missing */
+    if( iid_index.size( ) > 0 )
+    {
+        std::map<std::string, size_t>::iterator it;
+        for(it = iid_index.begin( ); it != iid_index.end( ); ++it)
+        {
+            missing[ it->second ] = 1;
+        }
+    }
+
+    return X;
+}
+
