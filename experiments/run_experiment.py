@@ -59,7 +59,7 @@ def updated_params(params, json_object):
     new_params.num_tests = json_object.get( "num_tests", params.num_tests )
     new_params.threshold = json_object.get( "threshold", params.threshold )
     new_params.sample_maf = params.sample_maf
-    new_params.closed_num_tests = params.closed_num_tests
+    new_params.closed_num_tests = json_object.get( "ctests", params.closed_num_tests )
 
     return new_params
 
