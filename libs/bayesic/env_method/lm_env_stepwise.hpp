@@ -57,6 +57,11 @@ private:
     arma::mat m_alt_matrix;
 
     /**
+     * Contains all design matrices.
+     */
+    std::vector<arma::mat *> m_model;
+
+    /**
      * Only contains non-redundant levels, i.e. the
      * "reference level" or "intercept" is removed 
      *
@@ -70,8 +75,9 @@ private:
      *
      * @param row Variant.
      * @param missing The missing samples.
+     * @param valid Determines whether there were enough samples in each cell.
      */
-    void init_matrix_with_snp(const snp_row &row, arma::uvec &missing);    
+    void init_matrix_with_snp(const snp_row &row, arma::uvec &missing, bool *valid);    
 };
 
 #endif /* End of __LM_ENV_STEPWISE_H__ */

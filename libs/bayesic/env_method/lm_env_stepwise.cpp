@@ -40,8 +40,10 @@ lm_env_stepwise::init(std::ostream &output)
 }
 
 void
-lm_env_stepwise::init_matrix_with_snp(const snp_row &row, arma::uvec &missing)
+lm_env_stepwise::init_matrix_with_snp(const snp_row &row, arma::uvec &missing, bool *valid)
 {
+    arma::uvec counts = arma::zeros<arma::uvec>( 2 + 2*m_E.n_cols );
+
     for(int i = 0; i < row.size( ); i++)
     {
         if( row[ i ] == 3 )
@@ -64,14 +66,26 @@ lm_env_stepwise::init_matrix_with_snp(const snp_row &row, arma::uvec &missing)
 
         m_alt_matrix.row( i ).cols( 1 + 2 + m_E.n_cols, 1 + 2 + 2*m_E.n_cols - 1 ) = m_E.row( i ) * s1;
         m_alt_matrix.row( i ).cols( 1 + 2 + 2*m_E.n_cols, 1+ 2 + 3*m_E.n_cols - 1 ) = m_E.row( i ) * s2;
+
+        counts[ 0 ] += s1;
+        counts[ 1 ] += s2;
+        for(int j = 0; j < m_E.n_cols; j++)
+        {
+            double e = ( abs( m_E( i, j ) ) > 0.0 ) ? 1.0 : 0.0;
+            counts[ 2 + j ] += e * s1;
+            counts[ 2 + m_E.n_cols + j ] += e * s2;
+        }
     }
+
+    *valid = counts.min( ) >= 20;
 }
 
 void lm_env_stepwise::run(const snp_row &row, std::ostream &output)
 {
     arma::uvec missing = get_data( )->missing;
 
-    init_matrix_with_snp( row, missing );
+    bool valid;
+    init_matrix_with_snp( row, missing, &valid );
 
     lm_info null_info;
     lm( m_null_matrix, get_data( )->phenotype, missing, null_info );
@@ -88,7 +102,7 @@ void lm_env_stepwise::run(const snp_row &row, std::ostream &output)
     lm_info alt_info;
     lm( m_alt_matrix, get_data( )->phenotype, missing, alt_info );
 
-    if( null_info.success && snp_info.success && env_info.success && add_info.success && alt_info.success )
+    if( null_info.success && snp_info.success && env_info.success && add_info.success && alt_info.success && valid )
     {
         try
         {
