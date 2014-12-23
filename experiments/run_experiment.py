@@ -14,7 +14,7 @@ class ExperimentParams:
     ##
     # Constructor.
     #
-    def __init__(self, maf = [ 0.0, 0.0 ], sample_size = [ 0, 0 ], num_pairs = 0, num_tests = 0, sample_maf = False, closed_num_tests = [ 0, 0, 0, 0 ] ):
+    def __init__(self, maf = [ 0.0, 0.0 ], sample_size = [ 0, 0 ], num_pairs = 0, num_tests = 0, sample_maf = False, closed_num_tests = [ 0, 0, 0, 0 ], heritability = None ):
         ##
         # Minor allele frequency.
         #
@@ -50,6 +50,11 @@ class ExperimentParams:
         #
         self.closed_num_tests = closed_num_tests
 
+        ##
+        # Given heritability for all interaction model experiment
+        #
+        self.heritability = heritability
+
 def updated_params(params, json_object):
     new_params = ExperimentParams( params.maf, params.sample_size, params.num_pairs, params.num_tests )
     
@@ -60,6 +65,7 @@ def updated_params(params, json_object):
     new_params.threshold = json_object.get( "threshold", params.threshold )
     new_params.sample_maf = params.sample_maf
     new_params.closed_num_tests = json_object.get( "ctests", params.closed_num_tests )
+    new_params.heritability = params.heritability
 
     return new_params
 
@@ -270,7 +276,12 @@ class AllStrategy(ExperimentStrategy):
     
     def calculate_power(self, params, experiment, plink_path, power_file):
         all_model_params = list( )
-        for h in experiment[ 'heritability' ]:
+
+        heritabilities = experiment[ 'heritability' ]
+        if params.heritability:
+            heritabilities = [ params.heritability ]
+
+        for h in heritabilities:
             plinkdata.generate_all_data( params, h, experiment[ 'base_risk' ], plink_path )
             
             self.method_handler.start_experiment( experiment[ 'name' ], 0 )
@@ -449,6 +460,7 @@ if __name__ == "__main__":
     parser.add_argument( '-m', type=float, nargs=2, help="Minor allele frequency of SNPs.", default = [ 0.2, 0.2 ] )
     parser.add_argument( '--sample-maf', action="store_true", help='The -m argument is treated as a range and maf is sampled uniformly in this range.', default = False )
     parser.add_argument( '--closed-num-tests', type=int, nargs=4, help="Number of tests to adjust for in each step (closed only)", default = [ 0, 0, 0, 0 ] )
+    parser.add_argument( '--heritability', type=float, help="Specify heritability for all experiment.", default = None )
     parser.add_argument( '-n', type=int, nargs=2, help="Number of controls and cases.", default = [ 1893, 1525 ] )
     parser.add_argument( '-s', type=int, help="Number of model instances to use when estimating power", default = 200 )
     parser.add_argument( '-i', type=int, help="Number of interactions to adjust for", default = 4000000 )
@@ -457,6 +469,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args( )
 
-    params = ExperimentParams( args.m, args.n, args.s, args.i, closed_num_tests = args.closed_num_tests )
+    params = ExperimentParams( args.m, args.n, args.s, args.i, closed_num_tests = args.closed_num_tests, heritability = args.heritability )
     experiment = GeneticExperiment( params, args.output_dir )
     experiment.run( args.experiment_file[ 'experiments' ] )
