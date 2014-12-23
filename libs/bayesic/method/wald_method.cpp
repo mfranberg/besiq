@@ -21,21 +21,18 @@ wald_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
     if( arma::min( arma::min( n ) ) <= 10 )
     {
         output << "NA\tNA";
+        return;
     }
 
     arma::vec log_or0( 4 );
     arma::vec log_or1( 4 );
     arma::mat I0( 4, 4 );
     arma::mat I1( 4, 4 );
-    arma::mat I( 4, 4 );
-    arma::mat Iinv( 4, 4 );
-    arma::vec log_diff( 4 );
     int elem = 0;
     for(int i = 1; i <= 2; i++)
     {
         for(int j = 1; j <= 2; j++)
         {
-            
             log_or0[ elem ] = log( n( i*3 + j, 0 ) * n( 0*3 + 0, 0 ) / n( 0*3 + j, 0 ) / n( i*3 + 0, 0 ) );
             log_or1[ elem ] = log( n( i*3 + j, 1 ) * n( 0*3 + 0, 1 ) / n( 0*3 + j, 1 ) / n( i*3 + 0, 1 ) );
             I0( elem, elem ) = 1.0 / n( i*3 + j, 0 ) + 1.0 / n( 0*3 + 0, 0 ) + 1.0 / n( 0*3 + j, 0 ) + 1.0 / n( i*3 + 0, 0 );
@@ -63,36 +60,16 @@ wald_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
     I0(2, 3) = 1.0 / n( 0*3 + 0, 0 ) + 1.0 / n( 2*3 + 0, 0 );
     I1(2, 3) = 1.0 / n( 0*3 + 0, 1 ) + 1.0 / n( 2*3 + 0, 1 );
 
-    log_diff = log_or0 - log_or1;
-    for(int i = 0; i < 4; i++)
-    {
-        for(int j = i; j < 4; j++)
-        {
-            I( i, j ) = I0( i, j ) + I1( i, j );
-        }
-    }
+    arma::vec log_diff = log_or0 - log_or1;
+    arma::mat I = symmatu( I0 ) + symmatu( I1 );
     
-    for(int i = 1; i < 4; i++)
-    {
-        for(int j = 0; j < i; j++)
-        {
-            I( i, j ) = I( j, i );
-        }
-    }
-
+    arma::mat Iinv( 4, 4 );
     if( !inv( Iinv, I ) )
     {
         output << "NA\tNA";
+        return;
     }
     
-    double chi = 0.0;
-    for(int i = 0; i < 4; i++)
-    {
-        for(int j = 0; j < 4; j++)
-        {
-            chi += Iinv( i , j ) * log_diff[ i ] * log_diff[ j ];
-        }
-    }
-
+    double chi = dot( log_diff, Iinv * log_diff );
     output << chi << "\t" << 1.0 - chi_square_cdf( chi, 4 );
 }
