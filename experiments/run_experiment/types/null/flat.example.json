@@ -1,0 +1,44 @@
+{
+    "experiments" :
+    [
+        {
+            "type" : "null",
+            "name" : "Flat",
+            "title" : "Shows the false positive rate",
+            "xlabel" : "Alpha",
+            "ylabel" : "False positive rate",
+            "num_chips" : 1000,
+            "models" : [
+                {
+                    "params" : [ 0.1, 0.1, 0.1,
+                                 0.1, 0.1, 0.1,
+                                 0.1, 0.1, 0.1 ],
+                    "threshold" : 0.05,
+                    "xvalue" : 0.05
+                },
+                {
+                    "params" : [ 0.1, 0.1, 0.1,
+                                 0.1, 0.1, 0.1,
+                                 0.1, 0.1, 0.1 ],
+                    "threshold" : 0.10,
+                    "xvalue" : 0.10
+                },
+                {
+                    "params" : [ 0.1, 0.1, 0.1,
+                                 0.1, 0.1, 0.1,
+                                 0.1, 0.1, 0.1 ],
+                    "threshold" : 0.15,
+                    "xvalue" : 0.15
+                },
+                {
+                    "params" : [ 0.1, 0.1, 0.1,
+                                 0.1, 0.1, 0.1,
+                                 0.1, 0.1, 0.1 ],
+                    "threshold" : 0.20,
+                    "xvalue" : 0.20
+                }
+
+            ] 
+        }
+    ] 
+}
