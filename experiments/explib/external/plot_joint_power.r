@@ -20,7 +20,7 @@ output_file = argv[ 5 ]
 
 pdf( output_file, width = 2 * 6.7, height = 2 * 6.7 / 1.618 )
 
-p = ggplot( model_power, aes( heritability, power, linetype = method ) ) + geom_line( ) + facet_grid( sample_size ~ maf, scales = "free_x" ) +
+p = ggplot( model_power, aes( heritability, power, color = method ) ) + geom_line( ) + facet_grid( sample_size ~ maf, scales = "free_x" ) +
     scale_x_continuous( xlabel ) +
     scale_y_continuous( ylabel, limits = c( 0.0, 1.0 ) )
 

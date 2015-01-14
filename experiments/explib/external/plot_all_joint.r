@@ -58,14 +58,17 @@ ylabel = argv[ 2 ]
 title = argv[ 3 ]
 
 model_power = read.table( argv[ 4 ], header = FALSE )
-names( model_power ) = c( "method", "model", "heritability", "power", "lower", "upper", "maf", "sample_size" )
-model_power = subset( model_power, heritability == 0.02 )
+names( model_power ) = c( "Method", "model", "heritability", "power", "lower", "upper", "maf", "sample_size" )
+# model_power = subset( model_power, heritability == 0.02 )
+
+model_power$Method = factor( model_power$Method, levels( model_power$Method )[ c( 3, 2, 1, 4 ) ] )
 
 output_file = argv[ 5 ]
 
 pdf( output_file, width = 2 * 6.7, height = 2 * 6.7 / 1.618 )
 
-p = ggplot( model_power, aes( x = power, linetype = method ) ) + stat_ecdf_reversed( geom = "smooth", colour = "black" ) + facet_grid( sample_size ~ maf, scales = "free_x" ) +
+#p = ggplot( model_power, aes( x = power, linetype = Method ) ) + stat_ecdf_reversed( geom = "smooth", colour = "black" ) + facet_grid( sample_size ~ maf, scales = "free_x" ) +
+p = ggplot( model_power, aes( x = power, colour = Method ) ) + stat_ecdf_reversed( geom = "smooth" ) + facet_grid( sample_size ~ heritability, scales = "free_x" ) +
     scale_x_continuous( xlabel ) +
     scale_y_continuous( ylabel, limits = c( 0.0, 1.0 ) )
 
@@ -82,7 +85,7 @@ z <- gtable_add_grob(z,
 z <- gtable_add_rows(z, z$heights[[3]], 2)
 z <- gtable_add_grob(z, 
                      list(rectGrob(gp = gpar(col = NA, fill = gray(0.5))),
-                          textGrob("Minor allele frequency", gp = gpar(col = gray(1)))),
+                          textGrob("Heritability", gp = gpar(col = gray(1)))),
                      3, 4, 3, 8, name = paste(runif(2)))
 
 # add margins
