@@ -251,7 +251,6 @@ class ClosedPartMethod:
         subprocess.call( cmd, stdout = output_file )
 
     def num_significant(self, output_path, params, include = None):
-        print self.pvalue_column
         return power.compute_from_file( output_path, self.pvalue_column, params.threshold, 1, True, include, correction = "B" )
     
     def get_ranks(self, output_path):
@@ -310,7 +309,7 @@ class GLMFactorMethod:
         subprocess.call( cmd, stdout = output_file )
 
     def num_significant(self, output_path, params, include = None):
-        return power.compute_from_file( output_path, 3, params.threshold, params.num_tests, True, include )
+        return power.compute_from_file( output_path, 3, params.threshold, params.num_tests, True, include, correction = "B" )
     
     def get_ranks(self, output_path):
         return power.get_ranks( output_path, 3, True )
@@ -411,9 +410,12 @@ class StepwiseRegression:
 #              ]
 
 g_methods = [ LogLinearMethod( "Log-linear", "bayesic" ),
-             ClosedMethod( "ScaleInv (adaptive)", "bayesic", "../tools/closed_correction/closed_correction.py" ),
-             ScaleInvarianceMethod( "ScaleInv (bon)", "../tools/closed_correction/closed_correction.py" ),
+             ClosedMethod( "Stage-wise (static)", "bayesic", "../tools/closed_correction/closed_correction.py" ),
+             ScaleInvarianceMethod( "ScaleInv (bonferroni)", "../tools/closed_correction/closed_correction.py" ),
              StepwiseRegression( "Marginal first", "bayesic" ) ]
+
+#g_methods = [ ClosedPartMethod( "Logistic H1", "bayesic", 2 ),
+#              GLMFactorMethod( "Logistic H4", "bayesic", "logistic" ) ]
 
 #g_methods = [ StepwiseRegression( "Stepwise", "bayesic" ), ClosedMethod( "ScaleInv (closed)", "bayesic", "../tools/closed_correction/closed_correction.py" ) ]
 
