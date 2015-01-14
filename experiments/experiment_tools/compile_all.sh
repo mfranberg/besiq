@@ -1,6 +1,7 @@
 #!/bin/bash
 
 root_dir=~/proj/private/data/bayesic_all/1000000/
+script_dir=$(dirname $0)
 
 touch $root_dir/combined_power.out
 rm $root_dir/combined_power.out
@@ -15,4 +16,4 @@ cat $root_dir/maf44s22/power/power_all.out | awk '{ print $0, 0.4, "2000" }' >> 
 cat $root_dir/maf44s33/power/power_all.out | awk '{ print $0, 0.4, "3000" }' >> $root_dir/combined_power.out
 cat $root_dir/maf44s44/power/power_all.out | awk '{ print $0, 0.4, "4000" }' >> $root_dir/combined_power.out
 
-Rscript ../run_experiment/explib/external/plot_all_joint.r "Power (t)" "Fraction of models with power >= t" X $root_dir/combined_power.out $root_dir/combined_all.pdf
+Rscript $script_dir/../run_experiment/explib/external/plot_all_joint.r "Power (t)" "Fraction of models with power >= t" X $root_dir/combined_power.out $root_dir/combined_all.pdf

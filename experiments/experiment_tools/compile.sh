@@ -2,6 +2,8 @@
 
 module add R/2.15.2
 
+script_dir=$(dirname $0)
+
 for power_path in `ls paper/maf20s22/power/*.out`;
 do
     power_type=$(basename $power_path);
@@ -19,6 +21,6 @@ do
     cat paper/maf40s33/power/$power_type | awk '{ print $0, "0.4", "3000" }' >> paper/$power_type
     cat paper/maf40s44/power/$power_type | awk '{ print $0, "0.4", "4000" }' >> paper/$power_type
 
-    Rscript ../run_experiment/explib/external/plot_joint_power.r "Heritability" "Power" X paper/$power_type paper/$power_type.pdf
+    Rscript $script_dir/../run_experiment/explib/external/plot_joint_power.r "Heritability" "Power" X paper/$power_type paper/$power_type.pdf
 done
 
