@@ -28,6 +28,7 @@
 #include <bayesic/method/stepwise_method.hpp>
 #include <bayesic/method/lm_stepwise_method.hpp>
 #include <bayesic/method/wald_method.hpp>
+#include <bayesic/method/wald_lm_method.hpp>
 #include <bayesic/method/method.hpp>
 
 using namespace arma;
@@ -92,11 +93,11 @@ main(int argc, char *argv[])
                                          .epilog( EPILOG );
     
     
-    char const* const choices[] = { "bayes", "bayes-fine", "lm", "glm", "loglinear", "caseonly", "stepwise", "lm-stepwise", "wald" };
+    char const* const choices[] = { "bayes", "bayes-fine", "lm", "glm", "loglinear", "caseonly", "stepwise", "lm-stepwise", "wald", "wald-lm" };
     char const* const link_choices[] = { "logistic", "log-complement", "odds-additive", "penetrance-additive", "penetrance-multiplicative" };
     char const* const factor_choices[] = { "factor", "additive", "tukey" };
 
-    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 9 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'bayes-fine', 'lm', 'glm', 'loglinear', 'caseonly', 'stepwise', or 'lm-stepwise', 'wald'." );
+    parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 10 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'bayes-fine', 'lm', 'glm', 'loglinear', 'caseonly', 'stepwise', 'lm-stepwise', 'wald', or 'wald-lm'." );
     parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
     parser.add_option( "-l", "--link-function" ).choices( &link_choices[ 0 ], &link_choices[ 5 ] ).metavar( "link" ).help( "The link function, or scale, that is used for the penetrance: 'logistic' log(p/(1-p)), 'log-complement' log(1 - p), 'odds-additive' p/(1-p), 'penetrance-additive' p, 'penetrance-multiplicative' log(p)." ).set_default( "logistic" );
     parser.add_option( "-f", "--factor" ).choices( &factor_choices[ 0 ], &factor_choices[ 3 ] ).help( "Determines how to code the SNPs, in 'factor' no order of the alleles is assumed, in 'additive' the SNPs are coded as the number of minor alleles, in 'tukey' the coding is the same as factor except that a single parameter for the interaction is used." ).set_default( "factor" );
@@ -267,6 +268,11 @@ main(int argc, char *argv[])
     else if( options[ "method" ] == "wald" )
     {
         wald_method wald( data );
+        run_method( wald, genotype_matrix, locus_names, pairs );
+    }
+    else if( options[ "method" ] == "wald-lm" )
+    {
+        wald_lm_method wald( data );
         run_method( wald, genotype_matrix, locus_names, pairs );
     }
 
