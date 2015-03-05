@@ -145,3 +145,6 @@ Then these methods are simply run by the following. These commands will use the 
     > bayesic -m glm -f factor -l logistic /data/dataset.pair /data/dataset > results.logistic.out
     > bayesic -m loglinear /data/dataset.pair /data/dataset > results.loglinear.out
 
+# Evaluation
+
+If you want to evaluate your own method, or the methods implemented in bayesic under various simulation settings, then check out the Python packages [epibench](https://github.com/mfranberg/epibench) for benchmarking, and [epigen](https://github.com/mfranberg/epigen) for generating data.
