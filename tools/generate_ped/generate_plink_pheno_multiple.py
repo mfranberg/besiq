@@ -107,20 +107,20 @@ if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser( description='Generates interaction pairs from a given model.' )
     arg_parser.add_argument( 'plink_file', metavar='plink_file', type=str, help='Path to a plink file.' )
     arg_parser.add_argument( '--beta0', metavar='beta0', type=float, help='Sets the intercept, by default it is chosen to get 50/50 cases and controls.', default = None )
-    arg_parser.add_argument( '--beta', metavar='beta', nargs=2, type=float, help='The mean and variance of the beta variables.', required = True )
-    arg_parser.add_argument( '--num-loci', metavar='num_loci', type=int, help='The number of loci that is involved in the phenotype.', required = True )
+    arg_parser.add_argument( '--beta', metavar='beta', nargs=2, type=float, help='The mean and variance of the beta variables.', default = [ 0.2, 0.3 ] )
+    arg_parser.add_argument( '--num-loci', metavar='num_loci', type=int, help='The number of loci that is involved in the phenotype.', default = 10 )
     arg_parser.add_argument( '--out', metavar='output_file', help='Output phenotype file.', required = True )
 
     args = arg_parser.parse_args( )
 
-    plink_file = plinkfile.open( args.plink_file ) 
+    plink_file = plinkfile.open( plink_file ) 
     loci = plink_file.get_loci( )
-    snp_indices = generate_loci_set( loci, args.num_loci )
-    beta = generate_beta( args.num_loci, args.beta[ 0 ], args.beta[ 1 ] )
+    snp_indices = generate_loci_set( loci, num_loci )
+    beta = generate_beta( num_loci, beta[ 0 ], beta[ 1 ] )
     rows = find_rows( plink_file, snp_indices )
 
     print " ".join( [ loci[ i ].name for i in snp_indices ] )
 
-    with open( args.out, "w" ) as output_file:
-        number_of_cases, number_of_controls = write_phenotypes( plink_file.get_samples( ), rows, beta, output_file, beta0 = args.beta0 )
+    with open( out, "w" ) as output_file:
+        number_of_cases, number_of_controls = write_phenotypes( plink_file.get_samples( ), rows, beta, output_file, beta0 = beta0 )
         print "Wrote {0} cases and {1} controls".format( number_of_cases, number_of_controls ) 
