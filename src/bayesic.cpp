@@ -15,7 +15,7 @@
 #include <cpp-argparse/OptionParser.h>
 
 #include <plink/plink_file.hpp>
-#include <bayesic/pair_iter.hpp>
+#include <bayesic/pairfile.hpp>
 #include <bayesic/prior.hpp>
 #include <bayesic/method/bayesic_method.hpp>
 #include <bayesic/method/bayesic_fine_method.hpp>
@@ -69,21 +69,6 @@ create_phenotype_vector(plink_file_ptr genotype_file, uvec &missing)
     return phenotype;
 }
 
-unsigned int
-count_interactions(const char *pair_file_path, const std::vector<std::string> &loci)
-{
-    shared_ptr<std::istream> pair_file = open_possible_gz( pair_file_path );
-    pair_iter pairs( *pair_file, loci );
-    unsigned int num_interactions = 0;
-    std::pair<size_t, size_t> pair;
-    while( pairs.get_pair( &pair ) )
-    {
-        num_interactions++;
-    }
-
-    return num_interactions;
-}
-
 int
 main(int argc, char *argv[])
 {
@@ -125,7 +110,7 @@ main(int argc, char *argv[])
     }
     else if( !options.is_set( "method" ) )
     {
-        std::cerr << "bayesic:error: No method selected." << std::endl;
+        std::cerr << "bayesic: error: No method selected." << std::endl;
         exit( 1 );
     }
 
@@ -134,9 +119,13 @@ main(int argc, char *argv[])
     std::vector<snp_row> genotype_matrix = create_genotype_matrix( genotype_file );
     
     /* Create pair iterator */
-    shared_ptr<std::istream> pair_file = open_possible_gz( args[ 0 ].c_str( ) );
     std::vector<std::string> locus_names = genotype_file->get_locus_names( );
-    pair_iter pairs( *pair_file, locus_names );
+    pairfile *pairs = open_pair_file( args[ 0 ].c_str( ), locus_names );
+    if( pairs == NULL || !pairs->open( ) )
+    {
+        std::cerr << "bayesic: error: Could not open pair file." << std::endl;
+        exit( 1 );
+    }
     
     /* Read additional data  */
     method_data_ptr data( new method_data( ) );
@@ -171,14 +160,6 @@ main(int argc, char *argv[])
     data->single_prior = (float) options.get( "single_prior" );
     data->num_single = (unsigned int) options.get( "num_single" );
     data->num_interactions = (unsigned int) options.get( "num_interactions" );
-    if( !options.is_set( "num_interactions" ) )
-    {
-        data->num_interactions = count_interactions( args[ 0 ].c_str( ), locus_names );
-    }
-    if( !options.is_set( "num_single" ) )
-    {
-        data->num_single = 0.5*(sqrt( 8*data->num_interactions + 1 ) + 1);
-    }
 
     /* XXX: Implement proper log file. */
     std::ostream nullstream( 0 );
@@ -188,12 +169,12 @@ main(int argc, char *argv[])
     if( options[ "method" ] == "bayes" )
     {
         bayesic_method bayesic( data, alpha );
-        run_method( bayesic, genotype_matrix, locus_names, pairs );
+        run_method( bayesic, genotype_matrix, locus_names, *pairs );
     }
     else if( options[ "method" ] == "bayes-fine" )
     {
         bayesic_fine_method bayesic_fine( data, (int) options.get( "mc_iterations" ), alpha );
-        run_method( bayesic_fine, genotype_matrix, locus_names, pairs );
+        run_method( bayesic_fine, genotype_matrix, locus_names, *pairs );
     }
     else if( options[ "method" ] == "glm" )
     {
@@ -222,17 +203,17 @@ main(int argc, char *argv[])
         if( options[ "factor" ] == "factor" )
         {
             glm_factor_method glm_factor( data, *link_function );
-            run_method( glm_factor, genotype_matrix, locus_names, pairs );
+            run_method( glm_factor, genotype_matrix, locus_names, *pairs );
         }
         else if( options[ "factor" ] == "additive" )
         {
             glm_method glm_additive( data, *link_function );
-            run_method( glm_additive, genotype_matrix, locus_names, pairs );
+            run_method( glm_additive, genotype_matrix, locus_names, *pairs );
         }
         else if( options[ "factor" ] == "tukey" )
         {
             glm_tukey_method glm_tukey( data, *link_function );
-            run_method( glm_tukey, genotype_matrix, locus_names, pairs );
+            run_method( glm_tukey, genotype_matrix, locus_names, *pairs );
         }
     }
     else if( options[ "method" ] == "lm" )
@@ -243,38 +224,40 @@ main(int argc, char *argv[])
             exit( 1 );
         }
         lm_factor_method lm_factor( data );
-        run_method( lm_factor, genotype_matrix, locus_names, pairs );
+        run_method( lm_factor, genotype_matrix, locus_names, *pairs );
     }
     else if( options[ "method" ] == "loglinear" )
     {
         loglinear_method loglinear( data );
-        run_method( loglinear, genotype_matrix, locus_names, pairs );
+        run_method( loglinear, genotype_matrix, locus_names, *pairs );
     }
     else if( options[ "method" ] == "caseonly" )
     {
         caseonly_method caseonly( data );
-        run_method( caseonly, genotype_matrix, locus_names, pairs );
+        run_method( caseonly, genotype_matrix, locus_names, *pairs );
     }
     else if( options[ "method" ] == "stepwise" )
     {
         stepwise_method stepwise( data );
-        run_method( stepwise, genotype_matrix, locus_names, pairs );
+        run_method( stepwise, genotype_matrix, locus_names, *pairs );
     }
     else if( options[ "method" ] == "lm-stepwise" )
     {
         lm_stepwise_method stepwise( data );
-        run_method( stepwise, genotype_matrix, locus_names, pairs );
+        run_method( stepwise, genotype_matrix, locus_names, *pairs );
     }
     else if( options[ "method" ] == "wald" )
     {
         wald_method wald( data );
-        run_method( wald, genotype_matrix, locus_names, pairs );
+        run_method( wald, genotype_matrix, locus_names, *pairs );
     }
     else if( options[ "method" ] == "wald-lm" )
     {
         wald_lm_method wald( data );
-        run_method( wald, genotype_matrix, locus_names, pairs );
+        run_method( wald, genotype_matrix, locus_names, *pairs );
     }
+
+    delete pairs;
 
     return 0;
 }

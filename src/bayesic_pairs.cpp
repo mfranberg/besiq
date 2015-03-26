@@ -1,9 +1,8 @@
-#include <iostream>
 #include <set>
 #include <string>
 #include <vector>
 
-#include <gzstream/gzstream.hpp>
+#include <bayesic/pairfile.hpp>
 
 #include <plink/plink_file.hpp>
 #include <cpp-argparse/OptionParser.h>
@@ -196,7 +195,7 @@ struct output_options
  * @param oo Output options.
  * @param gene_locus Map from gene to the loci belonging to that gene.
  */
-void output_within(std::ostream &output, const output_options &oo, const std::map< std::string, std::vector<size_t> > &gene_locus)
+void output_within(pairfile &output, const output_options &oo, const std::map< std::string, std::vector<size_t> > &gene_locus)
 {
     std::map< std::string, std::vector<size_t> >::const_iterator it;
     for(it = gene_locus.begin( ); it != gene_locus.end( ); ++it)
@@ -220,7 +219,7 @@ void output_within(std::ostream &output, const output_options &oo, const std::ma
 
                 if( oo.maf_vec[ snp2 ] >= oo.maf_threshold && (oo.maf_vec[ snp1 ] * oo.maf_vec[ snp2 ]) >= oo.combined_threshold )
                 {
-                    output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << "\n";
+                    output.write( snp1, snp2 );
                 }
             }
         }
@@ -234,7 +233,7 @@ void output_within(std::ostream &output, const output_options &oo, const std::ma
  * @param oo Output options.
  * @param gene_locus Map from gene to the loci belonging to that gene.
  */
-void output_between(std::ostream &output, const output_options &oo, std::map< std::string, std::vector<size_t> > &gene_locus)
+void output_between(pairfile &output, const output_options &oo, std::map< std::string, std::vector<size_t> > &gene_locus)
 {
     std::vector<std::string> genes;
     std::map< std::string, std::vector<size_t> >::const_iterator it;
@@ -269,7 +268,7 @@ void output_between(std::ostream &output, const output_options &oo, std::map< st
 
                     if( oo.maf_vec[ snp2 ] >= oo.maf_threshold && (oo.maf_vec[ snp1 ] * oo.maf_vec[ snp2 ]) >= oo.combined_threshold )
                     {
-                        output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << "\n";
+                        output.write( snp1, snp2 );
                     }
                 }
             }
@@ -285,7 +284,7 @@ void output_between(std::ostream &output, const output_options &oo, std::map< st
  * @param gene_locus Map from gene to the loci belonging to that gene.
  * @param gene_gene A list of pairs of genes to be considered.
  */
-void output_between_restrict(std::ostream &output, const output_options &oo, std::map< std::string, std::vector<size_t> > &gene_locus, const pair_vector &gene_gene)
+void output_between_restrict(pairfile &output, const output_options &oo, std::map< std::string, std::vector<size_t> > &gene_locus, const pair_vector &gene_gene)
 {
     for(int g = 0; g < gene_gene.size( ); g++)
     {
@@ -312,7 +311,7 @@ void output_between_restrict(std::ostream &output, const output_options &oo, std
 
                 if( oo.maf_vec[ snp2 ] >= oo.maf_threshold && (oo.maf_vec[ snp1 ] * oo.maf_vec[ snp2 ]) >= oo.combined_threshold )
                 {
-                    output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << "\n";
+                    output.write( snp1, snp2 );
                 }
             }
         }
@@ -328,7 +327,7 @@ void output_between_restrict(std::ostream &output, const output_options &oo, std
  * @param snp_set Set of SNPs.
  * @param ignore_in_set If true, ignore pairs between SNPs in the set.
  */
-void output_set(std::ostream &output, const output_options &oo, const std::set<size_t> &snp_set, bool ignore_in_set)
+void output_set(pairfile &output, const output_options &oo, const std::set<size_t> &snp_set, bool ignore_in_set)
 {
     std::set<size_t>::const_iterator it;
     for( it = snp_set.begin( ); it != snp_set.end( ); ++it )
@@ -356,7 +355,7 @@ void output_set(std::ostream &output, const output_options &oo, const std::set<s
 
             if( oo.maf_vec[ snp2 ] >= oo.maf_threshold && (oo.maf_vec[ snp1 ] * oo.maf_vec[ snp2 ]) >= oo.combined_threshold )
             {
-                output << oo.loci[ snp1 ] << " " << oo.loci[ snp2 ] << "\n";
+                output.write( snp1, snp2 );
             }
         }
     }
@@ -368,7 +367,7 @@ void output_set(std::ostream &output, const output_options &oo, const std::set<s
  * @param output Output stream.
  * @param oo Output options.
  */
-void output_all(std::ostream &output, const output_options &oo)
+void output_all(pairfile &output, const output_options &oo)
 {
     for(int i = 0; i < oo.loci.size( ); i++)
     {
@@ -386,7 +385,7 @@ void output_all(std::ostream &output, const output_options &oo)
 
             if( oo.maf_vec[ j ] >= oo.maf_threshold && (oo.maf_vec[ i ] * oo.maf_vec[ j ]) >= oo.combined_threshold )
             {
-                output << oo.loci[ i ] << " " << oo.loci[ j ] << "\n";
+                output.write( i, j );
             }
         }
     }
@@ -408,20 +407,16 @@ main(int argc, char *argv[])
     parser.add_option( "-r", "--restrict" ).help( "Used with --between to only check the pair of genes in this list." );
     parser.add_option( "-s", "--set" ).help( "Output pairs in this set with all others, but ignore pairs when both are in this set." );
     parser.add_option( "-n", "--set-no-ignore" ).help( "Output pairs in this set with all others including pairs in the set." );
-    parser.add_option( "-o", "--out" ).help( "Name of the output file, will be gzipped." ).set_default( "" );
+    parser.add_option( "-o", "--out" ).help( "Name of the output file." );
 
     Values options = parser.parse_args( argc, argv );
     std::vector<std::string> args = parser.args( );
     if( args.size( ) != 1 )
     {
-        printf( "bayesic-pairs: error: Pairs or genotypes is missing.\n" );
+        printf( "bayesic-pairs: error: Genotypes are missing.\n" );
         parser.print_help( );
         exit( 1 );
     }
-
-    std::ios_base::sync_with_stdio( false );
-    gz::ogzstream output_file( ( (std::string) options.get( "out" ) ).c_str( ) );
-    std::ostream &output = options.is_set( "out" ) ? output_file : std::cout;
 
     output_options oo;
     oo.maf_threshold = (double) options.get( "maf" );
@@ -432,6 +427,24 @@ main(int argc, char *argv[])
     oo.maf_vec = compute_maf( genotype_file );
     oo.loci_info = std::vector<pio_locus_t>( genotype_file->get_loci( ) );
     oo.loci = genotype_file->get_locus_names( );
+    
+    std::ios_base::sync_with_stdio( false );
+
+    if( !options.is_set( "out" ) )
+    {
+        printf( "bayesic-pairs: error: No output file set.\n" );
+        exit( 1 );
+    }
+
+    std::string output_path = (std::string) options.get( "out" );
+    bpairfile output( output_path, oo.loci );
+    
+    if( output.open( ) != true )
+    {
+        printf( "bayesic-pairs: error: Could not open output file\n" );
+        exit( 1 );
+    }
+
     if( options.is_set( "within" ) )
     {
         std::map< std::string, std::vector<size_t> > gene_locus = parse_gene_locus( options[ "within" ].c_str( ), oo.loci );

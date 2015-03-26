@@ -8,7 +8,8 @@
 
 #include <plink/snp_row.hpp>
 #include <shared_ptr/shared_ptr.hpp>
-#include <bayesic/pair_iter.hpp>
+
+class pairfile;
 
 /**
  * Represents additional data that is required by the method.
@@ -121,6 +122,6 @@ private:
  * @param loci The list of loci.
  * @param pairs The pairs to test.
  */
-void run_method(method_type &method, const std::vector<snp_row> &genotype_matrix, const std::vector<std::string> &loci, pair_iter &pairs);
+void run_method(method_type &method, const std::vector<snp_row> &genotype_matrix, const std::vector<std::string> &loci, pairfile &pairs);
 
 #endif /* End of __METHOD_H__ */

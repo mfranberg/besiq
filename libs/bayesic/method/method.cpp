@@ -1,22 +1,35 @@
 #include <bayesic/method/method.hpp>
+#include <bayesic/pairfile.hpp>
 
-void run_method(method_type &method, const std::vector<snp_row> &genotype_matrix, const std::vector<std::string> &loci, pair_iter &pairs)
+void run_method(method_type &method, const std::vector<snp_row> &genotype_matrix, const std::vector<std::string> &loci, pairfile &pairs)
 {
     std::cout.precision( 4 );
     std::cout << "snp1 snp2\t";
     method.init( std::cout );
     std::cout << "\tN" << std::endl;
-
-    std::pair<size_t, size_t> pair;
-    while( pairs.get_pair( &pair ) )
+    
+    /* Create a map from snp names in the file to the genotype file */
+    std::map<std::string, size_t> snp_to_index;
+    for(int i = 0; i < loci.size( ); i++)
     {
-        const snp_row &row1 = genotype_matrix[ pair.first ];
-        const snp_row &row2 = genotype_matrix[ pair.second ];
+        snp_to_index[ loci[ i ] ] = i;
+    }
 
-        std::string name1 = loci[ pair.first ];
-        std::string name2 = loci[ pair.second ];
+    std::pair<std::string, std::string> pair;
+    while( pairs.read( pair ) )
+    {
+        if( snp_to_index.count( pair.first ) <= 0 || snp_to_index.count( pair.second ) <= 0 )
+        {
+            continue;
+        }
 
-        std::cout << name1 << " " << name2 << "\t";
+        size_t snp1_index = snp_to_index[ pair.first ];
+        size_t snp2_index = snp_to_index[ pair.second ];
+
+        const snp_row &row1 = genotype_matrix[ snp1_index ];
+        const snp_row &row2 = genotype_matrix[ snp2_index ];
+
+        std::cout << pair.first << " " << pair.second << "\t";
         method.run( row1, row2, std::cout );
         std::cout << "\t" << method.num_usable_samples( row1, row2 ) << std::endl;
     }
