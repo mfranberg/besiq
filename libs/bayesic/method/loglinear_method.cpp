@@ -19,14 +19,18 @@ loglinear_method::num_ok_samples(const snp_row &row1, const snp_row &row2, const
     return arma::accu( joint_count( row1, row2, get_data( )->phenotype, m_weight ) + 1.0 );
 }
 
-void
-loglinear_method::init(std::ostream &output)
+std::vector<std::string>
+loglinear_method::init()
 {
-    output << "P";
+    std::vector<std::string> header;
+
+    header.push_back( "P" );
+
+    return header;
 }
 
 void
-loglinear_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
+loglinear_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     double num_samples = num_ok_samples( row1, row2, get_data( )->phenotype );
     std::vector<log_double> likelihood( m_models.size( ), 0.0 );
@@ -48,15 +52,10 @@ loglinear_method::run(const snp_row &row1, const snp_row &row2, std::ostream &ou
         try
         {
             double p_value = 1.0 - chi_square_cdf( LR, m_models[ best_model ]->df( ) );
-            output << p_value;
+            output[ 0 ] = p_value;
         }
         catch(bad_domain_value &e)
         {
-            output << "NA";
         }
-    }
-    else
-    {
-        output << "NA";
     }
 }

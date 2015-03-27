@@ -13,3 +13,5 @@ target_link_libraries( bayesic-env libdcdf libglm libbayesic libplink libcpp-arg
 add_executable( bayesic-pairs bayesic_pairs.cpp )
 target_link_libraries( bayesic-pairs libplink libcpp-argparse libbayesic libgzstream ${PLINKIO_LIBRARIES} )
 
+add_executable( bayesic-view bayesic_view.cpp )
+target_link_libraries( bayesic-view libcpp-argparse libbayesic )

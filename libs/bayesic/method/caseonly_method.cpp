@@ -14,14 +14,18 @@ caseonly_method::num_ok_samples(const snp_row &row1, const snp_row &row2, const 
     return arma::accu( joint_count( row1, row2, get_data( )->phenotype, m_weight ) + 1.0 );
 }
 
-void
-caseonly_method::init(std::ostream &output)
+std::vector<std::string>
+caseonly_method::init()
 {
-    output << "R2" << "\t" <<  "P";
+    std::vector<std::string> header;
+    header.push_back( "R2" );
+    header.push_back( "P" );
+
+    return header;
 }
 
 void
-caseonly_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
+caseonly_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::mat counts = joint_count( row1, row2, get_data( )->phenotype, m_weight );
     arma::vec snp_snp = sum( counts, 1 );
@@ -56,5 +60,6 @@ caseonly_method::run(const snp_row &row1, const snp_row &row2, std::ostream &out
     double s = ( dot( u % u, snp1 ) * dot( v % v, snp2 ) );
     R2 = R2 / s;
 
-    output << R2 << "\t" << m << "\t" << s << "\t" << 1.0 - chi_square_cdf( R2, 1 );
+    output[ 0 ] = R2;
+    output[ 1 ] = 1.0 - chi_square_cdf( R2, 1 );
 }

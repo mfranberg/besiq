@@ -27,10 +27,17 @@ glm_tukey_method::glm_tukey_method(method_data_ptr data, const glm_model &model)
     }
 }
 
-void
-glm_tukey_method::init(std::ostream &output)
+std::vector<std::string>
+glm_tukey_method::init()
 {
-    output << "Beta" << "\t" << "SE" << "\t" << "P" << "\t" << "LR" << "\t" << "LR_P";
+    std::vector<std::string> header;
+    header.push_back( "Beta" );
+    header.push_back( "SE" );
+    header.push_back( "P" );
+    header.push_back( "LR" );
+    header.push_back( "LR_P" );
+
+    return header;
 }
 
 void
@@ -92,7 +99,7 @@ glm_tukey_method::init_null(const snp_row &row1, const snp_row &row2, arma::mat 
     }
 }
 
-void glm_tukey_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
+void glm_tukey_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::uvec missing = get_data( )->missing;
 
@@ -111,15 +118,14 @@ void glm_tukey_method::run(const snp_row &row1, const snp_row &row2, std::ostrea
         try
         {
             double p = 1.0 - chi_square_cdf( LR, 1 );
-            output << b[ 2 ] << "\t" << alt_info.se_beta[ 2 ] << "\t" << alt_info.p_value[ 2 ] << "\t" << LR << "\t" << p;
+            output[ 0 ] = b[ 2 ];
+            output[ 1 ] = alt_info.se_beta[ 2 ];
+            output[ 2 ] = alt_info.p_value[ 2 ];
+            output[ 3 ] = LR;
+            output[ 4 ] = p;
         }
         catch(bad_domain_value &e)
         {
-            output << "NA\tNA\tNA\tNA\tNA";
         }
-    }
-    else
-    {
-        output << "NA\tNA\tNA\tNA\tNA";
     }
 }

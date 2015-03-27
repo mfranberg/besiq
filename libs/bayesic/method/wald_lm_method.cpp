@@ -8,14 +8,19 @@ wald_lm_method::wald_lm_method(method_data_ptr data)
     m_weight = arma::ones<arma::vec>( data->phenotype.n_elem );
 }
 
-void
-wald_lm_method::init(std::ostream &output)
+std::vector<std::string>
+wald_lm_method::init()
 {
-    output << "LR\tP";
+    std::vector<std::string> header;
+
+    header.push_back( "LR" );
+    header.push_back( "P" );
+
+    return header;
 }
 
 void
-wald_lm_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
+wald_lm_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::mat suf = arma::zeros<arma::mat>( 3, 3 );
     arma::mat suf2 = arma::zeros<arma::mat>( 3, 3 );
@@ -39,7 +44,6 @@ wald_lm_method::run(const snp_row &row1, const snp_row &row2, std::ostream &outp
     
     if( arma::min( arma::min( n ) ) <= 10 )
     {
-        output << "NA\tNA";
         return;
     }
 
@@ -84,11 +88,11 @@ wald_lm_method::run(const snp_row &row1, const snp_row &row2, std::ostream &outp
     arma::mat Iinv( 4, 4 );
     if( !inv( Iinv, I ) )
     {
-        output << "NA\tNA";
         return;
     }
     
     /* Test if b != 0 with Wald test */
     double chi = dot( beta, Iinv * beta );
-    output << chi << "\t" << 1.0 - chi_square_cdf( chi, 4 );
+    output[ 0 ] = chi;
+    output[ 1 ] = 1.0 - chi_square_cdf( chi, 4 );
 }

@@ -26,6 +26,11 @@ public:
       m_alpha( alpha )
     {
     }
+
+    /**
+     * Destructor.
+     */
+    virtual ~model(){ };
     
     /**
      * Returns the prior of the model.
@@ -52,7 +57,7 @@ public:
      * model.
      *
      * @param row1 The first snp.
-     * @param row2 The second snp.
+     * @param row2 The §second snp.
      * @param phenotype The phenotype, discrete 0.0 and 1.0.
      * @param weight A weight for each sample, this will be used instead of 1.0 as a count.
      *

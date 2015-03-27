@@ -15,13 +15,18 @@ glm_method::glm_method(method_data_ptr data, const glm_model &model)
     }
 }
 
-void
-glm_method::init(std::ostream &output)
+std::vector<std::string>
+glm_method::init()
 {
-    output << "Beta" << "\t" << "SE" << "\t" << "P";
+    std::vector<std::string> header;
+    header.push_back( "Beta" );
+    header.push_back( "SE" );
+    header.push_back( "P" );
+
+    return header;
 }
 
-void glm_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
+void glm_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::uvec missing = get_data( )->missing;
 
@@ -47,10 +52,8 @@ void glm_method::run(const snp_row &row1, const snp_row &row2, std::ostream &out
 
     if( info.converged && info.p_value[ 2 ] >= 0.0 )
     {
-        output << b[ 2 ] << "\t" << info.se_beta[ 2 ] << "\t" << info.p_value[ 2 ];
-    }
-    else
-    {
-        output << "NA\tNA\tNA";
+        output[ 0 ] = b[ 2 ];
+        output[ 1 ] = info.se_beta[ 2 ];
+        output[ 2 ] = info.p_value[ 2 ];
     }
 }

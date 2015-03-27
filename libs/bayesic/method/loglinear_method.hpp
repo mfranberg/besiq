@@ -29,7 +29,7 @@ public:
     /**
      * @see method_type::init.
      */
-    virtual void init(std::ostream &output);
+    virtual std::vector<std::string> init();
 
     /**
      * Returns the number of usable samples.
@@ -45,7 +45,7 @@ public:
     /**
      * @see method_type::run.
      */
-    virtual void run(const snp_row &row1, const snp_row &row2, std::ostream &output);
+    virtual void run(const snp_row &row1, const snp_row &row2, float *output);
 
 private: 
     /**

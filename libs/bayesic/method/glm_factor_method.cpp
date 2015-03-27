@@ -27,22 +27,26 @@ glm_factor_method::glm_factor_method(method_data_ptr data, const glm_model &mode
     }
 }
 
-void
-glm_factor_method::init(std::ostream &output)
+std::vector<std::string>
+glm_factor_method::init()
 {
+    std::vector<std::string> header;
     if( get_data( )->print_params )
     {
-        output << "b_00" << "\t";
-        output << "b_01" << "\t";
-        output << "b_02" << "\t";
-        output << "b_10" << "\t";
-        output << "b_20" << "\t";
-        output << "b_11" << "\t";
-        output << "b_12" << "\t";
-        output << "b_21" << "\t";
-        output << "b_22" << "\t";    
+        header.push_back( "b_00" );
+        header.push_back( "b_01" );
+        header.push_back( "b_02" );
+        header.push_back( "b_10" );
+        header.push_back( "b_20" );
+        header.push_back( "b_11" );
+        header.push_back( "b_12" );
+        header.push_back( "b_21" );
+        header.push_back( "b_22" );    
     }
-    output << "LR" << "\t" << "P";
+    header.push_back( "LR" );
+    header.push_back( "P" );
+
+    return header;
 }
 
 void
@@ -109,7 +113,7 @@ glm_factor_method::init_null(const snp_row &row1, const snp_row &row2, arma::mat
     }
 }
 
-void glm_factor_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
+void glm_factor_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::uvec missing = get_data( )->missing;
 
@@ -123,36 +127,26 @@ void glm_factor_method::run(const snp_row &row1, const snp_row &row2, std::ostre
 
     if( null_info.converged && alt_info.converged )
     {
+        int LR_pos = 0;
         if( get_data( )->print_params )
         {
-            output << b[ 8 ] << "\t";
+            output[ 0 ] = b[ 8 ];
             for(int i = 0; i < 8; i++)
             {
-                output << b[ i ] << "\t";
+                output[ i + 1 ] = b[ i ];
             }
+            LR_pos = 9;
         }
 
         double LR = -2 * ( null_info.logl - alt_info.logl );
 
         try
         {
-            double p = 1.0 - chi_square_cdf( LR, 4 );
-            output << LR << "\t" << p;
+            output[ LR_pos ] = LR;
+            output[ LR_pos + 1 ] = 1.0 - chi_square_cdf( LR, 4 );
         }
         catch(bad_domain_value &e)
         {
-            output << "NA\tNA";
         }
-    }
-    else
-    {
-        if( get_data( )->print_params )
-        {
-            for(int i = 0; i < 9; i++)
-            {
-                output << "NA\t";
-            }
-        }
-        output << "NA\tNA";
     }
 }

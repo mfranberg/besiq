@@ -1,5 +1,5 @@
-#ifndef __BAYESIC_METHOD_H__
-#define __BAYESIC_METHOD_H__
+#ifndef __BAYES_FAST_METHOD_H__
+#define __BAYES_FAST_METHOD_H__
 
 #include <string>
 #include <vector>
@@ -15,7 +15,7 @@
  * This class is responsible for intializing and repeatedly
  * executing the bayesic method on pairs of snps.
  */
-class bayesic_method
+class bayes_fast_method
 : public method_type
 {
 public:
@@ -25,8 +25,8 @@ public:
      * @param data Additional data required by all methods, such as
      *             covariates.
      */
-    bayesic_method(method_data_ptr data, arma::vec alpha = arma::ones<arma::vec>( 2 ));
-    virtual ~bayesic_method();
+    bayes_fast_method(method_data_ptr data, arma::vec alpha = arma::ones<arma::vec>( 2 ));
+    virtual ~bayes_fast_method();
 
     /**
      * Sets the models that should be compared. Memory will be
@@ -60,4 +60,4 @@ private:
     arma::vec m_weight;
 };
 
-#endif /* End of __BAYESIC_METHOD_H__ */
+#endif /* End of __BAYES_FAST_METHOD_H__ */

@@ -1,12 +1,16 @@
+#include <algorithm>
+
 #include <bayesic/method/method.hpp>
 #include <bayesic/pairfile.hpp>
+#include <bayesic/resultfile.hpp>
 
-void run_method(method_type &method, const std::vector<snp_row> &genotype_matrix, const std::vector<std::string> &loci, pairfile &pairs)
+void run_method(method_type &method, const std::vector<snp_row> &genotype_matrix, const std::vector<std::string> &loci, pairfile &pairs, resultfile &result)
 {
-    std::cout.precision( 4 );
-    std::cout << "snp1 snp2\t";
-    method.init( std::cout );
-    std::cout << "\tN" << std::endl;
+    std::vector<std::string> method_header = method.init( );
+    method_header.push_back( "N" );
+    result.set_header( method_header );
+
+    float *output = new float[ method_header.size( ) ];
     
     /* Create a map from snp names in the file to the genotype file */
     std::map<std::string, size_t> snp_to_index;
@@ -29,8 +33,13 @@ void run_method(method_type &method, const std::vector<snp_row> &genotype_matrix
         const snp_row &row1 = genotype_matrix[ snp1_index ];
         const snp_row &row2 = genotype_matrix[ snp2_index ];
 
-        std::cout << pair.first << " " << pair.second << "\t";
-        method.run( row1, row2, std::cout );
-        std::cout << "\t" << method.num_usable_samples( row1, row2 ) << std::endl;
+        std::fill( output, output + method_header.size( ), -9.0f );
+
+        method.run( row1, row2, output );
+        output[ method_header.size( ) - 1 ] = method.num_usable_samples( row1, row2 );
+
+        result.write( snp1_index, snp2_index, output );
     }
+
+    delete output;
 }

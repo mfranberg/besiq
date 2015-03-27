@@ -10,6 +10,7 @@
 #include <shared_ptr/shared_ptr.hpp>
 
 class pairfile;
+class resultfile;
 
 /**
  * Represents additional data that is required by the method.
@@ -68,6 +69,10 @@ public:
     {
     }
 
+    virtual ~method_type()
+    {
+    }
+
     /**
      * Returns the additional data.
      */
@@ -91,20 +96,20 @@ public:
     }
 
     /**
-     * Outputs the column names that will be
-     * outputted by this method separated by '\t'.
+     * Return the column names that will be written by this method.
      */
-    virtual void init(std::ostream &output) = 0;
+    virtual std::vector<std::string> init() = 0;
 
 
     /**
      * 
      * @param row1 The first genotype.
      * @param row2 The second genotype.
-     * @param name1 Name of the first genotype.
-     * @param name2 Name of the second genotype.
+     * @param output The results for this method, the size will be the same
+     *               as the length of the header, -9 is interpreted as missing.
+     *               You can assume that all values are initialized to -9.
      */
-    virtual void run(const snp_row &row1, const snp_row &row2, std::ostream &output) = 0;
+    virtual void run(const snp_row &row1, const snp_row &row2, float *output) = 0;
 
 private:
     /**
@@ -122,6 +127,6 @@ private:
  * @param loci The list of loci.
  * @param pairs The pairs to test.
  */
-void run_method(method_type &method, const std::vector<snp_row> &genotype_matrix, const std::vector<std::string> &loci, pairfile &pairs);
+void run_method(method_type &method, const std::vector<snp_row> &genotype_matrix, const std::vector<std::string> &loci, pairfile &pairs, resultfile &result);
 
 #endif /* End of __METHOD_H__ */

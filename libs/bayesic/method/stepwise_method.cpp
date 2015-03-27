@@ -19,10 +19,16 @@ stepwise_method::num_ok_samples(const snp_row &row1, const snp_row &row2, const 
     return arma::accu( joint_count( row1, row2, get_data( )->phenotype, m_weight ) + 1.0 );
 }
 
-void
-stepwise_method::init(std::ostream &output)
+std::vector<std::string>
+stepwise_method::init()
 {
-    output << "P_null\tP_snp1\tP_snp2\tLD_LR";
+    std::vector<std::string> header;
+
+    header.push_back( "P_null" );
+    header.push_back( "P_snp1" );
+    header.push_back( "P_snp2" );
+
+    return header;
 }
 
 double
@@ -49,7 +55,7 @@ stepwise_method::compute_ld_lr(const snp_row &row1, const snp_row &row2)
 }
 
 void
-stepwise_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
+stepwise_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     std::vector<log_double> likelihood( m_models.size( ), 0.0 );
     std::vector<double> bic( m_models.size( ), 0.0 );
@@ -72,21 +78,11 @@ stepwise_method::run(const snp_row &row1, const snp_row &row2, std::ostream &out
 
             try
             {
-                output << 1.0 - chi_square_cdf( LR, m_models[ i ]->df( ) ) << "\t";
+                output[ i - 1 ] = 1.0 - chi_square_cdf( LR, m_models[ i ]->df( ) );
             }
             catch(bad_domain_value &e)
             {
-                output << "NA\t";
             }
         }
     }
-    else
-    {
-        for(int i = 1; i < m_models.size( ); i++)
-        {
-            output << "NA\t";
-        }
-    }
-    
-    output << compute_ld_lr( row1, row2 );
 }

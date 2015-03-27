@@ -8,19 +8,23 @@ wald_method::wald_method(method_data_ptr data)
     m_weight = arma::ones<arma::vec>( data->phenotype.n_elem );
 }
 
-void
-wald_method::init(std::ostream &output)
+std::vector<std::string>
+wald_method::init()
 {
-    output << "LR\tP";
+    std::vector<std::string> header;
+
+    header.push_back( "LR" );
+    header.push_back( "P" );
+
+    return header;
 }
 
 void
-wald_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
+wald_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::mat n = joint_count( row1, row2, get_data( )->phenotype, m_weight );
     if( arma::min( arma::min( n ) ) <= 10 )
     {
-        output << "NA\tNA";
         return;
     }
 
@@ -66,10 +70,10 @@ wald_method::run(const snp_row &row1, const snp_row &row2, std::ostream &output)
     arma::mat Iinv( 4, 4 );
     if( !inv( Iinv, I ) )
     {
-        output << "NA\tNA";
         return;
     }
     
     double chi = dot( log_diff, Iinv * log_diff );
-    output << chi << "\t" << 1.0 - chi_square_cdf( chi, 4 );
+    output[ 0 ] = chi;
+    output[ 1 ] = 1.0 - chi_square_cdf( chi, 4 );
 }

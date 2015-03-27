@@ -16,6 +16,7 @@
 
 #include <plink/plink_file.hpp>
 #include <bayesic/pairfile.hpp>
+#include <bayesic/resultfile.hpp>
 #include <bayesic/prior.hpp>
 #include <bayesic/method/bayesic_method.hpp>
 #include <bayesic/method/bayesic_fine_method.hpp>
@@ -84,6 +85,7 @@ main(int argc, char *argv[])
 
     parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 10 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'bayes-fine', 'lm', 'glm', 'loglinear', 'caseonly', 'stepwise', 'lm-stepwise', 'wald', or 'wald-lm'." );
     parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
+    parser.add_option( "-o", "--out" ).help( "The output file that will contain the results." ).set_default( "-" );
     parser.add_option( "-l", "--link-function" ).choices( &link_choices[ 0 ], &link_choices[ 5 ] ).metavar( "link" ).help( "The link function, or scale, that is used for the penetrance: 'logistic' log(p/(1-p)), 'log-complement' log(1 - p), 'odds-additive' p/(1-p), 'penetrance-additive' p, 'penetrance-multiplicative' log(p)." ).set_default( "logistic" );
     parser.add_option( "-f", "--factor" ).choices( &factor_choices[ 0 ], &factor_choices[ 3 ] ).help( "Determines how to code the SNPs, in 'factor' no order of the alleles is assumed, in 'additive' the SNPs are coded as the number of minor alleles, in 'tukey' the coding is the same as factor except that a single parameter for the interaction is used." ).set_default( "factor" );
 
@@ -165,16 +167,15 @@ main(int argc, char *argv[])
     std::ostream nullstream( 0 );
     arma::set_stream_err2( nullstream );
 
-    /* Run method */
+
+    method_type *m = NULL;
     if( options[ "method" ] == "bayes" )
     {
-        bayesic_method bayesic( data, alpha );
-        run_method( bayesic, genotype_matrix, locus_names, *pairs );
+        m = new bayesic_method( data, alpha );
     }
     else if( options[ "method" ] == "bayes-fine" )
     {
-        bayesic_fine_method bayesic_fine( data, (int) options.get( "mc_iterations" ), alpha );
-        run_method( bayesic_fine, genotype_matrix, locus_names, *pairs );
+        m = new bayesic_fine_method( data, (int) options.get( "mc_iterations" ), alpha );
     }
     else if( options[ "method" ] == "glm" )
     {
@@ -202,18 +203,15 @@ main(int argc, char *argv[])
 
         if( options[ "factor" ] == "factor" )
         {
-            glm_factor_method glm_factor( data, *link_function );
-            run_method( glm_factor, genotype_matrix, locus_names, *pairs );
+            m = new glm_factor_method( data, *link_function );
         }
         else if( options[ "factor" ] == "additive" )
         {
-            glm_method glm_additive( data, *link_function );
-            run_method( glm_additive, genotype_matrix, locus_names, *pairs );
+            m = new glm_method( data, *link_function );
         }
         else if( options[ "factor" ] == "tukey" )
         {
-            glm_tukey_method glm_tukey( data, *link_function );
-            run_method( glm_tukey, genotype_matrix, locus_names, *pairs );
+            m = new glm_tukey_method( data, *link_function );
         }
     }
     else if( options[ "method" ] == "lm" )
@@ -223,40 +221,44 @@ main(int argc, char *argv[])
             std::cerr << "bayesic:error: Only factor supported for linear models." << std::endl;
             exit( 1 );
         }
-        lm_factor_method lm_factor( data );
-        run_method( lm_factor, genotype_matrix, locus_names, *pairs );
+        m = new lm_factor_method( data );
     }
     else if( options[ "method" ] == "loglinear" )
     {
-        loglinear_method loglinear( data );
-        run_method( loglinear, genotype_matrix, locus_names, *pairs );
+        m = new loglinear_method( data );
     }
     else if( options[ "method" ] == "caseonly" )
     {
-        caseonly_method caseonly( data );
-        run_method( caseonly, genotype_matrix, locus_names, *pairs );
+        m = new caseonly_method( data );
     }
     else if( options[ "method" ] == "stepwise" )
     {
-        stepwise_method stepwise( data );
-        run_method( stepwise, genotype_matrix, locus_names, *pairs );
+        m = new stepwise_method( data );
     }
     else if( options[ "method" ] == "lm-stepwise" )
     {
-        lm_stepwise_method stepwise( data );
-        run_method( stepwise, genotype_matrix, locus_names, *pairs );
+        m = new lm_stepwise_method( data );
     }
     else if( options[ "method" ] == "wald" )
     {
-        wald_method wald( data );
-        run_method( wald, genotype_matrix, locus_names, *pairs );
+        m = new wald_method( data );
     }
     else if( options[ "method" ] == "wald-lm" )
     {
-        wald_lm_method wald( data );
-        run_method( wald, genotype_matrix, locus_names, *pairs );
+        m = new wald_lm_method( data );
     }
+    
+    /* Run method */
+    std::string output_path = (std::string) options.get( "out" );
+    bresultfile result( output_path, locus_names );
+    if( !result.open( ) )
+    {
+        std::cerr << "bayesic: error: Can not open result file." << std::endl;
+        exit( 1 );
+    }
+    run_method( *m, genotype_matrix, locus_names, *pairs, result );
 
+    delete m;
     delete pairs;
 
     return 0;

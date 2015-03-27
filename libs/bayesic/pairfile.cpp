@@ -1,8 +1,7 @@
-#include <iterator>
-#include <sstream>
 #include <iostream>
 #include <fstream>
 
+#include <bayesic/misc.hpp>
 #include <bayesic/pairfile.hpp>
 
 bpairfile::bpairfile(const std::string &path)
@@ -69,12 +68,12 @@ bpairfile::open()
             return false;
         }
 
-        m_snp_names = parse_snp_names( buffer );
+        m_snp_names = unpack_string( buffer );
         free( buffer );
     }
     else
     {
-        std::string snp_names = make_snp_names( m_snp_names );
+        std::string snp_names = pack_string( m_snp_names );
         m_header.header_length = snp_names.size( ) + 1;
         size_t bytes_written = fwrite( &m_header, sizeof( bpair_header ), 1, m_fp );
         if( bytes_written != 1 )
@@ -146,7 +145,7 @@ bpairfile::write(size_t snp_id1, size_t snp_id2)
     uint32_t pair[] = { snp_id1, snp_id2 };
     size_t bytes_written = fwrite( pair, sizeof( uint32_t ), 2, m_fp );
 
-    if( bytes_written == sizeof( uint32_t ) * 2 )
+    if( bytes_written == 2 )
     {
         m_header.num_pairs++;
         return true;
@@ -155,31 +154,6 @@ bpairfile::write(size_t snp_id1, size_t snp_id2)
     {
         return false;
     }
-}
-
-std::vector<std::string>
-bpairfile::parse_snp_names(const char *snp_name_str)
-{
-    std::string snp_names( snp_name_str );
-    std::stringstream strstr( snp_names );
-    std::istream_iterator<std::string> it( strstr );
-    std::istream_iterator<std::string> end;
-    std::vector<std::string> results( it, end );
-
-    return results;
-}
-
-std::string
-bpairfile::make_snp_names(const std::vector<std::string> &snp_names)
-{
-    std::stringstream output;
-    output << snp_names[ 0 ];
-    for(size_t i = 1; i < snp_names.size( ); i++)
-    {
-        output << "\t" << snp_names[ i ];
-    }
-
-    return output.str( );
 }
 
 size_t

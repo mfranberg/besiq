@@ -1,8 +1,6 @@
-#include <bayesic/method/bayesic_method.hpp>
-#include <glm/models/binomial.hpp>
-#include <glm/irls.hpp>
+#include <bayesic/method/bayes_fast.hpp>
 
-bayesic_method::bayesic_method(method_data_ptr data, arma::vec alpha)
+bayes_fast_method::bayes_fast_method(method_data_ptr data, arma::vec alpha)
 : method_type::method_type( data )
 {
     double int_prior = 1.0 / ( 4.0 * data->num_interactions );
@@ -21,7 +19,7 @@ bayesic_method::bayesic_method(method_data_ptr data, arma::vec alpha)
     m_models.push_back( new null( 1.0 - int_prior - 2*single_prior, alpha ) );
 }
 
-bayesic_method::~bayesic_method()
+bayes_fast_method::~bayes_fast_method()
 {
     for(int i = 0; i < m_models.size( ); i++)
     {
@@ -32,7 +30,7 @@ bayesic_method::~bayesic_method()
 }
 
 void
-bayesic_method::set_models(const std::vector<model *> &models)
+bayes_fast_method::set_models(const std::vector<model *> &models)
 {
     for(int i = 0; i < m_models.size( ); i++)
     {
@@ -44,28 +42,10 @@ bayesic_method::set_models(const std::vector<model *> &models)
 }
 
 std::vector<std::string>
-bayesic_method::init()
+bayes_fast_method::init()
 {
-    if( get_data( )->covariate_matrix.n_elem == 0 )
-    {
-        m_weight = arma::ones<arma::vec>( get_data( )->missing.n_elem );
-    }
-    else
-    {
-        arma::mat design_matrix = get_data( )->covariate_matrix;
-        design_matrix.insert_cols( 0, arma::ones<arma::vec>( get_data( )->phenotype.n_elem ) );
-
-        binomial model;
-        irls_info full_info;
-        irls( design_matrix, get_data( )->phenotype, get_data( )->missing, model, full_info );
-
-        arma::mat null = arma::ones<arma::mat>( get_data( )->phenotype.size( ), 1 );
-        irls_info null_info;
-        irls( null, get_data( )->phenotype, get_data( )->missing, model, null_info );
-
-        m_weight = abs( get_data( )->phenotype - full_info.mu ) / abs( get_data( )->phenotype - null_info.mu );
-    }
-
+    m_weight = arma::ones<arma::vec>( get_data( )->missing.n_elem );
+   
     const arma::uvec &missing = get_data( )->missing;
     for(int i = 0; i < missing.size( ); i++)
     {
@@ -80,7 +60,7 @@ bayesic_method::init()
     return header;
 }
 
-void bayesic_method::run(const snp_row &row1, const snp_row &row2, float *output)
+void bayes_fast_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     log_double denominator = 0.0;
     std::vector<log_double> prior_likelihood( m_models.size( ), 0.0 );
@@ -91,5 +71,5 @@ void bayesic_method::run(const snp_row &row1, const snp_row &row2, float *output
     }
     log_double posterior = prior_likelihood[ 0 ] / denominator;
 
-    output[ 0 ] = posterior.value( );
+    std::cout << posterior.value( );
 }

@@ -6,7 +6,14 @@
 #include <cmath>
 #include <numeric>
 #include <vector>
+
+#ifndef USE_TR1
+#include <random>
+typedef std::mt19937 prg_type;
+#else
 #include <tr1/random>
+typedef std::tr1::mt19937 prg_type;
+#endif
 
 /**
  * Computes the dirichlet multinomial probability of a vector
@@ -72,7 +79,7 @@ private:
     /**
      * Mersenne twister random generator.
      */
-    std::tr1::mt19937 m_generator;
+    prg_type m_generator;
 };
 
 #endif /* End of __DIRICHLET_H__ */

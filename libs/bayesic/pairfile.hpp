@@ -13,6 +13,7 @@
 /**
  * Defines the header.
  */
+#pragma pack(push, 1)
 struct bpair_header
 {
     /**
@@ -28,13 +29,14 @@ struct bpair_header
     /**
      * The number of pairs stored in the file.
      */
-    uint32_t num_pairs;
+    uint64_t num_pairs;
 
     /**
      * Length of the header string.
      */
     uint32_t header_length;
 };
+#pragma pack(pop)
 
 /**
  * Pair file interface.
@@ -98,9 +100,6 @@ public:
     size_t num_pairs();
 
 private:
-    std::vector<std::string> parse_snp_names(const char *snp_name_str);
-    std::string make_snp_names(const std::vector<std::string> &snp_names);
-
     /* Path to the file */
     std::string m_path;
 
