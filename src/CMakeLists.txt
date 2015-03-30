@@ -15,3 +15,6 @@ target_link_libraries( bayesic-pairs libplink libcpp-argparse libbayesic libgzst
 
 add_executable( bayesic-view bayesic_view.cpp )
 target_link_libraries( bayesic-view libcpp-argparse libbayesic )
+
+add_executable( bayesic-correct bayesic_correct.cpp )
+target_link_libraries( bayesic-correct libdcdf libglm libbayesic libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )

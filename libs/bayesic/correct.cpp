@@ -195,7 +195,7 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
 }
 
     void
-run_static(metaresultfile *result, const correction_options &options, genotype_matrix_ptr genotypes, method_data_ptr data, const std::string &output_path)
+run_static(metaresultfile *result, genotype_matrix_ptr genotypes, method_data_ptr data, const correction_options &options, const std::string &output_path)
 {
     resultfile *last_stage = do_common_stages( result, options, output_path );
     if( last_stage == NULL )
@@ -209,7 +209,7 @@ run_static(metaresultfile *result, const correction_options &options, genotype_m
 }
 
 void
-run_adaptive(metaresultfile *result, const correction_options &options, genotype_matrix_ptr genotypes, method_data_ptr data, const std::string &output_path)
+run_adaptive(metaresultfile *result, genotype_matrix_ptr genotypes, method_data_ptr data, const correction_options &options, const std::string &output_path)
 {
     correction_options adaptive_options( options );
     for(int i = 0; i < adaptive_options.num_tests.size( ); i++)
@@ -217,6 +217,6 @@ run_adaptive(metaresultfile *result, const correction_options &options, genotype
         adaptive_options.num_tests[ i ] = 0;
     }
 
-    run_static( result, adaptive_options, genotypes, data, output_path );
+    run_static( result, genotypes, data, adaptive_options, output_path );
 }
 
