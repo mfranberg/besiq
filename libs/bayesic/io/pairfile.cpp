@@ -1,8 +1,12 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
+#include <algorithm>
 
 #include <bayesic/io/misc.hpp>
 #include <bayesic/io/pairfile.hpp>
+
+#define BLOCK_SIZE 4194304ULL
 
 bpairfile::bpairfile(const std::string &path)
     : m_path( path ),
@@ -165,6 +169,7 @@ bpairfile::num_pairs()
 tpairfile::tpairfile(const std::string &path, std::vector<std::string> snp_names, const char *mode)
     : m_path( path ),
       m_mode( mode ),
+      m_num_pairs( 0 ),
       m_input( NULL ),
       m_output( NULL ),
       m_snp_names( snp_names )
@@ -255,6 +260,7 @@ bool tpairfile::read(std::pair<std::string, std::string> &pair)
 bool tpairfile::write(size_t snp1_id, size_t snp2_id)
 {
     *m_output << m_snp_names[ snp1_id ] << " " << m_snp_names[ snp2_id ] << "\n";
+    m_num_pairs++;
 
     return true;
 }
@@ -262,7 +268,7 @@ bool tpairfile::write(size_t snp1_id, size_t snp2_id)
 size_t
 tpairfile::num_pairs()
 {
-    return 0;
+    return m_num_pairs;
 }
 
 pairfile *
@@ -291,3 +297,129 @@ open_pair_file(const std::string &path, const std::vector<std::string> &snp_name
         return new tpairfile( path, snp_names, "r" );
     }
 }
+
+bool write_pairs_in_block(uint32_t *snp_buffer, uint64_t num_pairs, FILE *in_fp, FILE *out_fp)
+{
+    for(int64_t block_pairs_left = num_pairs; block_pairs_left > 0; block_pairs_left -= BLOCK_SIZE )
+    {
+        uint64_t cur_block_size = 2 * BLOCK_SIZE;
+        if( block_pairs_left < BLOCK_SIZE )
+        {
+            cur_block_size = 2 * block_pairs_left;
+        }
+
+        if( fread( snp_buffer, sizeof( uint32_t ), cur_block_size, in_fp ) != cur_block_size )
+        {
+            return false;
+        }
+        if( fwrite( snp_buffer, sizeof( uint32_t ), cur_block_size, out_fp ) != cur_block_size )
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+char * parse_header(FILE *fp, bpair_header *header)
+{
+    /* Parse header info */
+    size_t bytes_read = fread( header, sizeof( bpair_header ), 1, fp );
+    if( bytes_read != 1 || header->version != PAIR_CUR_VERSION )
+    {
+        fclose( fp );
+        return NULL;
+    }
+    
+    char *buffer = (char *) malloc( header->header_length );
+    bytes_read = fread( buffer, 1, header->header_length, fp );
+    if( bytes_read != header->header_length )
+    {
+        free( buffer );
+        fclose( fp );
+        return NULL;
+    }
+
+    return buffer;
+}
+
+bool split_pair_file(const std::string &all_pairs, size_t num_splits, const std::string &output_path)
+{
+    FILE *fp = fopen( all_pairs.c_str( ), "r" );
+    if( fp == NULL || num_splits <= 1 )
+    {
+        return false;
+    }
+
+    bpair_header header;
+    char *buffer = parse_header( fp, &header );
+    if( buffer == NULL )
+    {
+        fclose( fp );
+        return false;
+    }
+
+    /* Create the split files and copy snps */
+    uint64_t num_pairs_in_each_split = (header.num_pairs + num_splits - 1) / num_splits;
+    if( num_pairs_in_each_split <= 0 )
+    {
+        fclose( fp );
+        free( buffer );
+        return false;
+    }
+
+    bool error = false;
+    uint64_t total_pairs = header.num_pairs;
+    int split = 1;
+    FILE *cur_fp;
+    uint32_t *snp_buffer = (uint32_t *) malloc( sizeof( uint32_t ) * BLOCK_SIZE * 2 );
+    for(int64_t pairs_left = total_pairs; pairs_left > 0; pairs_left -= num_pairs_in_each_split)
+    {
+        std::stringstream ss;
+        ss << output_path << ".split" << split;
+        std::string filename = ss.str( );
+
+        cur_fp = fopen( filename.c_str( ), "w" );
+        if( cur_fp == NULL )
+        {
+            error = true;
+            goto split_error;
+        }
+
+        bpair_header cur_header( header );
+        cur_header.num_pairs = num_pairs_in_each_split;
+        if( pairs_left < num_pairs_in_each_split )
+        {
+            cur_header.num_pairs = pairs_left;
+        }
+
+        if( fwrite( &cur_header, sizeof( bpair_header ), 1, cur_fp ) != 1 )
+        {
+            error = true;
+            goto split_error;
+        }
+        if( fwrite( buffer, 1, cur_header.header_length, cur_fp ) != cur_header.header_length )
+        {
+            error = true;
+            goto split_error;
+        }
+        if( !write_pairs_in_block( snp_buffer, num_pairs_in_each_split, fp, cur_fp ) )
+        {
+            error = true;
+            goto split_error;
+        }
+
+        fclose( cur_fp );
+
+        split++;
+    }
+
+split_error: 
+    fclose( fp );
+    free( buffer );
+    free( snp_buffer );
+    fclose( cur_fp );
+
+    return !error;
+}
+
+

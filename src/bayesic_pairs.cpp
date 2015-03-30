@@ -407,6 +407,7 @@ main(int argc, char *argv[])
     parser.add_option( "-r", "--restrict" ).help( "Used with --between to only check the pair of genes in this list." );
     parser.add_option( "-s", "--set" ).help( "Output pairs in this set with all others, but ignore pairs when both are in this set." );
     parser.add_option( "-n", "--set-no-ignore" ).help( "Output pairs in this set with all others including pairs in the set." );
+    parser.add_option( "-p", "--split" ).help( "Split the output file in X files with extension .splitY." );
     parser.add_option( "-o", "--out" ).help( "Name of the output file." );
 
     Values options = parser.parse_args( argc, argv );
@@ -476,6 +477,17 @@ main(int argc, char *argv[])
     else
     {
         output_all( output, oo );
+    }
+
+    if( options.is_set( "split" ) )
+    {
+        output.close( );
+
+        if( !split_pair_file( output_path, (size_t) options.get( "split" ), output_path ) )
+        {
+            printf( "bayesic-pairs: error: Could output pairs but failed to split file.\n" );
+            exit( 1 );
+        }
     }
 
     return 1;

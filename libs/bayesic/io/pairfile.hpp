@@ -66,6 +66,7 @@ public:
 private:
     std::string m_path;
     std::string m_mode;
+    uint64_t m_num_pairs;
     std::istream *m_input;
     std::ostream *m_output;
     std::vector<std::string> m_snp_names;
@@ -117,5 +118,6 @@ private:
 };
 
 pairfile * open_pair_file(const std::string &path, const std::vector<std::string> &snp_names);
+bool split_pair_file(const std::string &all_pairs, size_t num_splits, const std::string &output_path);
 
 #endif /* End of __BINARY_PAIR_H__ */
