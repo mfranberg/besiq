@@ -5,7 +5,7 @@
 #include <plinkio/plinkio.h>
 
 #include <gzstream/gzutil.hpp>
-#include <bayesic/covariates.hpp>
+#include <bayesic/io/covariates.hpp>
 #include <cpp-argparse/OptionParser.h>
 
 #include <plink/plink_file.hpp>
@@ -20,36 +20,6 @@ const std::string USAGE = "bayesic-env [-c covariates.csv] [-m method] environme
 const std::string VERSION = "Bayesic 0.0.1";
 const std::string DESCRIPTION = "A tool for inferring variant-environment interactions.";
 const std::string EPILOG = "";
-
-std::vector<snp_row>
-create_genotype_matrix(plink_file_ptr genotype_file)
-{
-    std::vector<snp_row> genotype_matrix;
-    snp_row row;
-    while( genotype_file->next_row( row ) )
-    {
-        genotype_matrix.push_back( row );
-    }
-
-    return genotype_matrix;
-}
-
-vec
-create_phenotype_vector(plink_file_ptr genotype_file, uvec &missing)
-{
-    const std::vector<pio_sample_t> &samples = genotype_file->get_samples( );
-    vec phenotype( samples.size( ) );
-    for(int i = 0; i < samples.size( ); i++)
-    {
-        phenotype[ i ] = samples[ i ].phenotype;
-        if( samples[ i ].affection == PIO_MISSING )
-        {
-            missing[ i ] = 1;
-        }
-    }
-
-    return phenotype;
-}
 
 int
 main(int argc, char *argv[])
@@ -86,7 +56,7 @@ main(int argc, char *argv[])
 
     /* Read all genotypes */
     plink_file_ptr genotype_file = open_plink_file( args[ 1 ] );
-    std::vector<snp_row> genotype_matrix = create_genotype_matrix( genotype_file );
+    genotype_matrix_ptr genotypes = create_genotype_matrix( genotype_file );
     std::vector<std::string> locus_names = genotype_file->get_locus_names( );
  
     /* Read additional data  */
@@ -100,7 +70,7 @@ main(int argc, char *argv[])
     }
     else
     {
-        data->phenotype = create_phenotype_vector( genotype_file, data->missing );
+        data->phenotype = create_phenotype_vector( genotype_file->get_samples( ), data->missing );
     }
 
     /* Read covariates */
@@ -127,7 +97,7 @@ main(int argc, char *argv[])
         }
 
         lm_env_stepwise stepwise_env( data, E );
-        run_env_method( stepwise_env, genotype_matrix, locus_names );
+        run_env_method( stepwise_env, genotypes );
     }
 
     return 0;

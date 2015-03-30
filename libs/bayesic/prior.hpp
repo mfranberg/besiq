@@ -5,6 +5,7 @@
 
 #include <armadillo>
 
+#include <plink/plink_file.hpp>
 #include <plink/snp_row.hpp>
 
 /**
@@ -26,6 +27,6 @@
  * @return Suitable beta prior parameters, or 1,1 if they could not
  *         be estimated.
  */
-arma::vec estimate_prior_parameters(const std::vector<snp_row> &genotype_matrix, const arma::vec &phenotypes, const arma::uvec &missing, int num_samples);
+arma::vec estimate_prior_parameters(genotype_matrix_ptr genotypes, const arma::vec &phenotypes, const arma::uvec &missing, int num_samples);
 
 #endif /* End of __PRIOR_H__ */

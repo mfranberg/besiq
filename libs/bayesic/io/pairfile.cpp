@@ -1,8 +1,8 @@
 #include <iostream>
 #include <fstream>
 
-#include <bayesic/misc.hpp>
-#include <bayesic/pairfile.hpp>
+#include <bayesic/io/misc.hpp>
+#include <bayesic/io/pairfile.hpp>
 
 bpairfile::bpairfile(const std::string &path)
     : m_path( path ),

@@ -11,6 +11,8 @@
 
 class pairfile;
 class resultfile;
+class genotype_matrix;
+typedef shared_ptr<genotype_matrix> genotype_matrix_ptr;
 
 /**
  * Represents additional data that is required by the method.
@@ -124,9 +126,9 @@ private:
  *
  * @param method A method to run.
  * @param genotype_matix Genotypes for all SNPs.
- * @param loci The list of loci.
  * @param pairs The pairs to test.
+ * @param result The result file.
  */
-void run_method(method_type &method, const std::vector<snp_row> &genotype_matrix, const std::vector<std::string> &loci, pairfile &pairs, resultfile &result);
+void run_method(method_type &method, genotype_matrix_ptr genotype_matrix, pairfile &pairs, resultfile &result);
 
 #endif /* End of __METHOD_H__ */

@@ -10,7 +10,8 @@
 
 #include <armadillo>
 
-#include <bayesic/covariates.hpp>
+#include <bayesic/io/covariates.hpp>
+#include <plink/plink_file.hpp>
 
 using namespace arma;
 
@@ -241,5 +242,21 @@ parse_environment(std::istream &stream, arma::uvec &missing, const std::vector<s
     }
 
     return X;
+}
+
+vec
+create_phenotype_vector(const std::vector<pio_sample_t> &samples, uvec &missing)
+{
+    vec phenotype( samples.size( ) );
+    for(int i = 0; i < samples.size( ); i++)
+    {
+        phenotype[ i ] = samples[ i ].phenotype;
+        if( samples[ i ].affection == PIO_MISSING )
+        {
+            missing[ i ] = 1;
+        }
+    }
+
+    return phenotype;
 }
 

@@ -3,7 +3,7 @@
 
 #include <cpp-argparse/OptionParser.h>
 
-#include <bayesic/resultfile.hpp>
+#include <bayesic/io/resultfile.hpp>
 
 using namespace optparse;
 
@@ -129,7 +129,7 @@ main(int argc, char *argv[])
             for(int j = 0; j < header_size; j++)
             {
                 float value = output[ j ];
-                if( output[ j ] != -9.0f )
+                if( output[ j ] != result_get_missing( ) )
                 {
                     std::cout << "\t" << output[ j ];
                 }

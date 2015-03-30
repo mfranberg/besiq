@@ -52,9 +52,9 @@ sample_risk(const snp_row &snp1, const snp_row &snp2, const arma::vec &phenotype
 }
 
 arma::vec
-estimate_prior_parameters(const std::vector<snp_row> &genotype_matrix, const arma::vec &phenotype, const arma::uvec &missing, int num_samples)
+estimate_prior_parameters(genotype_matrix_ptr genotypes, const arma::vec &phenotype, const arma::uvec &missing, int num_samples)
 {
-    assert( genotype_matrix.size( ) > 1 );
+    assert( genotypes->size( ) > 1 );
     assert( num_samples > 1 );
     assert( sum( missing ) < phenotype.n_elem - 2.0 );
 
@@ -70,14 +70,17 @@ estimate_prior_parameters(const std::vector<snp_row> &genotype_matrix, const arm
     arma::vec samples = arma::zeros<arma::vec>( num_samples );
     for(int i = 0; i < num_samples; i++)
     {
-        int snp1 = random( ) % genotype_matrix.size( );
+        int snp1 = random( ) % genotypes->size( );
         int snp2 = snp1;
         while( snp1 == snp2 )
         {
-            snp2 = random( ) % genotype_matrix.size( );
+            snp2 = random( ) % genotypes->size( );
         }
 
-        samples[ i ] = sample_risk( genotype_matrix[ snp1 ], genotype_matrix[ snp2 ], phenotype, weight );
+        const snp_row &snp1_row = genotypes->get_row( snp1 );
+        const snp_row &snp2_row = genotypes->get_row( snp2 );
+
+        samples[ i ] = sample_risk( snp1_row, snp2_row, phenotype, weight );
     }
 
     return mom_beta( samples );

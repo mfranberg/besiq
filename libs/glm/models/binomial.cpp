@@ -4,19 +4,20 @@
 
 using namespace arma;
 
-vec
-binomial::init_beta(const mat &X, const vec &y) const
+binomial::binomial(const std::string &link_name)
 {
-    vec mu = (y + 0.5) / 2.0;
-    vec eta = log( mu / ( 1.0 - mu ) );
-    
-    return pinv( X ) * eta;
+    m_link = make_link( link_name );
 }
 
-vec
-binomial::mu(const arma::vec &eta) const
+binomial::~binomial()
 {
-    return 1.0 / ( 1.0 + exp( -eta ) );
+    delete m_link;
+}
+
+const glm_link &
+binomial::get_link() const
+{
+    return *m_link;
 }
 
 bool
@@ -31,12 +32,6 @@ binomial::valid_mu(const arma::vec &mu) const
     }
     
     return true;
-}
-
-vec
-binomial::mu_eta(const arma::vec &mu) const
-{
-    return 1.0 / ( mu % ( 1.0 - mu ) );
 }
 
 vec
@@ -58,5 +53,4 @@ binomial::likelihood(const arma::vec &mu, const arma::vec &y, const arma::uvec &
     }
 
     return loglikelihood;
-    //return sum( (y % log( mu ) ) + ( (1 - y) % log( 1 - mu ) ) );
 }

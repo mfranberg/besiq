@@ -3,6 +3,8 @@
 
 #include <armadillo>
 
+class glm_link;
+
 /**
  * General base class for GLM models that will be solved with
  * the Iteratively reweighted least squares algorithm.
@@ -11,24 +13,12 @@ class glm_model
 {
     public:
         /**
-         * Generate starting values for the beta coefficients.
+         * Returns the link function used in this model.
          *
-         * @param X The design matrix, including an intercept if desired.
-         * @param y The outcome or observations.
-         *
-         * @return A vector containing the starting values for beta.
+         * @return the link function used in this model.
          */
-        virtual arma::vec init_beta(const arma::mat &X, const arma::vec &y) const = 0;
+        virtual const glm_link &get_link() const = 0;
 
-        /**
-         * Compute the mean value parameter from the linearized parameter.
-         *
-         * @param eta The linearized parameter.
-         *
-         * @return The mean value parameter.
-         */
-        virtual arma::vec mu(const arma::vec &eta) const = 0;
-    
         /**
         * Checks that mu is in the allowed range. Should return false
         * if this is not the case, the irls algorithm will terminate
@@ -40,16 +30,6 @@ class glm_model
         */
         virtual bool valid_mu(const arma::vec &mu) const = 0;
         
-        /**
-         * The derivative of mu with respect to eta. It is often good to
-         * use the relationship dmu/deta = (deta/dmu)^-1.
-         *
-         * @param mu The mean value parameter.
-         *
-         * @return The derivative of mu with respect to eta.
-         */
-        virtual arma::vec mu_eta(const arma::vec &mu) const = 0;
-
         /**
          * The variance of each observation given the mean value
          * parameter.

@@ -1,6 +1,7 @@
 #ifndef __RESULTFILE_H__
 #define __RESULTFILE_H__
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -50,6 +51,7 @@ struct result_header
 class resultfile
 {
     public:
+        virtual ~resultfile(){ };
         /**
          * Open the result file, return true if successful or
          * false otherwise. Must be called prior to other calls.
@@ -71,7 +73,14 @@ class resultfile
          *
          * @return a list of column names stored in the result file.
          */
-        virtual std::vector<std::string> get_header() = 0;
+        virtual const std::vector<std::string> &get_header() = 0;
+
+        /**
+         * Returns a list of variant names stored in the result file.
+         *
+         * @return a list of variant names stored in the result file.
+         */
+        virtual const std::vector<std::string> &get_snp_names() = 0;
 
         /**
          * Set the column names.
@@ -104,7 +113,7 @@ class resultfile
          *
          * @return True if successful, false otherwise.
          */
-        virtual bool write(uint32_t snp1, uint32_t snp2, float *values) = 0;
+        virtual bool write(const std::pair<std::string, std::string> &pair, float *values) = 0;
 
         /**
          * Closes the file.
@@ -156,7 +165,7 @@ class bresultfile : public resultfile
         /**
          * @see resultfile::write.
          */
-        bool write(uint32_t snp1, uint32_t snp2, float *values);
+        virtual bool write(const std::pair<std::string, std::string> &pair, float *values);
 
         /**
          * @see resultfile::num_pairs.
@@ -166,7 +175,12 @@ class bresultfile : public resultfile
         /**
          * @see resultfile::get_header.
          */
-        std::vector<std::string> get_header();
+        const std::vector<std::string> &get_header();
+        
+        /**
+         * @see resultfile::get_snp_names.
+         */
+        const std::vector<std::string> &get_snp_names();
 
         /**
          * @see resultfile::set_header.
@@ -203,6 +217,11 @@ class bresultfile : public resultfile
          * List of names of the variants in the result file.
          */
         std::vector<std::string> m_snp_names;
+
+        /**
+         * Maps snp names to indices in m_snp_names.
+         */
+        std::map<std::string, size_t> m_snp_to_index;
 };
 
 /**
@@ -214,5 +233,12 @@ class bresultfile : public resultfile
  * @return A result file, or a null pointer if it could not be opened.
  */
 resultfile * open_result_file(const std::string &path, const std::vector<std::string> &snp_names);
+
+/**
+ * Returns a missing value.
+ *
+ * @return a missing value.
+ */
+float result_get_missing();
 
 #endif /* End of __RESULTFILE_H__ */

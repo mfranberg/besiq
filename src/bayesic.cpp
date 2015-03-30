@@ -2,21 +2,15 @@
 
 #include <armadillo>
 
-#include <plinkio/plinkio.h>
-
 #include <gzstream/gzutil.hpp>
-#include <bayesic/covariates.hpp>
 #include <glm/irls.hpp>
 #include <glm/models/binomial.hpp>
-#include <glm/models/logcomplement.hpp>
-#include <glm/models/odds_additive.hpp>
-#include <glm/models/penetrance_additive.hpp>
-#include <glm/models/penetrance_multiplicative.hpp>
 #include <cpp-argparse/OptionParser.h>
 
 #include <plink/plink_file.hpp>
-#include <bayesic/pairfile.hpp>
-#include <bayesic/resultfile.hpp>
+#include <bayesic/io/covariates.hpp>
+#include <bayesic/io/pairfile.hpp>
+#include <bayesic/io/resultfile.hpp>
 #include <bayesic/prior.hpp>
 #include <bayesic/method/bayesic_method.hpp>
 #include <bayesic/method/bayesic_fine_method.hpp>
@@ -40,36 +34,6 @@ const std::string VERSION = "Bayesic 0.0.1";
 const std::string DESCRIPTION = "A tool for inferring genetic interactions.";
 const std::string EPILOG = "";
 
-std::vector<snp_row>
-create_genotype_matrix(plink_file_ptr genotype_file)
-{
-    std::vector<snp_row> genotype_matrix;
-    snp_row row;
-    while( genotype_file->next_row( row ) )
-    {
-        genotype_matrix.push_back( row );
-    }
-
-    return genotype_matrix;
-}
-
-vec
-create_phenotype_vector(plink_file_ptr genotype_file, uvec &missing)
-{
-    const std::vector<pio_sample_t> &samples = genotype_file->get_samples( );
-    vec phenotype( samples.size( ) );
-    for(int i = 0; i < samples.size( ); i++)
-    {
-        phenotype[ i ] = samples[ i ].phenotype;
-        if( samples[ i ].affection == PIO_MISSING )
-        {
-            missing[ i ] = 1;
-        }
-    }
-
-    return phenotype;
-}
-
 int
 main(int argc, char *argv[])
 {
@@ -80,13 +44,13 @@ main(int argc, char *argv[])
     
     
     char const* const choices[] = { "bayes", "bayes-fine", "lm", "glm", "loglinear", "caseonly", "stepwise", "lm-stepwise", "wald", "wald-lm" };
-    char const* const link_choices[] = { "logistic", "log-complement", "odds-additive", "penetrance-additive", "penetrance-multiplicative" };
+    char const* const link_choices[] = { "logit", "logc", "odds", "identity", "log" };
     char const* const factor_choices[] = { "factor", "additive", "tukey" };
 
     parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 10 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'bayes-fine', 'lm', 'glm', 'loglinear', 'caseonly', 'stepwise', 'lm-stepwise', 'wald', or 'wald-lm'." );
     parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
     parser.add_option( "-o", "--out" ).help( "The output file that will contain the results." ).set_default( "-" );
-    parser.add_option( "-l", "--link-function" ).choices( &link_choices[ 0 ], &link_choices[ 5 ] ).metavar( "link" ).help( "The link function, or scale, that is used for the penetrance: 'logistic' log(p/(1-p)), 'log-complement' log(1 - p), 'odds-additive' p/(1-p), 'penetrance-additive' p, 'penetrance-multiplicative' log(p)." ).set_default( "logistic" );
+    parser.add_option( "-l", "--link-function" ).choices( &link_choices[ 0 ], &link_choices[ 5 ] ).metavar( "link" ).help( "The link function, or scale, that is used for the penetrance: 'logit' log(p/(1-p)), 'logc' log(1 - p), 'odds' p/(1-p), 'identity' p, 'log' log(p)." ).set_default( "logit" );
     parser.add_option( "-f", "--factor" ).choices( &factor_choices[ 0 ], &factor_choices[ 3 ] ).help( "Determines how to code the SNPs, in 'factor' no order of the alleles is assumed, in 'additive' the SNPs are coded as the number of minor alleles, in 'tukey' the coding is the same as factor except that a single parameter for the interaction is used." ).set_default( "factor" );
 
     parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
@@ -118,10 +82,10 @@ main(int argc, char *argv[])
 
     /* Read all genotypes */
     plink_file_ptr genotype_file = open_plink_file( args[ 1 ] );
-    std::vector<snp_row> genotype_matrix = create_genotype_matrix( genotype_file );
+    genotype_matrix_ptr genotypes = create_genotype_matrix( genotype_file );
     
     /* Create pair iterator */
-    std::vector<std::string> locus_names = genotype_file->get_locus_names( );
+    const std::vector<std::string> &locus_names = genotype_file->get_locus_names( );
     pairfile *pairs = open_pair_file( args[ 0 ].c_str( ), locus_names );
     if( pairs == NULL || !pairs->open( ) )
     {
@@ -141,7 +105,7 @@ main(int argc, char *argv[])
     }
     else
     {
-        data->phenotype = create_phenotype_vector( genotype_file, data->missing );
+        data->phenotype = create_phenotype_vector( genotype_file->get_samples( ), data->missing );
     }
     if( options.is_set( "cov" ) )
     {
@@ -155,7 +119,7 @@ main(int argc, char *argv[])
     alpha[ 1 ] = (float) options.get( "beta_prior_param2" );
     if( options.is_set( "estimate_prior_params" ) )
     {
-        alpha = estimate_prior_parameters( genotype_matrix, data->phenotype, data->missing, 5000 );
+        alpha = estimate_prior_parameters( genotypes, data->phenotype, data->missing, 5000 );
     }
 
     /* Count the number of interactions to adjust for */
@@ -166,7 +130,6 @@ main(int argc, char *argv[])
     /* XXX: Implement proper log file. */
     std::ostream nullstream( 0 );
     arma::set_stream_err2( nullstream );
-
 
     method_type *m = NULL;
     if( options[ "method" ] == "bayes" )
@@ -179,39 +142,19 @@ main(int argc, char *argv[])
     }
     else if( options[ "method" ] == "glm" )
     {
-        glm_model *link_function;
-        if( options[ "link_function" ] == "logistic" )
-        {
-            link_function = new binomial( );
-        }
-        else if( options[ "link_function" ] == "log-complement" )
-        {
-            link_function = new logcomplement( );
-        }
-        else if( options[ "link_function" ] == "odds-additive" )
-        {
-            link_function = new odds_additive( );
-        }
-        else if( options[ "link_function" ] == "penetrance-additive" )
-        {
-            link_function = new penetrance_additive( );
-        }
-        else if( options[ "link_function" ] == "penetrance-multiplicative" )
-        {
-            link_function = new penetrance_multiplicative( );
-        }
+        binomial *glm = new binomial( options[ "link_function" ] );
 
         if( options[ "factor" ] == "factor" )
         {
-            m = new glm_factor_method( data, *link_function );
+            m = new glm_factor_method( data, *glm );
         }
         else if( options[ "factor" ] == "additive" )
         {
-            m = new glm_method( data, *link_function );
+            m = new glm_method( data, *glm );
         }
         else if( options[ "factor" ] == "tukey" )
         {
-            m = new glm_tukey_method( data, *link_function );
+            m = new glm_tukey_method( data, *glm );
         }
     }
     else if( options[ "method" ] == "lm" )
@@ -256,7 +199,7 @@ main(int argc, char *argv[])
         std::cerr << "bayesic: error: Can not open result file." << std::endl;
         exit( 1 );
     }
-    run_method( *m, genotype_matrix, locus_names, *pairs, result );
+    run_method( *m, genotypes, *pairs, result );
 
     delete m;
     delete pairs;

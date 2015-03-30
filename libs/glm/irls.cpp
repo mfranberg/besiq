@@ -4,6 +4,7 @@
 #include <armadillo>
 
 #include <glm/models/glm_model.hpp>
+#include <glm/models/links/glm_link.hpp>
 #include <glm/irls.hpp>
 #include <dcdflib/libdcdf.hpp>
 
@@ -68,12 +69,13 @@ compute_w(const vec &var, const vec& mu_eta)
 vec
 irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, irls_info &output)
 {
-    vec b = model.init_beta( X, y );
+    const glm_link &link = model.get_link( );
+    vec b = link.init_beta( X, y );
     vec w( X.n_rows );
     vec z( X.n_rows );
     vec eta = X * b;
-    vec mu = model.mu( eta );
-    vec mu_eta = model.mu_eta( mu );
+    vec mu = link.mu( eta );
+    vec mu_eta = link.mu_eta( mu );
 
     int num_iter = 0;
     double old_logl = -DBL_MAX;
@@ -93,8 +95,8 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, ir
         }
         
         eta = X * b;
-        mu = model.mu( eta );
-        mu_eta = model.mu_eta( mu );
+        mu = link.mu( eta );
+        mu_eta = link.mu_eta( mu );
 
         if( !model.valid_mu( mu ) )
         {

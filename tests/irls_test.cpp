@@ -15,7 +15,7 @@ TEST(IRLSTest, Simple)
 
     mat A( A_aux, 4, 2 );
     vec y( y_aux, 4 );
-    binomial binomial_model;
+    binomial binomial_model( "logit" );
 
     irls_info output;
     vec b = irls( A, y, binomial_model, output );

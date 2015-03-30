@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <map>
 #include <shared_ptr/shared_ptr.hpp>
 
 #include <plink/snp_row.hpp>
@@ -109,6 +110,66 @@ private:
     
 };
 
+class genotype_matrix
+{
+public:
+    /**
+     * Constructor.
+     *
+     * @param matrix The genotypes. This class now takes responsibility
+     *               of the matrix.
+     */
+    genotype_matrix(shared_ptr< std::vector<snp_row> > matrix, const std::vector<std::string> &snp_names);
+
+    /**
+     * Returns the genotypes for the given name.
+     *
+     * @param name Name of the variant.
+     *
+     * @return the genotypes for the given index, or NULL
+     *         if no genotypes were found.
+     */
+    snp_row const *get_row(const std::string &name) const;
+    
+    /**
+     * Returns the genotypes for the given index.
+     *
+     * @param index Name of the variant.
+     *
+     * @return the genotypes for the given index.
+     */
+    const snp_row &get_row(size_t index) const;
+
+    /**
+     * Returns a list of snp names.
+     *
+     * @return a list of snp names.
+     */
+    const std::vector<std::string> &get_snp_names() const;
+
+    /**
+     * Returns the size of the matrix.
+     */
+    size_t size() const;
+
+private:
+    /**
+     * The underlying matrix.
+     */
+    shared_ptr< std::vector<snp_row> > m_matrix;
+
+    /**
+     * List of snp names for each row.
+     */
+    std::vector<std::string> m_snp_names;
+
+    /**
+     * An index mapping snp names to indices.
+     */
+    std::map<std::string, size_t> m_snp_to_index;
+};
+
+typedef shared_ptr<genotype_matrix> genotype_matrix_ptr;
 typedef shared_ptr<plink_file> plink_file_ptr;
 
 /**
@@ -129,5 +190,15 @@ plink_file_ptr open_plink_file(const std::string &plink_prefix);
  * @return True if the row could be read, false otherwise.
  */
 bool get_snp_row(plink_file *file, snp_row &row);
+
+/**
+ * Creates a matrix of genotypes by reading the genotypes
+ * from the given plink file.
+ *
+ * @param genotype_file A plink file.
+ *
+ * @return A matrix of genotypes.
+ */
+genotype_matrix_ptr create_genotype_matrix(plink_file_ptr genotype_file);
 
 #endif /* End of __PLINK_FILE_H__ */

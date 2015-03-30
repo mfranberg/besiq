@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 
-#include <bayesic/pairfile.hpp>
+#include <bayesic/io/pairfile.hpp>
 
 #include <plink/plink_file.hpp>
 #include <cpp-argparse/OptionParser.h>

@@ -1,7 +1,7 @@
 #include <iterator>
 #include <sstream>
 
-#include <bayesic/misc.hpp>
+#include <bayesic/io/misc.hpp>
 
 std::vector<std::string>
 unpack_string(const char *snp_name_str)

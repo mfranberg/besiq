@@ -9,7 +9,10 @@
 #include <plink/snp_row.hpp>
 #include <shared_ptr/shared_ptr.hpp>
 #include <bayesic/pair_iter.hpp>
-#include <bayesic/method/method.hpp> 
+#include <bayesic/method/method.hpp>
+
+class genotype_matrix;
+typedef shared_ptr<genotype_matrix> genotype_matrix_ptr;
 
 class method_env_type
 {
@@ -69,9 +72,8 @@ private:
  * the given list of SNPs.
  *
  * @param method A method to run.
- * @param genotype_matix Genotypes for all SNPs.
- * @param loci The list of loci.
+ * @param genotyeps Genotypes for all SNPs.
  */
-void run_env_method(method_env_type &method, const std::vector<snp_row> &genotype_matrix, const std::vector<std::string> &loci);
+void run_env_method(method_env_type &method, genotype_matrix_ptr genotypes);
 
 #endif /* End of __ENV_METHOD_H__ */

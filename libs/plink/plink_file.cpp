@@ -97,3 +97,57 @@ get_snp_row(plink_file *file, snp_row &row)
 {
     return file->next_row( row );
 }
+
+genotype_matrix_ptr
+create_genotype_matrix(plink_file_ptr genotype_file)
+{
+    shared_ptr< std::vector<snp_row> > genotypes;
+    snp_row row;
+    while( genotype_file->next_row( row ) )
+    {
+        genotypes->push_back( row );
+    }
+
+    return genotype_matrix_ptr( new genotype_matrix( genotypes, genotype_file->get_locus_names( ) ) );
+}
+
+genotype_matrix::genotype_matrix(shared_ptr< std::vector<snp_row> > matrix, const std::vector<std::string> &snp_names) 
+    : m_matrix( matrix ),
+    m_snp_names( snp_names )
+{
+    for(int i = 0; i < snp_names.size( ); i++)
+    {
+        m_snp_to_index[ snp_names[ i ] ] = i;
+    }
+}
+
+snp_row const *
+genotype_matrix::get_row(const std::string &name) const
+{
+    std::map<std::string, size_t>::const_iterator it = m_snp_to_index.find( name );
+    if( it != m_snp_to_index.end( ) )
+    {
+        return &(*m_matrix)[ it->second ];
+    }
+    else
+    {
+        return NULL;
+    }
+}
+const snp_row &
+genotype_matrix::get_row(size_t index) const
+{
+    return (*m_matrix)[ index ];
+}
+
+const std::vector<std::string> &
+genotype_matrix::get_snp_names() const
+{
+    return m_snp_names;
+}
+
+size_t 
+genotype_matrix::size() const
+{
+    return m_matrix->size( );
+}

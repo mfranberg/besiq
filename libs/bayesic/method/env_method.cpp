@@ -1,17 +1,19 @@
+#include <plink/plink_file.hpp>
+
 #include <bayesic/method/env_method.hpp>
 
 void
-run_env_method(method_env_type &method, const std::vector<snp_row> &genotype_matrix, const std::vector<std::string> &loci)
+run_env_method(method_env_type &method, genotype_matrix_ptr genotype_matrix)
 {
     std::cout.precision( 4 );
     std::cout << "snp\t";
     method.init( std::cout );
     std::cout << "\tN" << std::endl;
 
-    for(int i = 0; i < loci.size( ); i++)
+    for(int i = 0; i < genotype_matrix->size( ); i++)
     {
-        const snp_row &row = genotype_matrix[ i ];
-        std::string name = loci[ i ];
+        const snp_row &row = genotype_matrix->get_row( i );
+        std::string name = genotype_matrix->get_snp_names( )[ i ];
 
         std::cout << name << "\t";
         method.run( row, std::cout );

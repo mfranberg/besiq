@@ -5,6 +5,8 @@
 
 #include <armadillo>
 
+struct pio_sample_t;
+
 /**
  * Parses the contents of a csv stream and returns them
  * as a matrix. Missing values will be set to 1 in the
@@ -55,5 +57,15 @@ parse_phenotypes(std::istream &stream, arma::uvec &missing, const std::vector<st
  */
 arma::mat
 parse_environment(std::istream &stream, arma::uvec &missing, const std::vector<std::string> &order, unsigned int levels, const char *missing_string = "NA");
+
+/**
+ * Creates a vector of phenotypes from the given sample vector.
+ *
+ * @param samples Plink samples.
+ * @param missing Missing values will be added here.
+ *
+ * @return A vector of phenotypes of the same length as the input samples.
+ */
+arma::vec create_phenotype_vector(const std::vector<pio_sample_t> &samples, arma::uvec &missing);
 
 #endif /* End of __COVARIATE_H__ */

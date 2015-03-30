@@ -1,5 +1,5 @@
-#include <bayesic/misc.hpp>
-#include <bayesic/resultfile.hpp>
+#include <bayesic/io/misc.hpp>
+#include <bayesic/io/resultfile.hpp>
 
 bresultfile::bresultfile(const std::string &path)
     : m_mode( "r" ),
@@ -15,6 +15,10 @@ bresultfile::bresultfile(const std::string &path, const std::vector<std::string>
       m_fp( NULL ),
       m_snp_names( snp_names )
 {
+    for(int i = 0; i < snp_names.size( ); i++)
+    {
+        m_snp_to_index[ snp_names[ i ] ] = i;
+    }
 }
 
 bresultfile::~bresultfile()
@@ -86,7 +90,8 @@ bresultfile::open()
     return m_fp != NULL;
 }
 
-bool bresultfile::read(std::pair<std::string, std::string> *pair, float *values)
+bool
+bresultfile::read(std::pair<std::string, std::string> *pair, float *values)
 {
     if( m_fp == NULL || m_mode != "r" )
     {
@@ -112,15 +117,21 @@ bool bresultfile::read(std::pair<std::string, std::string> *pair, float *values)
     return true;
 }
 
-bool bresultfile::write(uint32_t snp1, uint32_t snp2, float *values)
+bool
+bresultfile::write(const std::pair<std::string, std::string> &pair, float *values)
 {
     if( m_mode != "w" || m_fp == NULL )
     {
         return false;
     }
 
-    uint32_t pair[] = { snp1, snp2 };
-    size_t n_snp = fwrite( pair, sizeof( uint32_t ), 2, m_fp );
+    if( m_snp_to_index.count( pair.first ) <= 0 || m_snp_to_index.count( pair.second ) )
+    {
+        return false;
+    }
+
+    uint32_t write_pair[] = { m_snp_to_index[ pair.first ], m_snp_to_index[ pair.second ] };
+    size_t n_snp = fwrite( write_pair, sizeof( uint32_t ), 2, m_fp );
     size_t n_cols = fwrite( values, sizeof( float ), m_header.num_float_cols, m_fp );
     if( n_snp == 2 && n_cols == m_header.num_float_cols )
     {
@@ -134,7 +145,8 @@ bool bresultfile::write(uint32_t snp1, uint32_t snp2, float *values)
     return true;
 }
 
-void bresultfile::close()
+void
+bresultfile::close()
 {
     if( m_fp != NULL )
     {
@@ -162,17 +174,15 @@ bresultfile::num_pairs()
     }
 }
 
-std::vector<std::string>
+const std::vector<std::string> &
 bresultfile::get_header()
 {
-    if( m_fp != NULL )
-    {
-        return m_col_names;
-    }
-    else
-    {
-        return std::vector<std::string>( );
-    }
+    return m_col_names;
+}
+const std::vector<std::string> &
+bresultfile::get_snp_names()
+{
+    return m_snp_names;
 }
 
 bool
@@ -239,4 +249,10 @@ open_result_file(const std::string &path, const std::vector<std::string> &snp_na
     {
         return NULL;
     }
+}
+
+float
+result_get_missing()
+{
+    return -9.0f;
 }
