@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iostream>
 
 #include <glm/models/binomial.hpp>
 #include <bayesic/io/resultfile.hpp>
@@ -16,21 +17,27 @@ run_bonferroni(metaresultfile *result, float alpha, uint64_t num_tests, size_t c
         num_tests = result->num_pairs( );
     }
 
-    std::ofstream output( output_path.c_str( ) );
+    std::ostream &output = std::cout;
     std::vector<std::string> header = result->get_header( );
     output << "snp1\tsnp2";
     for(int i = 0; i < header.size( ); i++)
     {
         output << "\t" << header[ i ];
     }
-    output << "P_adjusted\n";
+    output << "\tP_adjusted\n";
 
     std::pair<std::string, std::string> pair;
     float *values = new float[ header.size( ) ];
     while( result->read( &pair, values ) )
     {
         float p = values[ column ];
+        if( p == result_get_missing( ) )
+        {
+            continue;
+        }
+
         float adjusted_p = std::min( p * num_tests, 1.0f );
+
         if( adjusted_p <= alpha )
         {
             output << pair.first << "\t" << pair.second;
@@ -50,6 +57,13 @@ do_common_stages(metaresultfile *result, const correction_options &options, cons
     char const *levels[] = { "1", "2", "3", "4" };
     std::string filename = output_path + std::string( ".level" ) + levels[ 0 ];
     bresultfile *stage_file = new bresultfile( filename, result->get_snp_names( ) );
+    if( stage_file == NULL || !stage_file->open( ) )
+    {
+        return NULL;
+    }
+
+    stage_file->set_header( result->get_header( ) );
+
     std::vector<uint64_t> num_tests( options.num_tests );
     if( num_tests[ 0 ] == 0 )
     {
@@ -58,7 +72,6 @@ do_common_stages(metaresultfile *result, const correction_options &options, cons
     std::pair<std::string, std::string> pair;
     while( result->read( &pair, values ) )
     {
-        
         if( values[ 0 ] == result_get_missing( ) )
         {
             continue;
@@ -73,17 +86,29 @@ do_common_stages(metaresultfile *result, const correction_options &options, cons
     }
     delete stage_file;
 
-    for(int i = 1; i < 4; i++)
+    for(int i = 1; i < 3; i++)
     {
         bresultfile *prev_file = new bresultfile( filename );
-        filename = output_path + std::string( ".level" ) + levels[ 0 ];
+        if( prev_file == NULL || !prev_file->open( ) )
+        {
+            return NULL;
+        }
+
+        filename = output_path + std::string( ".level" ) + levels[ i ];
         stage_file = new bresultfile( filename, result->get_snp_names( ) );
+        if( stage_file == NULL || !stage_file->open( ) )
+        {
+            return NULL;
+        }
+
+        stage_file->set_header( result->get_header( ) );
+        
         if( num_tests[ i ] == 0 )
         {
             num_tests[ i ] = prev_file->num_pairs( );
         }
 
-        while( result->read( &pair, values ) )
+        while( prev_file->read( &pair, values ) )
         {
             if( values[ 0 ] == result_get_missing( ) )
             {
@@ -99,20 +124,30 @@ do_common_stages(metaresultfile *result, const correction_options &options, cons
         }
 
         delete stage_file;
+        delete prev_file;
     }
 
     delete values;
 
-    return new bresultfile( filename, result->get_snp_names( ) );
+    bresultfile *last_stage = new bresultfile( filename );
+    if( last_stage != NULL && last_stage->open( ) )
+    {
+        return last_stage;
+    }
+    else
+    {
+        return NULL;
+    }
 }
 
 void
 do_last_stage(resultfile *last_stage, const correction_options &options, genotype_matrix_ptr genotypes, method_data_ptr data, const std::string &output_path)
 {
-    std::ofstream output( output_path.c_str( ) );
+    std::ostream &output = std::cout;
     std::vector<std::string> header = last_stage->get_header( );
 
     std::vector<method_type *> method;
+    std::vector<glm_model *> models;
     output << "snp1\tsnp2\t";
     if( options.is_lm )
     {
@@ -121,19 +156,30 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
     }
     else
     {
+        models.push_back( new binomial( "identity" ) );
+        models.push_back( new binomial( "log" ) );
+        models.push_back( new binomial( "logc" ) );
+        models.push_back( new binomial( "odds" ) );
+        models.push_back( new binomial( "logit" ) );
 
-        method.push_back( new glm_factor_method( data, *new binomial( "identity" ) ) );
-        method.push_back( new glm_factor_method( data, *new binomial( "log" ) ) );
-        method.push_back( new glm_factor_method( data, *new binomial( "logc" ) ) );
-        method.push_back( new glm_factor_method( data, *new binomial( "odds" ) ) );
-        method.push_back( new glm_factor_method( data, *new binomial( "logit" ) ) );
-        output << "penetrance_add\tpenetrance_mul\tpenetrance_het\todds_add\todds_mul\tP_combined\n";
+        for(int i = 0; i < models.size( ); i++)
+        {
+            method.push_back( new glm_factor_method( data, *models[ i ] ) );
+        }
+
+        output << "P_identity\tP_log\tP_logc\tP_odds\tP_logit\tP_combined\n";
     }
 
     std::vector<std::string> method_header;
     for(int i = 0; i < method.size( ); i++)
     {
         method_header = method[ i ]->init( );
+    }
+
+    uint64_t num_tests = options.num_tests[ 3 ];
+    if( num_tests == 0 )
+    {
+        num_tests = last_stage->num_pairs( );
     }
 
     std::pair<std::string, std::string> pair;
@@ -151,9 +197,14 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
             snp_row const *snp1 = genotypes->get_row( pair.first );
             snp_row const *snp2 = genotypes->get_row( pair.second );
             method[ i ]->run( *snp1, *snp2, method_values );
-            float adjusted_p = std::max( method_values[ 1 ] * last_stage->num_pairs( ) / options.weight[ 3 ], pre_p );
-            min_p = std::min( min_p, adjusted_p );
-            max_p = std::max( max_p, adjusted_p );
+
+            float adjusted_p = result_get_missing( );    
+            if( method_values[ 1 ] != result_get_missing( ) )
+            {
+                adjusted_p = std::max( method_values[ 1 ] * num_tests / options.weight[ 3 ], pre_p );
+                min_p = std::min( min_p, adjusted_p );
+                max_p = std::max( max_p, adjusted_p );
+            }
             p_values.push_back( adjusted_p );
         }
 
@@ -165,7 +216,7 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
         bool any_missing = false;
         for(int i = 0; i < p_values.size( ); i++)
         {
-            if( p_values[ i ] >= 0.0 )
+            if( p_values[ i ] != result_get_missing( ) )
             {
                 output << "\t" << p_values[ i ];
             }
@@ -192,9 +243,13 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
     {
         delete method[ i ];
     }
+    for(int i = 0; i < models.size( ); i++)
+    {
+        delete models[ i ];
+    }
 }
 
-    void
+void
 run_static(metaresultfile *result, genotype_matrix_ptr genotypes, method_data_ptr data, const correction_options &options, const std::string &output_path)
 {
     resultfile *last_stage = do_common_stages( result, options, output_path );

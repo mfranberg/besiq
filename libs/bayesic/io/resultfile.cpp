@@ -122,6 +122,7 @@ bresultfile::write(const std::pair<std::string, std::string> &pair, float *value
 {
     if( m_mode != "w" || m_fp == NULL )
     {
+        printf( "Bad mode\n" );
         return false;
     }
 
@@ -130,6 +131,7 @@ bresultfile::write(const std::pair<std::string, std::string> &pair, float *value
 
     if( ( snp1 == m_snp_to_index.end( ) ) || ( snp2 == m_snp_to_index.end( ) ) )
     {
+        printf( "Not found\n" );
         return false;
     }
 

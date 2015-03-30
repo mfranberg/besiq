@@ -29,9 +29,10 @@ std::vector<uint64_t> parse_tests(const std::string &num_tests, const std::strin
     while( ss >> test )
     {
         parsed_tests.push_back( test );
+        ss.get( );
     }
     
-    if( (method == "static" && parsed_tests.size( ) != 4) || parsed_tests.size( ) != 1)
+    if( (method == "static" && parsed_tests.size( ) != 4) || (method != "static" && parsed_tests.size( ) != 1) )
     {
         std::cerr << "bayesic-correct: error: Bad number of tests, either 4 or 1." << std::endl;
         exit( 1 );
@@ -55,6 +56,7 @@ std::vector<float> parse_weight(const std::string &weight_string, float default_
     {
         parsed_weights.push_back( weight );
         sum += weight;
+        ss.get( );
     }
 
     if( fabs( sum - 1.0 ) > 1e-5 )
@@ -120,6 +122,11 @@ main(int argc, char *argv[])
         if( !options.is_set( "bfile" ) )
         {
             std::cerr << "bayesic-correct: error: With static and adaptive a genotype file must be set with --bfile." << std::endl;
+            exit( 1 );
+        }
+        if( !options.is_set( "output_prefix" ) )
+        {
+            std::cerr << "bayesic-correct: error: With static and adaptive an output prefix must be set with --output-prefix." << std::endl;
             exit( 1 );
         }
 

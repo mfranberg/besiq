@@ -12,6 +12,8 @@ class glm_link;
 class glm_model
 {
     public:
+        virtual ~glm_model(){ };
+
         /**
          * Returns the link function used in this model.
          *
