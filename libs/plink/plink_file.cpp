@@ -101,7 +101,7 @@ get_snp_row(plink_file *file, snp_row &row)
 genotype_matrix_ptr
 create_genotype_matrix(plink_file_ptr genotype_file)
 {
-    shared_ptr< std::vector<snp_row> > genotypes;
+    shared_ptr< std::vector<snp_row> > genotypes( new std::vector<snp_row>( ) );
     snp_row row;
     while( genotype_file->next_row( row ) )
     {

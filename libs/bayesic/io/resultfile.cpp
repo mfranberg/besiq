@@ -125,12 +125,15 @@ bresultfile::write(const std::pair<std::string, std::string> &pair, float *value
         return false;
     }
 
-    if( m_snp_to_index.count( pair.first ) <= 0 || m_snp_to_index.count( pair.second ) )
+    std::map<std::string, size_t>::const_iterator snp1 = m_snp_to_index.find( pair.first );
+    std::map<std::string, size_t>::const_iterator snp2 = m_snp_to_index.find( pair.second );
+
+    if( ( snp1 == m_snp_to_index.end( ) ) || ( snp2 == m_snp_to_index.end( ) ) )
     {
         return false;
     }
 
-    uint32_t write_pair[] = { m_snp_to_index[ pair.first ], m_snp_to_index[ pair.second ] };
+    uint32_t write_pair[] = { snp1->second, snp2->second };
     size_t n_snp = fwrite( write_pair, sizeof( uint32_t ), 2, m_fp );
     size_t n_cols = fwrite( values, sizeof( float ), m_header.num_float_cols, m_fp );
     if( n_snp == 2 && n_cols == m_header.num_float_cols )
