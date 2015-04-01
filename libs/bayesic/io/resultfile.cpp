@@ -329,7 +329,14 @@ tresultfile::write(const std::pair<std::string, std::string> &pair, float *value
     *m_output << pair.first << " " << pair.second;
     for(int i = 0; i < m_col_names.size( ); i++)
     {
-        *m_output << "\t" << values[ i ];
+        if( values[ i ] != result_get_missing( ) )
+        {
+            *m_output << "\t" << values[ i ];
+        }
+        else
+        {
+            *m_output << "\tNA";
+        }
     }
     *m_output << "\n";
 

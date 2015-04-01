@@ -1,59 +1,59 @@
 #include <bayesic/method/glm_method.hpp>
 
-glm_method::glm_method(method_data_ptr data, const glm_model &model)
+#include <dcdflib/libdcdf.hpp>
+
+glm_method::glm_method(method_data_ptr data, const glm_model &model, model_matrix &model_matrix)
 : method_type::method_type( data ),
-  m_design_matrix( data->phenotype.n_elem, data->covariate_matrix.n_cols + 4 ),
-  m_model( model )
+  m_model( model ),
+  m_model_matrix( model_matrix )
 {
-    /*
-     * First three columns are snp1, snp2, snp1 x snp2 and intercept.
-     */
-    m_design_matrix.col( 3 ) = arma::ones<arma::vec>( data->phenotype.n_elem );
-    for(int i = 0; i < data->covariate_matrix.n_cols; i++)
-    {
-        m_design_matrix.col( i + 4 ) = data->covariate_matrix.col( i );
-    }
 }
 
 std::vector<std::string>
 glm_method::init()
 {
     std::vector<std::string> header;
-    header.push_back( "Beta" );
-    header.push_back( "SE" );
+    header.push_back( "LR" );
     header.push_back( "P" );
 
     return header;
 }
 
 void glm_method::run(const snp_row &row1, const snp_row &row2, float *output)
-{
+{ 
     arma::uvec missing = get_data( )->missing;
 
-    for(int i = 0; i < row1.size( ); i++)
-    {
-        if( row1[ i ] != 3 && row2[ i ] != 3 && missing[ i ] == 0 )
-        {
-            m_design_matrix( i, 0 ) = row1[ i ];
-            m_design_matrix( i, 1 ) = row2[ i ];
-            m_design_matrix( i, 2 ) = row1[ i ] * row2[ i ];
-        }
-        else
-        {
-            m_design_matrix( i, 0 ) = 0.0;
-            m_design_matrix( i, 1 ) = 0.0;
-            m_design_matrix( i, 2 ) = 0.0;
-            missing[ i ] = 1;
-        }
-    }
+    m_model_matrix.update_matrix( row1, row2, missing );
 
-    irls_info info;
-    arma::vec b = irls( m_design_matrix, get_data( )->phenotype, missing, m_model, info );   
+    irls_info null_info;
+    irls( m_model_matrix.get_null( ), get_data( )->phenotype, missing, m_model, null_info );
 
-    if( info.converged && info.p_value[ 2 ] >= 0.0 )
+    irls_info alt_info;
+    arma::vec b = irls( m_model_matrix.get_alt( ), get_data( )->phenotype, missing, m_model, alt_info );
+
+    if( null_info.converged && alt_info.converged )
     {
-        output[ 0 ] = b[ 2 ];
-        output[ 1 ] = info.se_beta[ 2 ];
-        output[ 2 ] = info.p_value[ 2 ];
+        int LR_pos = 0;
+        /*if( get_data( )->print_params )
+        {
+            output[ 0 ] = b[ m_model_matrix.num_alt( ) - 1 ];
+            for(int i = 0; i < m_model_matrix.num_alt( ) - 1; i++)
+            {
+                output[ i + 1 ] = b[ i ];
+            }
+            LR_pos = m_model_matrix.num_alt( );
+        }*/
+
+        double LR = -2 * ( null_info.logl - alt_info.logl );
+
+        try
+        {
+            output[ LR_pos ] = LR;
+            output[ LR_pos + 1 ] = 1.0 - chi_square_cdf( LR, m_model_matrix.num_df( ) );
+        }
+        catch(bad_domain_value &e)
+        {
+
+        }
     }
 }

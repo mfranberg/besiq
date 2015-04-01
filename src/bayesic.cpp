@@ -14,10 +14,8 @@
 #include <bayesic/prior.hpp>
 #include <bayesic/method/bayesic_method.hpp>
 #include <bayesic/method/bayesic_fine_method.hpp>
-#include <bayesic/method/lm_factor_method.hpp>
+#include <bayesic/method/lm_method.hpp>
 #include <bayesic/method/glm_method.hpp>
-#include <bayesic/method/glm_factor_method.hpp>
-#include <bayesic/method/glm_tukey_method.hpp>
 #include <bayesic/method/loglinear_method.hpp>
 #include <bayesic/method/caseonly_method.hpp>
 #include <bayesic/method/stepwise_method.hpp>
@@ -131,6 +129,8 @@ main(int argc, char *argv[])
     std::ostream nullstream( 0 );
     arma::set_stream_err2( nullstream );
 
+    model_matrix *model_matrix = make_model_matrix( options[ "factor" ], data->covariate_matrix, data->phenotype.n_elem );
+
     method_type *m = NULL;
     if( options[ "method" ] == "bayes" )
     {
@@ -143,28 +143,11 @@ main(int argc, char *argv[])
     else if( options[ "method" ] == "glm" )
     {
         binomial *glm = new binomial( options[ "link_function" ] );
-
-        if( options[ "factor" ] == "factor" )
-        {
-            m = new glm_factor_method( data, *glm );
-        }
-        else if( options[ "factor" ] == "additive" )
-        {
-            m = new glm_method( data, *glm );
-        }
-        else if( options[ "factor" ] == "tukey" )
-        {
-            m = new glm_tukey_method( data, *glm );
-        }
+        m = new glm_method( data, *glm, *model_matrix );
     }
     else if( options[ "method" ] == "lm" )
     {
-        if( options[ "factor" ] != "factor" )
-        {
-            std::cerr << "bayesic:error: Only factor supported for linear models." << std::endl;
-            exit( 1 );
-        }
-        m = new lm_factor_method( data );
+        m = new lm_method( data, *model_matrix );
     }
     else if( options[ "method" ] == "loglinear" )
     {
@@ -211,6 +194,7 @@ main(int argc, char *argv[])
     run_method( *m, genotypes, *pairs, *result );
 
     delete m;
+    delete model_matrix;
     delete pairs;
     delete result;
 

@@ -1,22 +1,23 @@
-#ifndef __GLM_METHOD_H__
-#define __GLM_METHOD_H__
+#ifndef __LINEAR_METHOD_H__
+#define __LINEAR_METHOD_H__
 
 #include <string>
 #include <vector>
 
 #include <armadillo>
 
-#include <glm/models/glm_model.hpp>
-#include <glm/irls.hpp>
+#include <glm/lm.hpp>
 #include <bayesic/method/method.hpp>
 #include <bayesic/stats/log_scale.hpp>
 #include <bayesic/model_matrix.hpp>
 
 /**
  * This class is responsible for initializing and repeatedly
- * executing the glm regression on pairs of snps.
+ * executing the linear regression on pairs of snps, this
+ * versions treats the SNPs as factor variables instead of
+ * ordinals.
  */
-class glm_method
+class lm_method
 : public method_type
 {
 public:
@@ -24,8 +25,9 @@ public:
      * Constructor.
      *
      * @param data Additional data required by all methods.
+     * @param model_matrix The model matrix.
      */
-    glm_method(method_data_ptr data, const glm_model &model, model_matrix &model_matrix);
+    lm_method(method_data_ptr data, model_matrix &model_matrix);
     
     /**
      * @see method_type::init.
@@ -39,14 +41,9 @@ public:
 
 private:
     /**
-     * The glm model used, in this case a binomial model with logit link.
-     */
-    const glm_model &m_model;
-
-    /**
-     * The model matrix that is used.
+     * The model matrix.
      */
     model_matrix &m_model_matrix;
 };
 
-#endif /* End of __GLM_METHOD_H__ */
+#endif /* End of __LINEAR_METHOD_H__ */

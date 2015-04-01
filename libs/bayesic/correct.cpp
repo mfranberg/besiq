@@ -4,8 +4,8 @@
 #include <glm/models/binomial.hpp>
 #include <bayesic/io/resultfile.hpp>
 #include <bayesic/io/metaresult.hpp>
-#include <bayesic/method/glm_factor_method.hpp>
-#include <bayesic/method/lm_factor_method.hpp>
+#include <bayesic/method/glm_method.hpp>
+#include <bayesic/method/lm_method.hpp>
 
 #include <bayesic/correct.hpp>
 
@@ -148,11 +148,12 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
 
     std::vector<method_type *> method;
     std::vector<glm_model *> models;
+    model_matrix *model_matrix = new factor_matrix( data->covariate_matrix, data->phenotype.n_elem );
     output << "snp1\tsnp2\t";
     if( options.is_lm )
     {
         output << "identity\tP_combined\n";
-        method.push_back( new lm_factor_method( data ) );
+        method.push_back( new lm_method( data, *model_matrix ) );
     }
     else
     {
@@ -164,7 +165,7 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
 
         for(int i = 0; i < models.size( ); i++)
         {
-            method.push_back( new glm_factor_method( data, *models[ i ] ) );
+            method.push_back( new glm_method( data, *models[ i ], *model_matrix ) );
         }
 
         output << "P_identity\tP_log\tP_logc\tP_odds\tP_logit\tP_combined\n";
