@@ -8,7 +8,6 @@
 
 #include <plink/snp_row.hpp>
 #include <shared_ptr/shared_ptr.hpp>
-#include <bayesic/pair_iter.hpp>
 #include <bayesic/method/method.hpp>
 
 class genotype_matrix;
