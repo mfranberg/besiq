@@ -432,6 +432,7 @@
 // Determines whether Google Test can use tr1/tuple.  You can define
 // this macro to 0 to prevent Google Test from using tuple (any
 // feature depending on tuple with be disabled in this mode).
+#define GTEST_HAS_TR1_TUPLE 0
 #ifndef GTEST_HAS_TR1_TUPLE
 // The user didn't tell us not to do it, so we assume it's OK.
 # define GTEST_HAS_TR1_TUPLE 1

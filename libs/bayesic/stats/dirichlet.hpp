@@ -7,7 +7,8 @@
 #include <numeric>
 #include <vector>
 
-#ifndef USE_TR1
+#include <bayesic/config.h>
+#ifndef HAVE_TR1_RANDOM
 #include <random>
 typedef std::mt19937 prg_type;
 #else
