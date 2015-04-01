@@ -102,6 +102,13 @@ main(int argc, char *argv[])
         exit( 1 );
     }
     
+    if( !options.is_set( "bfile" ) )
+    {
+        std::cerr << "bayesic-correct: error: Need to supply plink file with --bfile." << std::endl;
+        exit( 1 );
+    }
+    plink_file_ptr genotype_file = open_plink_file( options[ "bfile" ] );
+    
     correction_options correct;
 
     std::string method = (std::string) options.get( "method" );
@@ -109,28 +116,21 @@ main(int argc, char *argv[])
     size_t field = (size_t) options.get( "field" );
     correct.num_tests = parse_tests( options[ "num_tests" ], method );
     correct.weight = parse_weight( options[ "weight" ], 0.25 );
-    std::vector<resultfile *> result_files = open_result_files( args );
     std::string output_prefix = (std::string) options.get( "output_prefix" );
 
-    metaresultfile *meta_result_file = open_meta_result_file( args );
+    metaresultfile *meta_result_file = open_meta_result_file( args, genotype_file->get_locus_names( ) );
     if( method == "bonferroni" )
     {
         run_bonferroni( meta_result_file, correct.alpha, field, correct.num_tests[ 0 ], output_prefix );
     }
     else
     {
-        if( !options.is_set( "bfile" ) )
-        {
-            std::cerr << "bayesic-correct: error: With static and adaptive a genotype file must be set with --bfile." << std::endl;
-            exit( 1 );
-        }
         if( !options.is_set( "output_prefix" ) )
         {
             std::cerr << "bayesic-correct: error: With static and adaptive an output prefix must be set with --output-prefix." << std::endl;
             exit( 1 );
         }
 
-        plink_file_ptr genotype_file = open_plink_file( options[ "bfile" ] );
         genotype_matrix_ptr genotypes = create_genotype_matrix( genotype_file );
 
         method_data_ptr data( new method_data( ) );

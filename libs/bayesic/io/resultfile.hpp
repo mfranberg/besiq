@@ -1,6 +1,9 @@
 #ifndef __RESULTFILE_H__
 #define __RESULTFILE_H__
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
 #include <map>
 #include <string>
 #include <vector>
@@ -222,6 +225,100 @@ class bresultfile : public resultfile
          * Maps snp names to indices in m_snp_names.
          */
         std::map<std::string, size_t> m_snp_to_index;
+};
+
+/**
+ * Text results.
+ */
+class tresultfile : public resultfile
+{
+    public:
+        /**
+         * Constructor for reading.
+         *
+         * @param path Path to the input file.
+         * @param mode Reading or writing, "r" or "w".
+         * @param snp_names List of variants (required for interface).
+         */
+        tresultfile(const std::string &path, const std::string &mode, const std::vector<std::string> &snp_names);
+
+        /**
+         * Destructor.
+         */
+        ~tresultfile();
+
+        /**
+         * @see resultfile::open.
+         */
+        bool open();
+        
+        /**
+         * @see resultfile::close.
+         */
+        void close();
+
+        /**
+         * @see resultfile::read.
+         */
+        bool read(std::pair<std::string, std::string> *pair, float *values);
+
+        /**
+         * @see resultfile::write.
+         */
+        virtual bool write(const std::pair<std::string, std::string> &pair, float *values);
+
+        /**
+         * @see resultfile::num_pairs.
+         */
+        uint64_t num_pairs();
+
+        /**
+         * @see resultfile::get_header.
+         */
+        const std::vector<std::string> &get_header();
+        
+        /**
+         * @see resultfile::get_snp_names.
+         */
+        const std::vector<std::string> &get_snp_names();
+
+        /**
+         * @see resultfile::set_header.
+         */
+        bool set_header(const std::vector<std::string> &header);
+
+    private:
+        /**
+         * Read or writing mode.
+         */
+        std::string m_mode;
+
+        /**
+         * Path to the output file.
+         */
+        std::string m_path;
+
+        /**
+         * Underlying file pointer.
+         */
+        std::istream *m_input;
+        std::ostream *m_output;
+
+        /**
+         * Number of pairs written
+         */
+        uint64_t m_num_pairs;
+        bool m_written;
+
+        /**
+         * List of names of the columns in the result file.
+         */
+        std::vector<std::string> m_col_names;
+
+        /**
+         * List of names of the variants in the result file.
+         */
+        std::vector<std::string> m_snp_names;
 };
 
 /**

@@ -59,8 +59,8 @@ private:
     size_t m_cur_file;
 };
 
-std::vector<resultfile *> open_result_files(const std::vector<std::string> &paths);
+std::vector<resultfile *> open_result_files(const std::vector<std::string> &paths, const std::vector<std::string> &snp_names);
 
-metaresultfile *open_meta_result_file(const std::vector<std::string> &paths);
+metaresultfile *open_meta_result_file(const std::vector<std::string> &paths, const std::vector<std::string> &snp_names);
 
 #endif

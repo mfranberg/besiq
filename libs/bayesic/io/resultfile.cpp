@@ -227,6 +227,181 @@ bresultfile::set_header(const std::vector<std::string> &col_names)
     return true;
 }
 
+tresultfile::tresultfile(const std::string &path, const std::string &mode, const std::vector<std::string> &snp_names)
+    : m_mode( mode ), 
+      m_path( path ),
+      m_input( NULL ),
+      m_output( NULL ),
+      m_num_pairs( 0 ),
+      m_written( false ),
+      m_snp_names( snp_names )
+{
+
+}
+
+tresultfile::~tresultfile()
+{
+    close( );
+}
+
+bool
+tresultfile::open()
+{
+    if( m_mode == "r" && m_input == NULL && m_col_names.size( ) == 0 )
+    {
+        m_input = new std::ifstream( m_path.c_str( ) );
+        std::string line;
+        if( !std::getline( *m_input, line ) )
+        {
+            return false;
+        }
+
+        std::stringstream ss_line( line );
+        std::string snp1, snp2;
+        ss_line >> snp1 >> snp2;
+        if( snp1 != "snp1" || snp2 != "snp2" )
+        {
+            delete m_input;
+            m_input = NULL;
+            return false;
+        }
+
+        std::string field;
+        while( ss_line >> field )
+        {
+            m_col_names.push_back( field );
+        }
+
+        return true;
+
+    }
+    else if( m_mode == "w" && m_output == NULL )
+    {
+        if( m_path != "-" )
+        {
+            m_output = new std::ofstream( m_path );
+        }
+        else
+        {
+            m_output = &std::cout;
+        }
+
+        return m_output->good( );
+    }
+    else
+    {
+        return false;
+    }
+}
+bool
+tresultfile::read(std::pair<std::string, std::string> *pair, float *values)
+{
+    std::string snp1;
+    std::string snp2;
+
+    if( !(*m_input >> snp1) || !(*m_input >> snp2) )
+    {
+        return false;
+    }
+
+    pair->first = snp1;
+    pair->second = snp2;
+
+    for(int i = 0; i < m_col_names.size( ); i++)
+    {
+        if( !(*m_input >> values[ i ] ) )
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool
+tresultfile::write(const std::pair<std::string, std::string> &pair, float *values)
+{
+    if( m_output == NULL || !m_written )
+    {
+        return false;
+    }
+
+    *m_output << pair.first << " " << pair.second;
+    for(int i = 0; i < m_col_names.size( ); i++)
+    {
+        *m_output << "\t" << values[ i ];
+    }
+    *m_output << "\n";
+
+    return true;
+}
+
+uint64_t
+tresultfile::num_pairs()
+{
+    if( m_mode == "r" && m_num_pairs == 0 && m_input != &std::cin )
+    {
+        std::ifstream input( m_path.c_str( ) );
+        std::string line;
+        
+        std::getline( input, line ); // Ignore header
+        while( std::getline( input, line ) )
+        {
+            m_num_pairs++;
+        }
+    }
+
+    return m_num_pairs;
+}
+
+const std::vector<std::string> &
+tresultfile::get_header()
+{
+    return m_col_names;
+}
+
+const std::vector<std::string> &
+tresultfile::get_snp_names()
+{
+    return m_snp_names;
+}
+
+bool 
+tresultfile::set_header(const std::vector<std::string> &header)
+{
+    if( m_output == NULL || m_mode == "r" || m_written )
+    {
+        return false;
+    }
+    
+    m_col_names = std::vector<std::string>( header );
+    *m_output << "snp1 snp2";
+    for(int i = 0; i < m_col_names.size( ); i++)
+    {
+        *m_output << "\t" << m_col_names[ i ];
+    }
+    *m_output << "\n";
+
+    m_written = true;
+
+    return true;
+}
+
+void
+tresultfile::close()
+{
+    if( m_output != NULL && m_output != &std::cout )
+    {
+        delete m_output;
+        m_output = NULL;
+    }
+    if( m_input != NULL )
+    {
+        delete m_input;
+        m_input = NULL;
+    }
+}
+
 resultfile *
 open_result_file(const std::string &path, const std::vector<std::string> &snp_names)
 {
@@ -250,7 +425,7 @@ open_result_file(const std::string &path, const std::vector<std::string> &snp_na
     }
     else
     {
-        return NULL;
+        return new tresultfile( path, "r", snp_names );
     }
 }
 
@@ -259,3 +434,4 @@ result_get_missing()
 {
     return -9.0f;
 }
+

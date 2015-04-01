@@ -103,7 +103,7 @@ main(int argc, char *argv[])
     }
 
     std::setprecision( 4 );
-    std::cout << "snp1\tsnp2";
+    std::cout << "snp1 snp2";
     std::vector<std::string> header = result_files[ 0 ]->get_header( );
     for(int i = 0; i < header.size( ); i++)
     {
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
                 continue;
             }
 
-            std::cout << pair.first << "\t" << pair.second;
+            std::cout << pair.first << " " << pair.second;
             for(int j = 0; j < header_size; j++)
             {
                 float value = output[ j ];

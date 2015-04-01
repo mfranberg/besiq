@@ -49,7 +49,7 @@ main(int argc, char *argv[])
 
     parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 10 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'bayes-fine', 'lm', 'glm', 'loglinear', 'caseonly', 'stepwise', 'lm-stepwise', 'wald', or 'wald-lm'." );
     parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
-    parser.add_option( "-o", "--out" ).help( "The output file that will contain the results." ).set_default( "-" );
+    parser.add_option( "-o", "--out" ).help( "The output file that will contain the results (binary)." );
     parser.add_option( "-l", "--link-function" ).choices( &link_choices[ 0 ], &link_choices[ 5 ] ).metavar( "link" ).help( "The link function, or scale, that is used for the penetrance: 'logit' log(p/(1-p)), 'logc' log(1 - p), 'odds' p/(1-p), 'identity' p, 'log' log(p)." ).set_default( "logit" );
     parser.add_option( "-f", "--factor" ).choices( &factor_choices[ 0 ], &factor_choices[ 3 ] ).help( "Determines how to code the SNPs, in 'factor' no order of the alleles is assumed, in 'additive' the SNPs are coded as the number of minor alleles, in 'tukey' the coding is the same as factor except that a single parameter for the interaction is used." ).set_default( "factor" );
 
@@ -192,17 +192,27 @@ main(int argc, char *argv[])
     }
     
     /* Run method */
-    std::string output_path = (std::string) options.get( "out" );
-    bresultfile result( output_path, locus_names );
-    if( !result.open( ) )
+    resultfile *result = NULL;
+    if( options.is_set( "out" ) )
+    {
+        result = new bresultfile( options[ "out" ], locus_names );
+    }
+    else
+    {
+        std::ios_base::sync_with_stdio( false );
+        result = new tresultfile( "-", "w", locus_names );
+    }
+    if( !result->open( ) )
     {
         std::cerr << "bayesic: error: Can not open result file." << std::endl;
         exit( 1 );
     }
-    run_method( *m, genotypes, *pairs, result );
+
+    run_method( *m, genotypes, *pairs, *result );
 
     delete m;
     delete pairs;
+    delete result;
 
     return 0;
 }
