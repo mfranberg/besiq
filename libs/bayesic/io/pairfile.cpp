@@ -308,7 +308,8 @@ bool write_pairs_in_block(uint32_t *snp_buffer, uint64_t num_pairs, FILE *in_fp,
             cur_block_size = 2 * block_pairs_left;
         }
 
-        if( fread( snp_buffer, sizeof( uint32_t ), cur_block_size, in_fp ) != cur_block_size )
+        size_t bytes;
+        if( (bytes = fread( snp_buffer, sizeof( uint32_t ), cur_block_size, in_fp ) ) != cur_block_size )
         {
             return false;
         }
@@ -395,16 +396,19 @@ bool split_pair_file(const std::string &all_pairs, size_t num_splits, const std:
         if( fwrite( &cur_header, sizeof( bpair_header ), 1, cur_fp ) != 1 )
         {
             error = true;
+            fclose( cur_fp );
             goto split_error;
         }
         if( fwrite( buffer, 1, cur_header.header_length, cur_fp ) != cur_header.header_length )
         {
             error = true;
+            fclose( cur_fp );
             goto split_error;
         }
-        if( !write_pairs_in_block( snp_buffer, num_pairs_in_each_split, fp, cur_fp ) )
+        if( !write_pairs_in_block( snp_buffer, cur_header.num_pairs, fp, cur_fp ) )
         {
             error = true;
+            fclose( cur_fp );
             goto split_error;
         }
 
@@ -417,7 +421,6 @@ split_error:
     fclose( fp );
     free( buffer );
     free( snp_buffer );
-    fclose( cur_fp );
 
     return !error;
 }
