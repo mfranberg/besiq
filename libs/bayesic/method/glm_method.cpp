@@ -31,19 +31,11 @@ void glm_method::run(const snp_row &row1, const snp_row &row2, float *output)
     irls_info alt_info;
     arma::vec b = irls( m_model_matrix.get_alt( ), get_data( )->phenotype, missing, m_model, alt_info );
 
+    set_num_ok_samples( missing.n_elem - sum( missing ) );
+
     if( null_info.converged && alt_info.converged )
     {
         int LR_pos = 0;
-        /*if( get_data( )->print_params )
-        {
-            output[ 0 ] = b[ m_model_matrix.num_alt( ) - 1 ];
-            for(int i = 0; i < m_model_matrix.num_alt( ) - 1; i++)
-            {
-                output[ i + 1 ] = b[ i ];
-            }
-            LR_pos = m_model_matrix.num_alt( );
-        }*/
-
         double LR = -2 * ( null_info.logl - alt_info.logl );
 
         try

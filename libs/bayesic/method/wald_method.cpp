@@ -23,10 +23,12 @@ void
 wald_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::mat n = joint_count( row1, row2, get_data( )->phenotype, m_weight );
-    if( arma::min( arma::min( n ) ) <= 10 )
+    if( arma::min( arma::min( n ) ) < 10 )
     {
         return;
     }
+
+    set_num_ok_samples( (size_t) arma::accu( n ) );
 
     arma::vec log_or0( 4 );
     arma::vec log_or1( 4 );

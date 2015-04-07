@@ -67,7 +67,8 @@ public:
      * Constructor.
      */
     method_type(method_data_ptr data)
-        : m_data( data )
+        : m_data( data ),
+          m_num_ok_samples( 0 )
     {
     }
 
@@ -82,19 +83,24 @@ public:
     {
         return m_data;
     }
-    
-    virtual size_t num_usable_samples(const snp_row &row1, const snp_row &row2)
-    {
-        unsigned int n = 0;
-        for(int i = 0; i < row1.size( ); i++)
-        {
-            if( row1[ i ] != 3 && row2[ i ] != 3 && m_data->missing[ i ] == 0 )
-            {
-                n++;
-            }
-        }
 
-        return n;
+    virtual void set_num_ok_samples(size_t ok_samples)
+    {
+        m_num_ok_samples = ok_samples;
+    }
+    
+    /**
+     * Return the number of samples that could be used in
+     * the last call to run.
+     *
+     * @param row1 The first variant.
+     * @param row2 The second variant.
+     *
+     * @return The number of samples that could be used.
+     */
+    virtual size_t num_ok_samples(const snp_row &row1, const snp_row &row2)
+    {
+        return m_num_ok_samples;
     }
 
     /**
@@ -118,6 +124,11 @@ private:
      * Additional data required by the method.
      */
     method_data_ptr m_data;
+
+    /**
+     * The number of samples
+     */
+    size_t m_num_ok_samples;
 };
 
 /**

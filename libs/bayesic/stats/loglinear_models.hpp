@@ -52,15 +52,11 @@ public:
      * Computes the likelihood of the snps and phenotypes under this
      * model. 
      *
-     * @param row1 The first snp.
-     * @param row2 The second snp.
-     * @param phenotype The phenotype, discrete 0.0 and 1.0.
-     * @param weight A weight for each sample, this will be used instead of 1.0 as a count.
-     * @param is_valid True if model could be estimated, false otherwise.
+     * @param count The number of counts for each genotype.
      *
      * @return The likelihood of the snps.
      */
-    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid) = 0;
+    virtual log_double prob(const arma::mat &count) = 0;
     
 private:
     /**
@@ -90,7 +86,7 @@ public:
     /**
      * @see loglinear_model::prob.
      */
-    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid);
+    virtual log_double prob(const arma::mat &count);
 };
 
 /**
@@ -109,7 +105,7 @@ public:
     /**
      * @see loglinear_model::prob.
      */
-    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid);
+    virtual log_double prob(const arma::mat &count);
 };
 
 /**
@@ -130,7 +126,7 @@ public:
     /**
      * @see loglinear_model::prob.
      */
-    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid);
+    virtual log_double prob(const arma::mat &count);
 
 private:
     /**

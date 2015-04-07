@@ -71,6 +71,11 @@ private:
      * The models used.
      */
     std::vector<loglinear_model *> m_models;
+
+    /**
+     * Number of usable samples in the last call to run.
+     */
+    unsigned int m_num_usable_samples;
 };
 
 #endif /* End of __STEPWISE_METHOD_H__ */

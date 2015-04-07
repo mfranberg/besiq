@@ -27,7 +27,7 @@ void run_method(method_type &method, genotype_matrix_ptr genotypes, pairfile &pa
         std::fill( output, output + method_header.size( ), result_get_missing( ) );
 
         method.run( *row1, *row2, output );
-        output[ method_header.size( ) - 1 ] = method.num_usable_samples( *row1, *row2 );
+        output[ method_header.size( ) - 1 ] = method.num_ok_samples( *row1, *row2 );
 
         result.write( pair, output );
     }

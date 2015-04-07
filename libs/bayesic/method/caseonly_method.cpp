@@ -8,12 +8,6 @@ caseonly_method::caseonly_method(method_data_ptr data)
     m_weight = arma::ones<arma::vec>( data->phenotype.size( ) );
 }
 
-unsigned int
-caseonly_method::num_ok_samples(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype)
-{
-    return arma::accu( joint_count( row1, row2, get_data( )->phenotype, m_weight ) + 1.0 );
-}
-
 std::vector<std::string>
 caseonly_method::init()
 {
@@ -34,6 +28,7 @@ caseonly_method::run(const snp_row &row1, const snp_row &row2, float *output)
     arma::vec u = arma::zeros<arma::vec>( 3 );
     arma::vec v = arma::zeros<arma::vec>( 3 );
     double N = arma::accu( counts );
+    set_num_ok_samples( (size_t) N );
 
     for(int i = 0; i < 3; i++)
     {

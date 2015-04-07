@@ -13,12 +13,6 @@ lm_stepwise_method::lm_stepwise_method(method_data_ptr data)
     m_weight = arma::ones<arma::vec>( data->phenotype.size( ) );
 }
 
-unsigned int
-lm_stepwise_method::num_ok_samples(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype)
-{
-    return arma::accu( joint_count( row1, row2, get_data( )->phenotype, m_weight ) + 1.0 );
-}
-
 std::vector<std::string>
 lm_stepwise_method::init()
 {
@@ -37,6 +31,8 @@ lm_stepwise_method::run(const snp_row &row1, const snp_row &row2, float *output)
     bool all_valid = true;
 
     arma::mat count = joint_count_cont( row1, row2, get_data( )->phenotype, m_weight );
+    set_num_ok_samples( (size_t) arma::accu( count.col( 1 ) ) );
+
     bool enough_samples = arma::min( count.col( 1 ) ) >= 10;
     if( !enough_samples )
     {

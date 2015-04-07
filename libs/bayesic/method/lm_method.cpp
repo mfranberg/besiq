@@ -31,18 +31,11 @@ void lm_method::run(const snp_row &row1, const snp_row &row2, float *output)
     lm_info alt_info;
     arma::vec b = lm( m_model_matrix.get_alt( ), get_data( )->phenotype, missing, alt_info );
 
+    set_num_ok_samples( missing.n_elem - sum( missing ) );
+
     if( null_info.success && alt_info.success )
     {
         int LR_pos = 0;
-        /*if( get_data( )->print_params )
-        {
-            output[ 0 ] = b[ 8 ];
-            for(int i = 0; i < 8; i++)
-            {
-                output[ i + 1 ] = b[ i ];
-            }
-            LR_pos = 9;
-        }*/
 
         double LR = -2 * ( null_info.logl - alt_info.logl );
 
