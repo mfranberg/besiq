@@ -41,15 +41,13 @@ public:
      * Computes the likelihood of the snps and phenotypes under this
      * model. 
      *
-     * @param row1 The first snp.
-     * @param row2 The second snp.
-     * @param phenotype The phenotype, discrete 0.0 and 1.0.
-     * @param weight A weight for each sample, this will be used instead of 1.0 as a count.
-     * @param is_valid True if model could be estimated, false otherwise.
+     * @param count A 9x3 matrix, where the 3 columns contains: the
+     *              number of samples, the phenotype sum and 
+     *              squared phenotype sum.
      *
      * @return The likelihood of the snps.
      */
-    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid) = 0;
+    virtual log_double prob(const arma::mat &count) = 0;
     
 private:
     /**
@@ -79,7 +77,7 @@ public:
     /**
      * @see stepwise_model::prob.
      */
-    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid);
+    virtual log_double prob(const arma::mat &count);
 };
 
 /**
@@ -98,7 +96,7 @@ public:
     /**
      * @see stepwise_model::prob.
      */
-    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid);
+    virtual log_double prob(const arma::mat &count);
 };
 
 /**
@@ -119,7 +117,7 @@ public:
     /**
      * @see stepwise_model::prob.
      */
-    virtual log_double prob(const snp_row &row1, const snp_row &row2, const arma::vec &phenotype, const arma::vec &weight, bool *is_valid);
+    virtual log_double prob(const arma::mat &count);
 
 private:
     /**

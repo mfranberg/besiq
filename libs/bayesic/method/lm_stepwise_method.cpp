@@ -35,29 +35,29 @@ lm_stepwise_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     std::vector<log_double> likelihood( m_models.size( ), 0.0 );
     bool all_valid = true;
+
+    arma::mat count = joint_count_cont( row1, row2, get_data( )->phenotype, m_weight );
+    bool enough_samples = arma::min( count.col( 1 ) ) >= 10;
+    if( !enough_samples )
+    {
+        return;
+    }
     
     for(int i = 0; i < m_models.size( ); i++)
     {
-        bool is_valid = false;
-        likelihood[ i ] = m_models[ i ]->prob( row1, row2, get_data( )->phenotype, m_weight, &is_valid );
-        all_valid = is_valid && all_valid;
+        likelihood[ i ] = m_models[ i ]->prob( count );
     }
 
-    if( all_valid )
+    for(int i = 1; i < m_models.size( ); i++)
     {
+        double LR = -2.0*(likelihood[ i ].log_value( ) - likelihood[ 0 ].log_value( ));
 
-        for(int i = 1; i < m_models.size( ); i++)
+        try
         {
-            double LR = -2.0*(likelihood[ i ].log_value( ) - likelihood[ 0 ].log_value( ));
-            double p_value = 1.0 - chi_square_cdf( LR, m_models[ i ]->df( ) );
-
-            try
-            {
-                output[ i - 1 ] = 1.0 - chi_square_cdf( LR, m_models[ i ]->df( ) );
-            }
-            catch(bad_domain_value &e)
-            {
-            }
+            output[ i - 1 ] = 1.0 - chi_square_cdf( LR, m_models[ i ]->df( ) );
+        }
+        catch(bad_domain_value &e)
+        {
         }
     }
 }
