@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <string>
 
 extern char **environ;
@@ -75,10 +77,6 @@ std::string dirname(std::string source)
     if( source.size( ) <= 1 )
     {
         return source;
-    }
-    if( *(source.rbegin( ) + 1) == '/' )
-    {
-        source.pop_back( );
     }
 
     source.erase( std::find( source.rbegin( ), source.rend( ), '/' ).base( ), source.end( ) );

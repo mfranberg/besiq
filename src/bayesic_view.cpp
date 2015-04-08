@@ -23,19 +23,19 @@ struct return_true : comparator
 };
 struct less : comparator
 {
-    bool operator()(const float& x, const float&y) const { return x < y; };
+    bool operator()(const float& x, const float&y) const { return x != result_get_missing( ) && x < y; };
 };
 struct less_equal : comparator
 {
-    bool operator()(const float& x, const float&y) const { return x <= y; };
+    bool operator()(const float& x, const float&y) const { return x != result_get_missing( ) && x <= y; };
 };
 struct greater : comparator
 {
-    bool operator()(const float& x, const float&y) const { return x > y; };
+    bool operator()(const float& x, const float&y) const { return x != result_get_missing( ) && x > y; };
 };
 struct greater_equal : comparator
 {
-    bool operator()(const float& x, const float&y) const { return x >= y; };
+    bool operator()(const float& x, const float&y) const { return x != result_get_missing( ) && x >= y; };
 };
 
 int
