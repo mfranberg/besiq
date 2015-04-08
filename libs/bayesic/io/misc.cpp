@@ -13,7 +13,6 @@ unpack_string(const char *snp_name_str)
     std::vector<std::string> results( it, end );
 
     return results;
-
 }
 
 std::string
