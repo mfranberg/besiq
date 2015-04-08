@@ -45,7 +45,7 @@ Make sure you have the Armadillo matrix library installed. Then to build and run
     rs51512 rs151251
     rs51512 rs516163
 
-    > ./src/bayesic -m wald /data/dataset.pair /data/dataset
+    > ./src/bayesic wald /data/dataset.pair /data/dataset
     snp1        snp2        LR  P   N
     rs412512    rs516161    4.1500    0.386 3418
     rs51512     rs151251    3.1200    0.5379    3412
@@ -121,15 +121,15 @@ or
 
 Generate a list of all possible pairs with a combined maf of greater than 0.04, a marginal maf greater than 0.2 and with a distance of at least 1 Mbp between variants in the same pair.
 
-    > bayesic-pairs -c 0.04 -m 0.2 -d 1000000 /data/dataset > dataset.pair
+    > bayesic pairs -c 0.04 -m 0.2 -d 1000000 /data/dataset > dataset.pair
 
 Run the stepwise command, this should preferebly be parallelized on a cluster with more than 100k variants in the genotype file. It is also recommended to filter out pairs with a p-value higher than 0.05 / num_pairs. This command will use the phenotype in the plink file, if in another file specify with -p.
 
-    > bayesic -m stepwise /data/dataset.pair /data/dataset > results.out
+    > bayesic stagewise /data/dataset.pair /data/dataset > results.out
     
 Use closed testing to perform multiple testing correction assuming 50 marginally associated variants and 100k variants.
 
-    > python tools/closed_correction/closed_correction.py --weight 0.25 0.25 0.25 0.25 --num-tests 4999950000 5000000 5000000 1225 results.out /data/dataset
+    > bayesic correct --weight 0.25,0.25,0.25,0.25 --num-tests 4999950000,5000000,5000000,1225 results.out /data/dataset
     
 This will output all pairs significant on at least one scale, and the adjusted p-values.
 
@@ -137,13 +137,13 @@ This will output all pairs significant on at least one scale, and the adjusted p
 
 These are all run similiarly. First pairs should be created
 
-    > bayesic-pairs -c 0.04 -m 0.2 -d 1000000 /data/dataset > dataset.pair
+    > bayesic pairs -c 0.04 -m 0.2 -d 1000000 /data/dataset > dataset.pair
     
 Then these methods are simply run by the following. These commands will use the phenotype in the plink file, if in another file specify with -p.
 
-    > bayesic -m wald /data/dataset.pair /data/dataset > result.wald.out
-    > bayesic -m glm -f factor -l logistic /data/dataset.pair /data/dataset > results.logistic.out
-    > bayesic -m loglinear /data/dataset.pair /data/dataset > results.loglinear.out
+    > bayesic wald /data/dataset.pair /data/dataset > result.wald.out
+    > bayesic glm -f factor -l logistic /data/dataset.pair /data/dataset > results.logistic.out
+    > bayesic loglinear /data/dataset.pair /data/dataset > results.loglinear.out
 
 # Evaluation
 
