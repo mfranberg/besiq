@@ -47,6 +47,7 @@ main(int argc, char *argv[])
 
     parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 10 ] ).metavar( "method" ).help( "Which method to use, one of: 'bayes', 'bayes-fine', 'lm', 'glm', 'loglinear', 'caseonly', 'stepwise', 'lm-stepwise', 'wald', or 'wald-lm'." );
     parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
+    parser.add_option( "-e", "--mpheno" ).help( "Name of the phenotype that you want to read (if there are more than one in the phenotype file)." );
     parser.add_option( "-o", "--out" ).help( "The output file that will contain the results (binary)." );
     parser.add_option( "-l", "--link-function" ).choices( &link_choices[ 0 ], &link_choices[ 5 ] ).metavar( "link" ).help( "The link function, or scale, that is used for the penetrance: 'logit' log(p/(1-p)), 'logc' log(1 - p), 'odds' p/(1-p), 'identity' p, 'log' log(p)." ).set_default( "logit" );
     parser.add_option( "-f", "--factor" ).choices( &factor_choices[ 0 ], &factor_choices[ 3 ] ).help( "Determines how to code the SNPs, in 'factor' no order of the alleles is assumed, in 'additive' the SNPs are coded as the number of minor alleles, in 'tukey' the coding is the same as factor except that a single parameter for the interaction is used." ).set_default( "factor" );
@@ -99,7 +100,7 @@ main(int argc, char *argv[])
     if( options.is_set( "pheno" ) )
     {
         std::ifstream phenotype_file( options[ "pheno" ].c_str( ) );
-        data->phenotype = parse_phenotypes( phenotype_file, data->missing, order );
+        data->phenotype = parse_phenotypes( phenotype_file, data->missing, order, options[ "mpheno" ] );
     }
     else
     {

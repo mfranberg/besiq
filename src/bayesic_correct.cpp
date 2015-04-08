@@ -87,6 +87,7 @@ main(int argc, char *argv[])
     parser.add_option( "-m", "--method" ).set_default( "none" ).choices( &methods[ 0 ], &methods[ 3 ] ).help( "The multiple testing correction to use 'bonferroni', 'static' or 'adaptive (default = bonferroni)." );
     parser.add_option( "-b", "--bfile" ).help( "Plink prefix, needed for static and adaptive." );
     parser.add_option( "-p", "--pheno" ).help( "Phenotype file, possibly needed for static and adaptive." );
+    parser.add_option( "-e", "--mpheno" ).help( "Name of the phenotype." );
     parser.add_option( "-a", "--alpha" ).set_default( 0.05 ).help( "The significance threshold." );
     parser.add_option( "-f", "--field" ).set_default( 1 ).help( "For 'bonferroni', the column that contains the p-value, the first column after the snp names is 0 (default = 1)." );
     parser.add_option( "-n", "--num-tests" ).set_default( "0" ).help( "The number of tests to perform, if multiple, separate by ',' and 0 indicates let the program decide, typically the number of pairs." );
@@ -139,7 +140,7 @@ main(int argc, char *argv[])
         if( options.is_set( "pheno" ) )
         {
             std::ifstream phenotype_file( options[ "pheno" ].c_str( ) );
-            data->phenotype = parse_phenotypes( phenotype_file, data->missing, order );
+            data->phenotype = parse_phenotypes( phenotype_file, data->missing, order, options[ "mpheno" ] );
         }
         else
         {

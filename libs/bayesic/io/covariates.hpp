@@ -17,12 +17,13 @@ struct pio_sample_t;
  *                others will remain untouched.
  * @param order This vector defines the order of the individuals that will
  *              be parsed from the covariate file.
+ * @param out_header The header names will be stored here.
  * @param missing_string The string that indicates a missing value.
  *
  * @return A matrix that contains the parsed covariates.
  */
 arma::mat
-parse_covariate_matrix(std::istream &stream, arma::uvec &missing, const std::vector<std::string> &order, const char *missing_string = "NA");
+parse_covariate_matrix(std::istream &stream, arma::uvec &missing, const std::vector<std::string> &order, std::vector<std::string> *out_header = NULL, const char *missing_string = "NA");
 
 /**
  * Parsers phenotypes from a csv stream and returns them as a 
@@ -33,12 +34,14 @@ parse_covariate_matrix(std::istream &stream, arma::uvec &missing, const std::vec
  *                others will remain untouched.
  * @param order This vector defines the order of the individuals that will
  *              be parsed from the phenotype file.
+ * @param pheno_name If different than "" it will search for the column with this
+ *                   name and return it.
  * @param missing_string The string that indicates a missing value.
  *
  * @return A vector containing the parsed phenotypes.
  */
 arma::vec
-parse_phenotypes(std::istream &stream, arma::uvec &missing, const std::vector<std::string> &order, const char *missing_string = "NA");
+parse_phenotypes(std::istream &stream, arma::uvec &missing, const std::vector<std::string> &order, std::string pheno_name = "", const char *missing_string = "NA");
 
 /**
  * Parses an environmental factor from a csv stream and returns them as a 

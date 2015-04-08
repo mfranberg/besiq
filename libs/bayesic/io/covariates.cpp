@@ -91,11 +91,15 @@ create_iid_map(const std::vector<std::string> &order)
 }
 
 mat
-parse_covariate_matrix(std::istream &stream, arma::uvec &missing, const std::vector<std::string> &order, const char *missing_string)
+parse_covariate_matrix(std::istream &stream, arma::uvec &missing, const std::vector<std::string> &order, std::vector<std::string> *out_header, const char *missing_string)
 {
     std::string header;
     std::getline( stream, header );
     std::vector<std::string> header_fields = get_fields( header );
+    if( out_header != NULL )
+    {
+        *out_header = header_fields;
+    }
     
     std::map<std::string, size_t> iid_index = create_iid_map( order );
     mat X = arma::zeros<arma::mat>( order.size( ), header_fields.size( ) - 2 );
@@ -157,11 +161,30 @@ parse_covariate_matrix(std::istream &stream, arma::uvec &missing, const std::vec
 }
 
 arma::vec
-parse_phenotypes(std::istream &stream, arma::uvec &missing, const std::vector<std::string> &order, const char *missing_string)
+parse_phenotypes(std::istream &stream, arma::uvec &missing, const std::vector<std::string> &order, std::string pheno_name, const char *missing_string)
 {
-    mat phenotype_matrix = parse_covariate_matrix( stream, missing, order, missing_string );
-    assert( phenotype_matrix.n_cols == 1 );
-    return phenotype_matrix.col( 0 );
+    std::vector<std::string> header;
+    mat phenotype_matrix = parse_covariate_matrix( stream, missing, order, &header, missing_string );
+    if( pheno_name == "" )
+    {
+        assert( phenotype_matrix.n_cols == 1 );
+        return phenotype_matrix.col( 0 );
+    }
+    else
+    {
+        std::vector<std::string>::iterator it = std::find( header.begin( ), header.end( ), pheno_name );
+        if( it != header.end( ) )
+        {
+            int pos = it - header.begin( );
+            assert( phenotype_matrix.n_cols >= pos - 2 );
+            return phenotype_matrix.col( pos - 2 );
+        }
+        else
+        {
+            throw std::runtime_error( "parse_phenotypes: Could not find that phenotype name." );
+        }
+    }
+
 }
 
 arma::mat
