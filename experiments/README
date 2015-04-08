@@ -1,0 +1,7 @@
+These experiments are run with:
+
+epibench run --method-file method.json --experiment-file lireich.json --out lireich/
+epibench compile lireich/
+
+epibench run --method-file method.json --experiment-file specific.json --out specific/
+epibench compile specific/
