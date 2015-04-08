@@ -19,6 +19,7 @@ struct command g_commands[] =
     { "pairs", "Generate pairs for a gene-gene analysis." },
     { "view", "Display a binary result file" },
     { "glm", "Run a GLM model possibly with covariates." },
+    { "scaleinv", "Scale-invariant tests of interaction." },
     { "stagewise", "Run a stage-wise method." },
     { "wald", "Perform a 'fast' wald test with main effects." },
     { "bayes", "Run a stage-wise method." },

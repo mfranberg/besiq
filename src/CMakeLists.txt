@@ -19,6 +19,9 @@ target_link_libraries( bayesic-caseonly libdcdf libbayesic libplink libcpp-argpa
 add_executable( bayesic-glm bayesic_glm.cpp )
 target_link_libraries( bayesic-glm libdcdf libbayesic libglm libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
+add_executable( bayesic-scaleinv bayesic_scaleinv.cpp )
+target_link_libraries( bayesic-scaleinv libdcdf libbayesic libglm libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+
 add_executable( bayesic-loglinear bayesic_loglinear.cpp )
 target_link_libraries( bayesic-loglinear libdcdf libbayesic libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
