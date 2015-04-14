@@ -40,3 +40,7 @@ target_link_libraries( bayesic-view libcpp-argparse libbayesic )
 add_executable( bayesic-correct bayesic_correct.cpp )
 target_link_libraries( bayesic-correct libdcdf libglm libbayesic libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
+INSTALL( TARGETS bayesic bayesic-stagewise bayesic-bayes bayesic-caseonly
+    bayesic-glm bayesic-scaleinv bayesic-loglinear bayesic-wald bayesic-env
+    bayesic-pairs bayesic-view bayesic-correct DESTINATION bin )
+

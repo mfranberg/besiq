@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <vector>
 #include <string>
 
 extern char **environ;
@@ -79,10 +80,55 @@ std::string dirname(std::string source)
     {
         return source;
     }
+    if( source.find( '/' ) == std::string::npos )
+    {
+        return "";
+    }
 
     source.erase( std::find( source.rbegin( ), source.rend( ), '/' ).base( ), source.end( ) );
 
     return source;
+}
+
+std::vector<std::string> get_environment_path()
+{
+    std::vector<std::string> result;
+#if _WIN32
+    const std::string path = convert_to_utf8( _wgetenv( L"PATH" ) );
+    const char delimiter = ';';
+#else
+    const std::string path = getenv( "PATH" );
+    const char delimiter = ':';
+#endif
+    if( path.empty( ) )
+    {
+        return result;
+    }
+
+    size_t previous = 0;
+    size_t index = path.find( delimiter );
+    while( index != std::string::npos )
+    {
+        result.push_back( path.substr( previous, index - previous ) );
+        previous = index + 1;
+        index = path.find( delimiter, previous );
+    }
+    result.push_back( path.substr( previous ) );
+
+    return result;
+}
+
+std::string find_executable_in_path(std::string name)
+{
+    std::vector<std::string> path = get_environment_path( );
+    for(int i = 0; i < path.size( ); i++)
+    {
+        std::string filename = path[ i ] + "/" + name;
+        if( access( filename.c_str( ), F_OK ) != -1 )
+        {
+            return filename;
+        }
+    }
 }
 
 int main(int argc, char *argv[])
@@ -102,6 +148,10 @@ int main(int argc, char *argv[])
     std::string cmd_path( argv[ 0 ] );
     std::string cmd_dir = dirname( cmd_path );
     std::string new_cmd_path = cmd_dir + "bayesic-" + std::string( argv[ 1 ] );
+    if( cmd_dir == "" )
+    {
+        new_cmd_path = find_executable_in_path( "bayesic-" + std::string( argv[ 1 ] ) );
+    }
 
     argv[ 1 ] = strdup( new_cmd_path.c_str( ) );
     if( execve( new_cmd_path.c_str( ), &argv[ 1 ], environ ) == -1 )
