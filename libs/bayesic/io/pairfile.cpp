@@ -29,7 +29,7 @@ bpairfile::~bpairfile()
 }
 
 bool
-bpairfile::open()
+bpairfile::open(size_t split, size_t num_splits)
 {
     if( m_fp == NULL )
     {
@@ -74,6 +74,15 @@ bpairfile::open()
 
         m_snp_names = unpack_string( buffer );
         free( buffer );
+
+        /* Only read a part of the pair file */
+        size_t pairs_per_split = ( m_header.num_pairs + num_splits - 1 ) / num_splits;
+        size_t seek_length = sizeof( uint64_t ) * 2 * pairs_per_split;
+        m_pairs_left = pairs_per_split;
+        if( seek_length > 0 )
+        {
+            fseek( m_fp, seek_length, SEEK_CUR );
+        }
     }
     else
     {
@@ -120,7 +129,7 @@ bpairfile::get_snp_names()
 bool
 bpairfile::read(std::pair<std::string, std::string> &pair)
 {
-    if( m_mode != "r" || m_fp == NULL )
+    if( m_mode != "r" || m_fp == NULL || m_pairs_left > 0 )
     {
         return false;
     }
@@ -134,6 +143,7 @@ bpairfile::read(std::pair<std::string, std::string> &pair)
 
     pair.first = m_snp_names[ read_pair[ 0 ] ];
     pair.second = m_snp_names[ read_pair[ 1 ] ];
+    m_pairs_left--;
 
     return true;
 }
@@ -186,7 +196,7 @@ tpairfile::~tpairfile()
 }
 
 bool
-tpairfile::open()
+tpairfile::open(size_t split, size_t num_splits)
 {
     if( m_mode == "r" )
     {
@@ -268,6 +278,21 @@ bool tpairfile::write(size_t snp1_id, size_t snp2_id)
 size_t
 tpairfile::num_pairs()
 {
+    if( m_path != "-" && m_mode == "r" && m_num_pairs == 0 )
+    {
+        std::ifstream *input = static_cast<std::ifstream *>( m_input );
+        std::streampos pos = input->tellg( );
+        input->seekg( 0, input->beg );
+        
+        std::pair<std::string, std::string> pair;
+        while( read( pair ) )
+        {
+            m_num_pairs++;
+        }
+        
+        input->seekg( pos, input->beg );
+    }
+
     return m_num_pairs;
 }
 
@@ -287,9 +312,9 @@ open_pair_file(const std::string &path, const std::vector<std::string> &snp_name
         return NULL;
     }
 
+    fclose( fp );
     if( header.version == PAIR_CUR_VERSION )
     {
-        fclose( fp );
         return new bpairfile( path );
     }
     else

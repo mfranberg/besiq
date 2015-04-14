@@ -44,7 +44,7 @@ struct bpair_header
 class pairfile
 {
 public:
-    virtual bool open() = 0;
+    virtual bool open(size_t split = 1, size_t num_splits = 1) = 0;
     virtual void close() = 0;
     virtual bool read(std::pair<std::string, std::string> &pair) = 0;
     virtual bool write(size_t snp1_id1, size_t snp2_id2) = 0;
@@ -58,7 +58,7 @@ public:
     tpairfile(const std::string &path, std::vector<std::string> m_snp_names, const char *mode);
     ~tpairfile();
     
-    bool open();
+    bool open(size_t split = 1, size_t num_splits = 1);
     void close();
     bool read(std::pair<std::string, std::string> &pair);
     bool write(size_t snp1_id1, size_t snp2_id2);
@@ -81,6 +81,8 @@ class bpairfile : public pairfile
 public:
     /**
      * This constructor is used when reading files.
+     *
+     * @param path Path to the pair file.
      */
     bpairfile(const std::string &path);
 
@@ -91,7 +93,7 @@ public:
 
     ~bpairfile();
 
-    bool open();
+    bool open(size_t split = 1, size_t num_splits = 1);
     void close();
 
     const std::vector<std::string> & get_snp_names();
@@ -115,6 +117,11 @@ private:
 
     /* Names of the SNPs */
     std::vector<std::string> m_snp_names;
+
+    /* 
+     * Number of pairs left to read.
+     */
+    size_t m_pairs_left;
 };
 
 pairfile * open_pair_file(const std::string &path, const std::vector<std::string> &snp_names);
