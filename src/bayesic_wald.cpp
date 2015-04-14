@@ -4,115 +4,47 @@
 
 #include <cpp-argparse/OptionParser.h>
 
-#include <plink/plink_file.hpp>
-#include <bayesic/io/covariates.hpp>
-#include <bayesic/io/pairfile.hpp>
-#include <bayesic/io/resultfile.hpp>
 #include <bayesic/method/wald_method.hpp>
 #include <bayesic/method/wald_lm_method.hpp>
 #include <bayesic/method/method.hpp>
+
+#include "common_options.hpp"
 
 using namespace arma;
 using namespace optparse;
 
 const std::string USAGE = "bayesic-wald [OPTIONS] pairs genotype_plink_prefix";
-const std::string VERSION = "Bayesic 0.0.1";
 const std::string DESCRIPTION = "Fast wald tests for genetic interactions.";
-const std::string EPILOG = "";
 
 int
 main(int argc, char *argv[])
 {
-    OptionParser parser = OptionParser( ).usage( USAGE )
-                                         .version( VERSION )
-                                         .description( DESCRIPTION )
-                                         .epilog( EPILOG );
+    OptionParser parser = create_common_options( USAGE, DESCRIPTION, false );
     
     char const* const model_choices[] = { "binomial", "normal" };
-    parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
-    parser.add_option( "-e", "--mpheno" ).help( "Name of the phenotype that you want to read (if there are more than one in the phenotype file)." );
-    parser.add_option( "-o", "--out" ).help( "The output file that will contain the results (binary)." );
     parser.add_option( "-m", "--model" ).choices( &model_choices[ 0 ], &model_choices[ 2 ] ).metavar( "model" ).help( "The model to use for the phenotype, 'binomial' or 'normal', default = 'binomial'." ).set_default( "binomial" );
-    parser.add_option( "--print-params" ).action( "store_true" ).set_default( 0 ).help( "Print parameter estimates in factor GLM models." );
     
     Values options = parser.parse_args( argc, argv );
-    std::vector<std::string> args = parser.args( );
-    if( args.size( ) != 2 )
+    if( parser.args( ).size( ) != 2 )
     {
-        std::cerr << "bayesic: error: Pairs or genetypes is missing." << std::endl;
         parser.print_help( );
         exit( 1 );
     }
-
-    /* Read all genotypes */
-    plink_file_ptr genotype_file = open_plink_file( args[ 1 ] );
-    genotype_matrix_ptr genotypes = create_genotype_matrix( genotype_file );
-
-    /* Create pair iterator */
-    const std::vector<std::string> &locus_names = genotype_file->get_locus_names( );
-    pairfile *pairs = open_pair_file( args[ 0 ].c_str( ), locus_names );
-    if( pairs == NULL || !pairs->open( ) )
-    {
-        std::cerr << "bayesic: error: Could not open pair file." << std::endl;
-        exit( 1 );
-    }
-
-    /* Read additional data  */
-    method_data_ptr data( new method_data( ) );
-    data->print_params = (bool) options.get( "print_params" );
-    data->missing = zeros<uvec>( genotype_file->get_samples( ).size( ) );
-    std::vector<std::string> order = genotype_file->get_sample_iids( );
-    if( options.is_set( "pheno" ) )
-    {
-        std::ifstream phenotype_file( options[ "pheno" ].c_str( ) );
-        data->phenotype = parse_phenotypes( phenotype_file, data->missing, order );
-    }
-    else
-    {
-        data->phenotype = create_phenotype_vector( genotype_file->get_samples( ), data->missing );
-    }
-    if( options.is_set( "cov" ) )
-    {
-        std::ifstream covariate_file( options[ "cov" ].c_str( ) );
-        data->covariate_matrix = parse_covariate_matrix( covariate_file, data->missing, order );
-    }
-
-    /* XXX: Implement proper log file. */
-    std::ostream nullstream( 0 );
-    arma::set_stream_err2( nullstream );
+    shared_ptr<common_options> parsed_data = parse_common_options( options, parser.args( ) );
 
     method_type *m = NULL;
     if( options[ "model" ] == "binomial" )
     {
-        m = new wald_method( data );
+        m = new wald_method( parsed_data->data );
     }
     else if( options[ "model" ] == "normal" )
     {
-        m = new wald_lm_method( data );
+        m = new wald_lm_method( parsed_data->data );
     }
     
-    /* Run method */
-    resultfile *result = NULL;
-    if( options.is_set( "out" ) )
-    {
-        result = new bresultfile( options[ "out" ], locus_names );
-    }
-    else
-    {
-        std::ios_base::sync_with_stdio( false );
-        result = new tresultfile( "-", "w", locus_names );
-    }
-    if( !result->open( ) )
-    {
-        std::cerr << "bayesic: error: Can not open result file." << std::endl;
-        exit( 1 );
-    }
-
-    run_method( *m, genotypes, *pairs, *result );
+    run_method( *m, parsed_data->genotypes, *parsed_data->pairs, *parsed_data->result_file );
 
     delete m;
-    delete pairs;
-    delete result;
-
+    
     return 0;
 }
