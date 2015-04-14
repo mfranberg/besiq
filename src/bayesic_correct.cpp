@@ -32,7 +32,7 @@ std::vector<uint64_t> parse_tests(const std::string &num_tests, const std::strin
         ss.get( );
     }
     
-    if( (method == "static" && parsed_tests.size( ) != 4) || (method != "static" && parsed_tests.size( ) != 1) )
+    if( (method == "static" && parsed_tests.size( ) != 4) || (method == "adaptive" && parsed_tests.size( ) != 1) )
     {
         std::cerr << "bayesic-correct: error: Bad number of tests, either 4 or 1." << std::endl;
         exit( 1 );
@@ -84,8 +84,10 @@ main(int argc, char *argv[])
                                          .epilog( EPILOG ); 
 
     char const * const methods[] = { "bonferroni", "static", "adaptive" };
+    char const * const models[] = { "binomial", "normal" };
     parser.add_option( "-m", "--method" ).set_default( "none" ).choices( &methods[ 0 ], &methods[ 3 ] ).help( "The multiple testing correction to use 'bonferroni', 'static' or 'adaptive (default = bonferroni)." );
     parser.add_option( "-b", "--bfile" ).help( "Plink prefix, needed for static and adaptive." );
+    parser.add_option( "-e", "--model" ).set_default( "binomial" ).choices( &models[ 0 ], &models[ 2 ] ).help( "Type of model, binomial or normal (default = binomial)." );
     parser.add_option( "-p", "--pheno" ).help( "Phenotype file, possibly needed for static and adaptive." );
     parser.add_option( "-e", "--mpheno" ).help( "Name of the phenotype." );
     parser.add_option( "-a", "--alpha" ).set_default( 0.05 ).help( "The significance threshold." );
@@ -117,6 +119,7 @@ main(int argc, char *argv[])
     size_t field = (size_t) options.get( "field" );
     correct.num_tests = parse_tests( options[ "num_tests" ], method );
     correct.weight = parse_weight( options[ "weight" ], 0.25 );
+    correct.model = options[ "model" ];
     std::string output_prefix = (std::string) options.get( "output_prefix" );
 
     metaresultfile *meta_result_file = open_meta_result_file( args, genotype_file->get_locus_names( ) );

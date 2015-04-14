@@ -146,7 +146,7 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
     std::vector<std::string> header = last_stage->get_header( );
 
     model_matrix *model_matrix = new factor_matrix( data->covariate_matrix, data->phenotype.n_elem );
-    scaleinv_method method( data, *model_matrix, options.is_lm );
+    scaleinv_method method( data, *model_matrix, options.model == "normal" );
     std::vector<std::string> method_header = method.init( ); 
 
     output << "snp1\tsnp2";

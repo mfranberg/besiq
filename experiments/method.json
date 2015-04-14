@@ -8,7 +8,7 @@
         {
             "name" : "ScaleInvariance",
             "method" : "scaleinv",
-            "num-tests" : [ 1000000000000, 0, 0, 0 ]
+            "num-tests" : 1000000000000
         },
         {
             "name" : "Log-linear",

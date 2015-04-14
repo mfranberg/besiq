@@ -31,9 +31,9 @@ struct correction_options
     std::vector<float> weight;
 
     /**
-     * Is this GLM or LM?
+     * Normal, binomial?
      */
-    bool is_lm;
+    std::string model;
 };
 
 void run_bonferroni(metaresultfile *result, float alpha, uint64_t num_tests, size_t column, const std::string &output_path);
