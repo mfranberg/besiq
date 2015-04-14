@@ -77,8 +77,9 @@ bpairfile::open(size_t split, size_t num_splits)
 
         /* Only read a part of the pair file */
         uint64_t pairs_per_split = ( m_header.num_pairs + num_splits - 1 ) / num_splits;
-        uint64_t seek_length = sizeof( uint64_t ) * 2 * pairs_per_split;
+        uint64_t seek_length = sizeof( uint32_t ) * 2 * pairs_per_split * (split - 1);
         m_pairs_left = pairs_per_split;
+
         if( seek_length > 0 )
         {
             fseek( m_fp, seek_length, SEEK_CUR );
@@ -129,7 +130,7 @@ bpairfile::get_snp_names()
 bool
 bpairfile::read(std::pair<std::string, std::string> &pair)
 {
-    if( m_mode != "r" || m_fp == NULL || m_pairs_left > 0 )
+    if( m_mode != "r" || m_fp == NULL || m_pairs_left <= 0 )
     {
         return false;
     }
