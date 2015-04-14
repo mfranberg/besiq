@@ -4,8 +4,7 @@
 #include <glm/models/binomial.hpp>
 #include <bayesic/io/resultfile.hpp>
 #include <bayesic/io/metaresult.hpp>
-#include <bayesic/method/glm_method.hpp>
-#include <bayesic/method/lm_method.hpp>
+#include <bayesic/method/scaleinv_method.hpp>
 
 #include <bayesic/correct.hpp>
 
@@ -146,36 +145,16 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
     std::ostream &output = std::cout;
     std::vector<std::string> header = last_stage->get_header( );
 
-    std::vector<method_type *> method;
-    std::vector<glm_model *> models;
     model_matrix *model_matrix = new factor_matrix( data->covariate_matrix, data->phenotype.n_elem );
-    output << "snp1\tsnp2\t";
-    if( options.is_lm )
-    {
-        output << "identity\tP_combined\n";
-        method.push_back( new lm_method( data, *model_matrix ) );
-    }
-    else
-    {
-        models.push_back( new binomial( "identity" ) );
-        models.push_back( new binomial( "log" ) );
-        models.push_back( new binomial( "logc" ) );
-        models.push_back( new binomial( "odds" ) );
-        models.push_back( new binomial( "logit" ) );
+    scaleinv_method method( data, *model_matrix, options.is_lm );
+    std::vector<std::string> method_header = method.init( ); 
 
-        for(int i = 0; i < models.size( ); i++)
-        {
-            method.push_back( new glm_method( data, *models[ i ], *model_matrix ) );
-        }
-
-        output << "P_identity\tP_log\tP_logc\tP_odds\tP_logit\tP_combined\n";
-    }
-
-    std::vector<std::string> method_header;
-    for(int i = 0; i < method.size( ); i++)
+    output << "snp1\tsnp2";
+    for(int i = 0; i < method_header.size( ); i++)
     {
-        method_header = method[ i ]->init( );
+        output << "\tP_" << method_header[ i ];
     }
+    output << "\tP_combined\n";
 
     uint64_t num_tests = options.num_tests[ 3 ];
     if( num_tests == 0 )
@@ -191,18 +170,18 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
         float pre_p = values[ header.size( ) - 2 ];
         float min_p = 1.0;
         float max_p = 0.0;
+        
+        snp_row const *snp1 = genotypes->get_row( pair.first );
+        snp_row const *snp2 = genotypes->get_row( pair.second );
+        method.run( *snp1, *snp2, method_values );
 
         std::vector<float> p_values;
-        for(int i = 0; i < method.size( ); i++)
+        for(int i = 0; i < method_header.size( ); i++)
         {
-            snp_row const *snp1 = genotypes->get_row( pair.first );
-            snp_row const *snp2 = genotypes->get_row( pair.second );
-            method[ i ]->run( *snp1, *snp2, method_values );
-
             float adjusted_p = result_get_missing( );    
-            if( method_values[ 1 ] != result_get_missing( ) )
+            if( method_values[ i ] != result_get_missing( ) )
             {
-                adjusted_p = std::max( method_values[ 1 ] * num_tests / options.weight[ 3 ], pre_p );
+                adjusted_p = std::max( method_values[ i ] * num_tests / options.weight[ 3 ], pre_p );
                 min_p = std::min( min_p, adjusted_p );
                 max_p = std::max( max_p, adjusted_p );
             }
@@ -238,16 +217,9 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
         }
     }
     
+    delete model_matrix;
     delete values;
     delete method_values;
-    for(int i = 0; i < method.size( ); i++)
-    {
-        delete method[ i ];
-    }
-    for(int i = 0; i < models.size( ); i++)
-    {
-        delete models[ i ];
-    }
 }
 
 void
