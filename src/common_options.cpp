@@ -37,8 +37,8 @@ parse_common_options(optparse::Values &options, const std::vector<std::string> &
         exit( 1 );
     }
     /* Read all genotypes */
-    result->genotype_file = open_plink_file( args[ 1 ] );
-    result->genotypes = create_genotype_matrix( result->genotype_file );
+    plink_file_ptr genotype_file = open_plink_file( args[ 1 ] );
+    genotype_matrix_ptr genotypes = create_genotype_matrix( genotype_file );
     
     /* Create pair iterator */
     size_t split = (size_t) options.get( "split" );
@@ -49,31 +49,31 @@ parse_common_options(optparse::Values &options, const std::vector<std::string> &
         exit( 1 );
     }
     
-    result->pairs = shared_ptr<pairfile>( open_pair_file( args[ 0 ].c_str( ), result->genotype_file->get_locus_names( ) ) );
-    if( result->pairs == NULL || !result->pairs->open( split, num_splits ) )
+    pairfile *pairs = open_pair_file( args[ 0 ].c_str( ), genotype_file->get_locus_names( ) );
+    if( pairs == NULL || !pairs->open( split, num_splits ) )
     {
         std::cerr << "bayesic: error: Could not open pair file." << std::endl;
         exit( 1 );
     }
     
     /* Read additional data  */
-    result->data = shared_ptr<method_data>( new method_data( ) );
-    result->data->print_params = (bool) options.get( "print_params" );
-    result->data->missing = zeros<uvec>( result->genotype_file->get_samples( ).size( ) );
-    std::vector<std::string> order = result->genotype_file->get_sample_iids( );
+    method_data_ptr data( new method_data( ) );
+    data->print_params = (bool) options.get( "print_params" );
+    data->missing = zeros<uvec>( genotype_file->get_samples( ).size( ) );
+    std::vector<std::string> order = genotype_file->get_sample_iids( );
     if( options.is_set( "pheno" ) )
     {
         std::ifstream phenotype_file( options[ "pheno" ].c_str( ) );
-        result->data->phenotype = parse_phenotypes( phenotype_file, result->data->missing, order );
+        data->phenotype = parse_phenotypes( phenotype_file, data->missing, order );
     }
     else
     {
-        result->data->phenotype = create_phenotype_vector( result->genotype_file->get_samples( ), result->data->missing );
+        data->phenotype = create_phenotype_vector( genotype_file->get_samples( ), data->missing );
     }
     if( options.is_set( "cov" ) )
     {
         std::ifstream covariate_file( options[ "cov" ].c_str( ) );
-        result->data->covariate_matrix = parse_covariate_matrix( covariate_file, result->data->missing, order );
+        data->covariate_matrix = parse_covariate_matrix( covariate_file, data->missing, order );
     }
 
     /* XXX: Implement proper log file. */
@@ -81,21 +81,22 @@ parse_common_options(optparse::Values &options, const std::vector<std::string> &
     arma::set_stream_err2( nullstream );
     
     /* Open results. */
+    resultfile *result_file = NULL;
     if( options.is_set( "out" ) )
     {
-        result->result_file = shared_ptr<resultfile>( new bresultfile( options[ "out" ], result->genotype_file->get_locus_names( ) ) );
+        result_file = new bresultfile( options[ "out" ], genotype_file->get_locus_names( ) );
     }
     else
     {
         std::ios_base::sync_with_stdio( false );
-        result->result_file = shared_ptr<resultfile>( new tresultfile( "-", "w", result->genotype_file->get_locus_names( ) ) );
+        result_file = new tresultfile( "-", "w", genotype_file->get_locus_names( ) );
     }
-    if( !result->result_file->open( ) )
+    if( result_file == NULL || !result_file->open( ) )
     {
         std::cerr << "bayesic: error: Can not open result file." << std::endl;
         exit( 1 );
     }
 
-    return result;
+    return shared_ptr<common_options>( new common_options( genotype_file, genotypes, data, pairs, result_file ) );
 }
 

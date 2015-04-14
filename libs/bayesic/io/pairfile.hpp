@@ -71,6 +71,7 @@ private:
     std::ostream *m_output;
     std::vector<std::string> m_snp_names;
     std::map<std::string,size_t> m_snp_to_index;
+    uint64_t m_pairs_left;
 };
 
 /**
@@ -121,7 +122,7 @@ private:
     /* 
      * Number of pairs left to read.
      */
-    size_t m_pairs_left;
+    uint64_t m_pairs_left;
 };
 
 pairfile * open_pair_file(const std::string &path, const std::vector<std::string> &snp_names);

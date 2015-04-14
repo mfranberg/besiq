@@ -16,6 +16,16 @@
 
 struct common_options
 {
+    common_options(plink_file_ptr gf, genotype_matrix_ptr g, method_data_ptr d, pairfile *pf, resultfile *rf)
+        : genotype_file( gf ),
+          genotypes( g ),
+          data( d ),
+          pairs( pf ),
+          result_file( rf )
+
+    {
+    }
+
     plink_file_ptr genotype_file;
     genotype_matrix_ptr genotypes;
     method_data_ptr data;

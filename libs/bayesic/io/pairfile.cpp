@@ -76,8 +76,8 @@ bpairfile::open(size_t split, size_t num_splits)
         free( buffer );
 
         /* Only read a part of the pair file */
-        size_t pairs_per_split = ( m_header.num_pairs + num_splits - 1 ) / num_splits;
-        size_t seek_length = sizeof( uint64_t ) * 2 * pairs_per_split;
+        uint64_t pairs_per_split = ( m_header.num_pairs + num_splits - 1 ) / num_splits;
+        uint64_t seek_length = sizeof( uint64_t ) * 2 * pairs_per_split;
         m_pairs_left = pairs_per_split;
         if( seek_length > 0 )
         {
@@ -213,6 +213,23 @@ tpairfile::open(size_t split, size_t num_splits)
         else
         {
             m_input = new std::ifstream( m_path.c_str( ) );
+            if( num_splits > 1 )
+            {
+                uint64_t npairs = num_pairs( );
+                uint64_t pairs_per_split = ( npairs + num_splits - 1 ) / num_splits;
+                uint64_t pairs_to_skip = pairs_per_split * (split - 1);
+
+                std::pair<std::string, std::string> pair;
+                while( pairs_to_skip-- > 0 )
+                {
+                    read( pair );
+                }
+                m_pairs_left = pairs_per_split;
+            }
+            else
+            {
+                m_pairs_left = -1;
+            }
         }
 
         return m_input->good( );
@@ -253,6 +270,11 @@ tpairfile::close()
 
 bool tpairfile::read(std::pair<std::string, std::string> &pair)
 {
+    if( m_path != "-" && m_pairs_left <= 0 )
+    {
+        return false;
+    }
+
     std::string snp1;
     std::string snp2;
 
@@ -263,6 +285,7 @@ bool tpairfile::read(std::pair<std::string, std::string> &pair)
 
     pair.first = snp1;
     pair.second = snp2;
+    m_pairs_left--;
     
     return true;
 }
@@ -289,7 +312,8 @@ tpairfile::num_pairs()
         {
             m_num_pairs++;
         }
-        
+       
+        input->clear( );
         input->seekg( pos, input->beg );
     }
 
