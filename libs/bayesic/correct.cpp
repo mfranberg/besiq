@@ -149,7 +149,7 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
     scaleinv_method method( data, *model_matrix, options.model == "normal" );
     std::vector<std::string> method_header = method.init( ); 
 
-    output << "snp1\tsnp2";
+    output << "snp1 snp2";
     for(int i = 0; i < method_header.size( ); i++)
     {
         output << "\tP_" << method_header[ i ];
@@ -193,6 +193,7 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
             continue;
         }
 
+        output << pair.first << " " << pair.second;
         bool any_missing = false;
         for(int i = 0; i < p_values.size( ); i++)
         {
@@ -209,11 +210,11 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
 
         if( !any_missing )
         {
-            output << "\t" << max_p << "";
+            output << "\t" << max_p << "\n";
         }
         else
         {
-            output << "\tNA";
+            output << "\tNA\n";
         }
     }
     
