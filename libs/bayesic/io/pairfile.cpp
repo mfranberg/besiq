@@ -332,13 +332,8 @@ open_pair_file(const std::string &path, const std::vector<std::string> &snp_name
 
     bpair_header header;
     size_t bytes_read = fread( &header, sizeof( bpair_header ), 1, fp );
-    if( bytes_read != 1 )
-    {
-        return NULL;
-    }
-
     fclose( fp );
-    if( header.version == PAIR_CUR_VERSION )
+    if( bytes_read == 1 && header.version == PAIR_CUR_VERSION )
     {
         return new bpairfile( path );
     }
