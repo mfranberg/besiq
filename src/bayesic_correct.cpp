@@ -125,7 +125,7 @@ main(int argc, char *argv[])
     metaresultfile *meta_result_file = open_meta_result_file( args, genotype_file->get_locus_names( ) );
     if( method == "bonferroni" )
     {
-        run_bonferroni( meta_result_file, correct.alpha, field, correct.num_tests[ 0 ], output_prefix );
+        run_bonferroni( meta_result_file, correct.alpha, correct.num_tests[ 0 ], field, output_prefix );
     }
     else
     {

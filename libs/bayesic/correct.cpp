@@ -18,7 +18,7 @@ run_bonferroni(metaresultfile *result, float alpha, uint64_t num_tests, size_t c
 
     std::ostream &output = std::cout;
     std::vector<std::string> header = result->get_header( );
-    output << "snp1\tsnp2";
+    output << "snp1 snp2";
     for(int i = 0; i < header.size( ); i++)
     {
         output << "\t" << header[ i ];
