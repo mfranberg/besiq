@@ -1,29 +1,30 @@
-#include <bayesic/stats/loglinear_models.hpp>
+#include <bayesic/stats/closed_form_models.hpp>
+#include <bayesic/stats/binomial_models.hpp>
 
 using namespace arma;
 
-full::full()
-: loglinear_model::loglinear_model( 16, 0 )
+binomial_full::binomial_full()
+: closed_form_model::closed_form_model( 9 )
 {
 
 }
 
 log_double
-full::prob(const arma::mat &count)
+binomial_full::prob(const arma::mat &count)
 {
     arma::vec p_full = count.col( 1 ) / ( count.col( 0 ) + count.col( 1 ) );
 
     return log_double::from_log( accu( count.col( 1 ) % arma::log( p_full ) + count.col( 0 ) % arma::log( 1 - p_full ) ) );
 }
 
-block::block()
-: loglinear_model::loglinear_model( 8, 8 )
+binomial_null::binomial_null()
+: closed_form_model::closed_form_model( 1 )
 {
 
 }
 
 log_double
-block::prob(const arma::mat &count)
+binomial_null::prob(const arma::mat &count)
 {
     arma::rowvec pheno = sum( count, 0 );
     double p_case = pheno( 1 ) / ( pheno( 0 ) + pheno( 1 ) );
@@ -31,15 +32,15 @@ block::prob(const arma::mat &count)
     return log_double::from_log( pheno( 1 ) * log( p_case ) + pheno( 0 ) * log( 1 - p_case ) );
 }
 
-partial::partial(bool is_first)
-: loglinear_model::loglinear_model( 10, 6 ),
+binomial_single::binomial_single(bool is_first)
+: closed_form_model::closed_form_model( 3 ),
   m_is_first( is_first )
 {
 
 }
 
 log_double
-partial::prob(const arma::mat &count)
+binomial_single::prob(const arma::mat &count)
 {
     arma::mat snp_pheno = zeros<mat>( 3, 2 );
     for(int i = 0; i < 3; i++)

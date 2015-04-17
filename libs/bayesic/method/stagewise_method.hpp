@@ -1,5 +1,5 @@
-#ifndef __STEPWISE_METHOD_H__
-#define __STEPWISE_METHOD_H__
+#ifndef __STAGEWISE_METHOD_H__
+#define __STAGEWISE_METHOD_H__
 
 #include <string>
 #include <vector>
@@ -8,14 +8,14 @@
 
 #include <bayesic/method/method.hpp>
 #include <bayesic/stats/log_scale.hpp>
-#include <bayesic/stats/loglinear_models.hpp>
+#include <bayesic/stats/closed_form_models.hpp>
 
 /**
  * This class is responsible for intializing and repeatedly
  * executing a stepwise method where p-values for a series
  * of more complex models are computed.
  */
-class stepwise_method
+class stagewise_method
 : public method_type
 {
 public:
@@ -25,7 +25,7 @@ public:
      * @param data Additional data required by all methods, such as
      *             covariates.
      */
-    stepwise_method(method_data_ptr data);
+    stagewise_method(method_data_ptr data, const std::string &model);
     
     /**
      * @see method_type::init.
@@ -60,7 +60,11 @@ public:
      */
     virtual void run(const snp_row &row1, const snp_row &row2, float *output);
 
-private: 
+private:
+    /**
+     * Type of model.
+     */
+    std::string m_model;
     /**
      * A weight > 0 associated with each sample, that allows for
      * covariate adjustment.
@@ -70,7 +74,7 @@ private:
     /**
      * The models used.
      */
-    std::vector<loglinear_model *> m_models;
+    std::vector<closed_form_model *> m_models;
 
     /**
      * Number of usable samples in the last call to run.
@@ -78,4 +82,4 @@ private:
     unsigned int m_num_usable_samples;
 };
 
-#endif /* End of __STEPWISE_METHOD_H__ */
+#endif /* End of __STAGEWISE_METHOD_H__ */

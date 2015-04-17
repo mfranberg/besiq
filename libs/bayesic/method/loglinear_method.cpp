@@ -5,10 +5,10 @@
 loglinear_method::loglinear_method(method_data_ptr data)
 : method_type::method_type( data )
 {
-    m_models.push_back( new full( ) );
-    m_models.push_back( new partial( true ) );
-    m_models.push_back( new partial( false ) );
-    m_models.push_back( new block( ) );
+    m_models.push_back( new binomial_full( ) );
+    m_models.push_back( new binomial_single( true ) );
+    m_models.push_back( new binomial_single( false ) );
+    m_models.push_back( new binomial_null( ) );
 
     m_weight = arma::ones<arma::vec>( data->phenotype.size( ) );
 }
@@ -39,7 +39,7 @@ loglinear_method::run(const snp_row &row1, const snp_row &row2, float *output)
     for(int i = 0; i < m_models.size( ); i++)
     {
         likelihood[ i ] = m_models[ i ]->prob( count );
-        bic[ i ] = -2.0 * likelihood[ i ].log_value( ) + m_models[ i ]->num_params( ) * log( num_samples );
+        bic[ i ] = -2.0 * likelihood[ i ].log_value( ) + m_models[ i ]->df( ) * log( num_samples );
     }
 
     unsigned int best_model = std::distance( bic.begin( ), std::min_element( bic.begin( ) + 1, bic.end( ) ) );
@@ -47,7 +47,7 @@ loglinear_method::run(const snp_row &row1, const snp_row &row2, float *output)
 
     try
     {
-        double p_value = 1.0 - chi_square_cdf( LR, m_models[ best_model ]->df( ) );
+        double p_value = 1.0 - chi_square_cdf( LR, m_models[ 0 ]->df( ) - m_models[ best_model ]->df( ) );
         output[ 0 ] = p_value;
     }
     catch(bad_domain_value &e)

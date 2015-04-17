@@ -4,8 +4,7 @@
 
 #include <cpp-argparse/OptionParser.h>
 
-#include <bayesic/method/stepwise_method.hpp>
-#include <bayesic/method/lm_stepwise_method.hpp>
+#include <bayesic/method/stagewise_method.hpp>
 #include <bayesic/method/method.hpp>
 
 #include "common_options.hpp"
@@ -32,15 +31,7 @@ main(int argc, char *argv[])
     }
     shared_ptr<common_options> parsed_data = parse_common_options( options, parser.args( ) );
 
-    method_type *m;
-    if( options[ "model" ] == "binomial" )
-    {
-        m = new stepwise_method( parsed_data->data );
-    }
-    else if( options[ "model" ] == "normal" )
-    {
-        m = new lm_stepwise_method( parsed_data->data );
-    }
+    method_type *m = new stagewise_method( parsed_data->data, options[ "model" ] );
 
     run_method( *m, parsed_data->genotypes, *parsed_data->pairs, *parsed_data->result_file );
 

@@ -8,7 +8,7 @@
 
 #include <bayesic/method/method.hpp>
 #include <bayesic/stats/log_scale.hpp>
-#include <bayesic/stats/loglinear_models.hpp>
+#include <bayesic/stats/binomial_models.hpp>
 
 /**
  * This class is responsible for intializing and repeatedly
@@ -46,7 +46,7 @@ private:
     /**
      * The models used.
      */
-    std::vector<loglinear_model *> m_models;
+    std::vector<closed_form_model *> m_models;
 };
 
 #endif /* End of __LOGLINEAR_METHOD_H__ */
