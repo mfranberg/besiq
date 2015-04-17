@@ -109,7 +109,7 @@ do_common_stages(metaresultfile *result, const correction_options &options, cons
 
         while( prev_file->read( &pair, values ) )
         {
-            if( values[ 0 ] == result_get_missing( ) )
+            if( values[ i ] == result_get_missing( ) )
             {
                 continue;
             }
@@ -117,7 +117,7 @@ do_common_stages(metaresultfile *result, const correction_options &options, cons
             float adjusted = values[ i ] * num_tests[ i ] / options.weight[ i ];
             if( adjusted <= options.alpha )
             {
-                values[ 0 ] = adjusted;
+                values[ i ] = adjusted;
                 stage_file->write( pair, values );
             }
         }
@@ -167,7 +167,8 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
     float *method_values = new float[ method_header.size( ) ];
     while( last_stage->read( &pair, values ) )
     {
-        float pre_p = values[ header.size( ) - 2 ];
+        /* Skip N and last p-value */
+        float pre_p = *std::max_element( values, values + header.size( ) - 2 );
         float min_p = 1.0;
         float max_p = 0.0;
         
@@ -181,7 +182,7 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
             float adjusted_p = result_get_missing( );    
             if( method_values[ i ] != result_get_missing( ) )
             {
-                adjusted_p = std::max( method_values[ i ] * num_tests / options.weight[ 3 ], pre_p );
+                adjusted_p = std::max( method_values[ i ] * num_tests / options.weight[ header.size( ) - 2 ], pre_p );
                 min_p = std::min( min_p, adjusted_p );
                 max_p = std::max( max_p, adjusted_p );
             }

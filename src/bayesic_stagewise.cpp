@@ -41,7 +41,7 @@ main(int argc, char *argv[])
     {
         m = new lm_stepwise_method( parsed_data->data );
     }
-    
+
     run_method( *m, parsed_data->genotypes, *parsed_data->pairs, *parsed_data->result_file );
 
     delete m;

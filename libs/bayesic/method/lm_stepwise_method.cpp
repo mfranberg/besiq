@@ -10,7 +10,7 @@ lm_stepwise_method::lm_stepwise_method(method_data_ptr data)
     m_models.push_back( new single( true ) );
     m_models.push_back( new single( false ) );
 
-    m_weight = arma::ones<arma::vec>( data->phenotype.size( ) );
+    m_weight = 1.0 - arma::conv_to<arma::vec>::from( data->missing );
 }
 
 std::vector<std::string>
