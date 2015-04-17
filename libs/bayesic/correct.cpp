@@ -39,7 +39,7 @@ run_bonferroni(metaresultfile *result, float alpha, uint64_t num_tests, size_t c
 
         if( adjusted_p <= alpha )
         {
-            output << pair.first << "\t" << pair.second;
+            output << pair.first << " " << pair.second;
             for(int i = 0; i < header.size( ); i++)
             {
                 output << "\t" << values[ i ];
