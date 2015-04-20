@@ -129,6 +129,8 @@ std::string find_executable_in_path(std::string name)
             return filename;
         }
     }
+
+    return "";
 }
 
 int main(int argc, char *argv[])

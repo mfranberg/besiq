@@ -56,11 +56,11 @@ bayesic_method::init()
         design_matrix.insert_cols( 0, arma::ones<arma::vec>( get_data( )->phenotype.n_elem ) );
 
         binomial model( "logit" );
-        irls_info full_info;
+        glm_info full_info;
         irls( design_matrix, get_data( )->phenotype, get_data( )->missing, model, full_info );
 
         arma::mat null = arma::ones<arma::mat>( get_data( )->phenotype.size( ), 1 );
-        irls_info null_info;
+        glm_info null_info;
         irls( null, get_data( )->phenotype, get_data( )->missing, model, null_info );
 
         m_weight = abs( get_data( )->phenotype - full_info.mu ) / abs( get_data( )->phenotype - null_info.mu );

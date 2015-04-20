@@ -3,43 +3,8 @@
 
 #include <armadillo>
 
+#include <glm/glm.hpp>
 #include <glm/models/glm_model.hpp>
-
-/**
- * Contains additional statistics about the estimated betas.
- */
-struct irls_info
-{
-    /**
-    * Standard error of estimated beta.
-    */
-    arma::vec se_beta;
-
-    /**
-    * P-value for each beta, based on Wald test.
-    */
-    arma::vec p_value;
-
-    /**
-    * Number of iterations.
-    */
-    unsigned int num_iters;
-
-    /**
-     * Estimated mean value.
-     */
-    arma::vec mu;
-
-    /**
-     * Log likelihood of the model.
-     */
-    double logl;
-
-    /**
-    * True if converged, false otherwise.
-    */
-    bool converged;
-};
 
 /**
  * Maximum number of iterations in the IRLS algorithm.
@@ -127,7 +92,7 @@ arma::vec compute_w(const arma::vec &var, const arma::vec& mu_eta);
  *
  * @return Estimated beta coefficients.
  */
-arma::vec irls(const arma::mat &X, const arma::vec &y, const glm_model &model, irls_info &output);
+arma::vec irls(const arma::mat &X, const arma::vec &y, const glm_model &model, glm_info &output);
 
 /**
  * This function performs the iteratively reweighted
@@ -143,6 +108,6 @@ arma::vec irls(const arma::mat &X, const arma::vec &y, const glm_model &model, i
  *
  * @return Estimated beta coefficients.
  */
-arma::vec irls(const arma::mat &X, const arma::vec &y, const arma::uvec &missing, const glm_model &model, irls_info &output);
+arma::vec irls(const arma::mat &X, const arma::vec &y, const arma::uvec &missing, const glm_model &model, glm_info &output);
 
 #endif /* End of __IRLS_H__ */

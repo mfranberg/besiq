@@ -212,7 +212,7 @@ void output_within(pairfile &output, const output_options &oo, const std::map< s
             for(int j = i + 1; j < indices.size( ); j++)
             {
                 int snp2 = indices[ j ];
-                if( oo.loci_info[ snp1 ].chromosome == oo.loci_info[ snp2 ].chromosome && !( abs( oo.loci_info[ snp1 ].bp_position - oo.loci_info[ snp2 ].bp_position ) >= oo.pos_threshold ) )
+                if( oo.loci_info[ snp1 ].chromosome == oo.loci_info[ snp2 ].chromosome && !( std::abs( oo.loci_info[ snp1 ].bp_position - oo.loci_info[ snp2 ].bp_position ) >= oo.pos_threshold ) )
                 {
                     continue;
                 }
@@ -261,7 +261,7 @@ void output_between(pairfile &output, const output_options &oo, std::map< std::s
                 {
                     int snp2 = indices2[ j ];
 
-                    if( oo.loci_info[ snp1 ].chromosome == oo.loci_info[ snp2 ].chromosome && !( abs( oo.loci_info[ snp1 ].bp_position - oo.loci_info[ snp2 ].bp_position ) >= oo.pos_threshold ) )
+                    if( oo.loci_info[ snp1 ].chromosome == oo.loci_info[ snp2 ].chromosome && !( std::abs( oo.loci_info[ snp1 ].bp_position - oo.loci_info[ snp2 ].bp_position ) >= oo.pos_threshold ) )
                     {
                         continue;
                     }
@@ -304,7 +304,7 @@ void output_between_restrict(pairfile &output, const output_options &oo, std::ma
             for(int j = 0; j < indices2.size( ); j++)
             {
                 int snp2 = indices2[ j ];
-                if( oo.loci_info[ snp1 ].chromosome == oo.loci_info[ snp2 ].chromosome && !( abs( oo.loci_info[ snp1 ].bp_position - oo.loci_info[ snp2 ].bp_position ) >= oo.pos_threshold ) )
+                if( oo.loci_info[ snp1 ].chromosome == oo.loci_info[ snp2 ].chromosome && !( std::abs( oo.loci_info[ snp1 ].bp_position - oo.loci_info[ snp2 ].bp_position ) >= oo.pos_threshold ) )
                 {
                     continue;
                 }
@@ -348,7 +348,7 @@ void output_set(pairfile &output, const output_options &oo, const std::set<size_
                 }
             }
 
-            if( oo.loci_info[ snp1 ].chromosome == oo.loci_info[ snp2 ].chromosome && !( abs( oo.loci_info[ snp1 ].bp_position - oo.loci_info[ snp2 ].bp_position ) >= oo.pos_threshold ) )
+            if( oo.loci_info[ snp1 ].chromosome == oo.loci_info[ snp2 ].chromosome && !( std::abs( oo.loci_info[ snp1 ].bp_position - oo.loci_info[ snp2 ].bp_position ) >= oo.pos_threshold ) )
             {
                 continue;
             }
@@ -378,7 +378,7 @@ void output_all(pairfile &output, const output_options &oo)
 
         for(int j = i + 1; j < oo.loci.size( ); j++)
         {
-            if( oo.loci_info[ i ].chromosome == oo.loci_info[ j ].chromosome && !( abs( oo.loci_info[ i ].bp_position - oo.loci_info[ j ].bp_position ) >= oo.pos_threshold ) )
+            if( oo.loci_info[ i ].chromosome == oo.loci_info[ j ].chromosome && !( std::abs( oo.loci_info[ i ].bp_position - oo.loci_info[ j ].bp_position ) >= oo.pos_threshold ) )
             {
                 continue;
             }

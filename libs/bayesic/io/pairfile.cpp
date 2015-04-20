@@ -157,7 +157,7 @@ bpairfile::write(size_t snp_id1, size_t snp_id2)
         return false;
     }
 
-    uint32_t pair[] = { snp_id1, snp_id2 };
+    uint32_t pair[] = { (uint32_t) snp_id1, (uint32_t) snp_id2 };
     size_t bytes_written = fwrite( pair, sizeof( uint32_t ), 2, m_fp );
 
     if( bytes_written == 2 )

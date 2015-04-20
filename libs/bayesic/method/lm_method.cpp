@@ -25,10 +25,10 @@ void lm_method::run(const snp_row &row1, const snp_row &row2, float *output)
 
     m_model_matrix.update_matrix( row1, row2, missing );
     
-    lm_info null_info;
+    glm_info null_info;
     lm( m_model_matrix.get_null( ), get_data( )->phenotype, missing, null_info );
 
-    lm_info alt_info;
+    glm_info alt_info;
     arma::vec b = lm( m_model_matrix.get_alt( ), get_data( )->phenotype, missing, alt_info );
 
     set_num_ok_samples( missing.n_elem - sum( missing ) );

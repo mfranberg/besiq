@@ -17,7 +17,7 @@ TEST(IRLSTest, Simple)
     vec y( y_aux, 4 );
     binomial binomial_model( "logit" );
 
-    irls_info output;
+    glm_info output;
     vec b = irls( A, y, binomial_model, output );
 
     ASSERT_NEAR( b[ 0 ], 2.0, 0.01 ); 

@@ -25,15 +25,15 @@ void glm_method::run(const snp_row &row1, const snp_row &row2, float *output)
 
     m_model_matrix.update_matrix( row1, row2, missing );
 
-    irls_info null_info;
+    glm_info null_info;
     irls( m_model_matrix.get_null( ), get_data( )->phenotype, missing, m_model, null_info );
 
-    irls_info alt_info;
+    glm_info alt_info;
     arma::vec b = irls( m_model_matrix.get_alt( ), get_data( )->phenotype, missing, m_model, alt_info );
 
     set_num_ok_samples( missing.n_elem - sum( missing ) );
 
-    if( null_info.converged && alt_info.converged )
+    if( null_info.success && alt_info.success )
     {
         int LR_pos = 0;
         double LR = -2 * ( null_info.logl - alt_info.logl );

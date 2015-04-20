@@ -87,19 +87,19 @@ void lm_env_stepwise::run(const snp_row &row, std::ostream &output)
     bool valid;
     init_matrix_with_snp( row, missing, &valid );
 
-    lm_info null_info;
+    glm_info null_info;
     lm( m_null_matrix, get_data( )->phenotype, missing, null_info );
     
-    lm_info snp_info;
+    glm_info snp_info;
     lm( m_snp_matrix, get_data( )->phenotype, missing, snp_info );
     
-    lm_info env_info;
+    glm_info env_info;
     lm( m_env_matrix, get_data( )->phenotype, missing, env_info );
     
-    lm_info add_info;
+    glm_info add_info;
     lm( m_add_matrix, get_data( )->phenotype, missing, add_info );
 
-    lm_info alt_info;
+    glm_info alt_info;
     lm( m_alt_matrix, get_data( )->phenotype, missing, alt_info );
 
     if( null_info.success && snp_info.success && env_info.success && add_info.success && alt_info.success && valid )

@@ -40,13 +40,13 @@ void scaleinv_method::run(const snp_row &row1, const snp_row &row2, float *outpu
         for(int i = 0; i < m_header.size( ); i++)
         {
             binomial model( m_header[ i ] );
-            irls_info alt_info;
+            glm_info alt_info;
             irls( m_model_matrix.get_alt( ), get_data( )->phenotype, missing, model, alt_info );
 
-            irls_info null_info;
+            glm_info null_info;
             irls( m_model_matrix.get_null( ), get_data( )->phenotype, missing, model, null_info );
 
-            if( !null_info.converged || !alt_info.converged )
+            if( !null_info.success || !alt_info.success )
             {
                 continue;
             }
@@ -64,10 +64,10 @@ void scaleinv_method::run(const snp_row &row1, const snp_row &row2, float *outpu
     }
     else
     {
-        lm_info null_info;
+        glm_info null_info;
         lm( m_model_matrix.get_null( ), get_data( )->phenotype, missing, null_info );
 
-        lm_info alt_info;
+        glm_info alt_info;
         arma::vec b = lm( m_model_matrix.get_alt( ), get_data( )->phenotype, missing, alt_info );
         if( !null_info.success || !alt_info.success )
         {

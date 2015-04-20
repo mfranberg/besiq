@@ -67,7 +67,7 @@ compute_w(const vec &var, const vec& mu_eta)
 }
 
 vec
-irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, irls_info &output)
+irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, glm_info &output)
 {
     const glm_link &link = model.get_link( );
     vec b = link.init_beta( X, y );
@@ -119,6 +119,7 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, ir
             output.se_beta = sqrt( diagvec( C ) );
             output.num_iters = num_iter;
             output.converged = true;
+            output.success = true;
             output.mu = mu;
             output.logl = logl;
             
@@ -139,20 +140,21 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, ir
         }
         else
         {
-            output.converged = false;
+            output.success = false;
         }
     }
     else
     {   
         output.num_iters = num_iter;
         output.converged = false;
+        output.success = false;
     }
 
     return b;
 }
 
 vec
-irls(const mat &X, const vec &y, const glm_model &model, irls_info &output)
+irls(const mat &X, const vec &y, const glm_model &model, glm_info &output)
 {
     uvec missing = zeros<uvec>( y.n_elem );
     return irls( X, y, missing, model, output );

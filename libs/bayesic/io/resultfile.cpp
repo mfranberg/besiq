@@ -133,7 +133,7 @@ bresultfile::write(const std::pair<std::string, std::string> &pair, float *value
         return false;
     }
 
-    uint32_t write_pair[] = { snp1->second, snp2->second };
+    uint32_t write_pair[] = { (uint32_t) snp1->second, (uint32_t) snp2->second };
     size_t n_snp = fwrite( write_pair, sizeof( uint32_t ), 2, m_fp );
     size_t n_cols = fwrite( values, sizeof( float ), m_header.num_float_cols, m_fp );
     if( n_snp == 2 && n_cols == m_header.num_float_cols )
