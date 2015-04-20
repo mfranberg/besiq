@@ -40,7 +40,7 @@ binomial::dispersion(const arma::vec &mu, const arma::vec &y, const arma::uvec &
 }
 
 double
-binomial::likelihood(const arma::vec &mu, const arma::vec &y, const arma::uvec &missing) const
+binomial::likelihood(const arma::vec &mu, const arma::vec &y, const arma::uvec &missing, float dispersion) const
 {
     double loglikelihood = 0.0;
     for(int i = 0; i < y.n_elem; i++)

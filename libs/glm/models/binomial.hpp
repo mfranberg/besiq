@@ -40,7 +40,7 @@ public:
     /**
      * @see glm_model.likelihood.
      */
-    virtual double likelihood(const arma::vec &mu, const arma::vec &y, const arma::uvec &missing) const;
+    virtual double likelihood(const arma::vec &mu, const arma::vec &y, const arma::uvec &missing, float dispersion = 1.0) const;
 };
 
 #endif /* End of __BINOMIAL_H__ */

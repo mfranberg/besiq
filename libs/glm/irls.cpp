@@ -116,12 +116,13 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, gl
         bool inverted = inv( C, X.t( ) *  diagmat( w ) * X );
         if( inverted )
         {
-            output.se_beta = sqrt( model.dispersion( mu, y, missing, b.n_elem ) * diagvec( C ) );
+            float dispersion = model.dispersion( mu, y, missing, b.n_elem );
+            output.se_beta = sqrt( model.dispersion( mu, y, missing, dispersion ) * diagvec( C ) );
             output.num_iters = num_iter;
             output.converged = true;
             output.success = true;
             output.mu = mu;
-            output.logl = logl;
+            output.logl = model.likelihood( mu, y, missing, dispersion );
             
             vec wald_z = b / output.se_beta;
             vec chi2_value = wald_z % wald_z;

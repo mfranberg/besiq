@@ -90,10 +90,11 @@ public:
      * @param mu The mean value parameter.
      * @param y The observations.
      * @param missing Indicates missing samples by 1 and not missing by 0.
+     * @param dispersion Estimated dispersion (only used for final likelihood).
      *
      * @return The log likelihood.
      */
-    virtual double likelihood(const arma::vec &mu, const arma::vec &y, const arma::uvec &missing) const = 0;
+    virtual double likelihood(const arma::vec &mu, const arma::vec &y, const arma::uvec &missing, float dispersion = 1.0) const = 0;
     
 private:
     /**
