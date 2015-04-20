@@ -34,5 +34,5 @@ normal::dispersion(const arma::vec &mu, const arma::vec &y, const arma::uvec &mi
 double
 normal::likelihood(const arma::vec &mu, const arma::vec &y, const arma::uvec &missing) const
 {
-    return as_scalar( (-1.0/2*log(2*datum::pi) - 1.0/2*log( 1.0 ) - 1/(2*1.0) * ((y - mu) % (y - mu ))) * (1 - missing) );
+    return as_scalar( ( - ( ( y - mu ) % ( y - mu ) ) ) * ( 1 - missing ) );
 }
