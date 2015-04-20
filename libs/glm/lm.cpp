@@ -11,7 +11,7 @@ double loglikelihood(const vec &residuals, double sigma_square, double n)
 }
 
 vec
-lm(const mat &X, const vec &y, const uvec &missing, glm_info &output)
+lm(const mat &X, const vec &y, const uvec &missing, const glm_model &model, glm_info &output)
 {
     vec w = ones<vec>( y.n_elem );
     set_missing_to_zero( missing, w );

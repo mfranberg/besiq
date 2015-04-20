@@ -4,6 +4,11 @@
 
 using namespace arma;
 
+odds_link::odds_link()
+    : glm_link::glm_link( "odds" )
+{
+}
+
 vec
 odds_link::init_beta(const mat &X, const vec &y) const
 {

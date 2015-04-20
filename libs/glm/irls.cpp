@@ -116,7 +116,7 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, gl
         bool inverted = inv( C, X.t( ) *  diagmat( w ) * X );
         if( inverted )
         {
-            output.se_beta = sqrt( diagvec( C ) );
+            output.se_beta = sqrt( model.dispersion( mu, y, missing, b.n_elem ) * diagvec( C ) );
             output.num_iters = num_iter;
             output.converged = true;
             output.success = true;

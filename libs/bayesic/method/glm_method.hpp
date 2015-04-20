@@ -6,8 +6,7 @@
 
 #include <armadillo>
 
-#include <glm/models/glm_model.hpp>
-#include <glm/irls.hpp>
+#include <glm/glm.hpp>
 #include <bayesic/method/method.hpp>
 #include <bayesic/stats/log_scale.hpp>
 #include <bayesic/model_matrix.hpp>

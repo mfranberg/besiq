@@ -6,7 +6,7 @@
 
 #include <armadillo>
 
-#include <glm/lm.hpp>
+#include <glm/glm.hpp>
 #include <bayesic/method/method.hpp>
 #include <bayesic/stats/log_scale.hpp>
 #include <bayesic/model_matrix.hpp>
@@ -27,6 +27,11 @@ public:
     scaleinv_method(method_data_ptr data, model_matrix &model_matrix, bool is_lm);
     
     /**
+     * Destructor.
+     */
+    ~scaleinv_method();
+    
+    /**
      * @see method_type::init.
      */
     virtual std::vector<std::string> init();
@@ -38,19 +43,14 @@ public:
 
 private:
     /**
-     * The names of each column.
+     * The included models.
      */
-    std::vector<std::string> m_header;
+    std::vector<glm_model *> m_model;
 
     /**
      * The model matrix.
      */
     model_matrix &m_model_matrix;
-
-    /**
-     * Is this a normal linear model?
-     */
-    bool m_is_lm;
 };
 
 #endif /* End of __SCALEINV_METHOD_H__ */

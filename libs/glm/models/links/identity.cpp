@@ -3,6 +3,10 @@
 #include <armadillo>
 
 using namespace arma;
+identity_link::identity_link()
+    : glm_link::glm_link( "identity" )
+{
+}
 
 vec
 identity_link::init_beta(const mat &X, const vec &y) const

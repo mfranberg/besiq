@@ -3,7 +3,7 @@
 
 #include <armadillo>
 
-#include <glm/glm.hpp>
+#include <glm/glm_info.hpp>
 #include <glm/models/glm_model.hpp>
 
 /**

@@ -1,45 +1,23 @@
 #ifndef __GLM_H__
 #define __GLM_H__
 
+#include <glm/glm_info.hpp>
+#include <glm/models/glm_model.hpp>
+
 /**
- * Information about the estimated parameters.
+ * This function fits a generalized linear model. The specific algorithm
+ * depends on the model, but in general either matrix inversion for linear
+ * regression, and iteratively reweighted least squares for other models.
+ *
+ * @param X The design matrix (caller is responsible for
+ *          adding an intercept).
+ * @param y The observations.
+ * @param missing Identifies missing sampels by 1 and non-missing by 0.
+ * @param model The GLM model to estimate.
+ * @param output Output statistics of the estimated betas.
+ *
+ * @return Estimated beta coefficients.
  */
-struct glm_info
-{
-    /**
-    * Standard error of estimated beta.
-    */
-    arma::vec se_beta;
-
-    /**
-    * P-value for each beta, based on Wald test.
-    */
-    arma::vec p_value;
-    
-    /**
-     * Estimated mean value for each individual.
-     */
-    arma::vec mu;
-    
-    /**
-     * Log likelihood of the model.
-     */
-    double logl;
-    
-    /**
-     * Converged and had no inversion problems.
-     */
-    bool success;
-
-    /**
-    * For iterative algorithms, the number of iterations.
-    */
-    unsigned int num_iters;
-    
-    /**
-    * For iterative algorithms, True if converged, false otherwise.
-    */
-    bool converged;
-};
+arma::vec glm_fit(const arma::mat &X, const arma::vec &y, const arma::uvec &missing, const glm_model &model, glm_info &output);
 
 #endif /* End of __GLM_H__ */

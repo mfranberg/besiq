@@ -6,7 +6,7 @@
 
 #include <armadillo>
 
-#include <glm/lm.hpp>
+#include <glm/glm.hpp>
 #include <bayesic/method/env_method.hpp>
 #include <bayesic/stats/log_scale.hpp>
 

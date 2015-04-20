@@ -1,5 +1,6 @@
 #include <bayesic/env_method/lm_env_stepwise.hpp>
 
+#include <glm/models/normal.hpp>
 #include <dcdflib/libdcdf.hpp>
 
 lm_env_stepwise::lm_env_stepwise(method_data_ptr data, const arma::mat &E)
@@ -71,7 +72,7 @@ lm_env_stepwise::init_matrix_with_snp(const snp_row &row, arma::uvec &missing, b
         counts[ 1 ] += s2;
         for(int j = 0; j < m_E.n_cols; j++)
         {
-            double e = ( abs( m_E( i, j ) ) > 0.0 ) ? 1.0 : 0.0;
+            double e = ( std::abs( m_E( i, j ) ) > 0.0 ) ? 1.0 : 0.0;
             counts[ 2 + j ] += e * s1;
             counts[ 2 + m_E.n_cols + j ] += e * s2;
         }
@@ -87,20 +88,21 @@ void lm_env_stepwise::run(const snp_row &row, std::ostream &output)
     bool valid;
     init_matrix_with_snp( row, missing, &valid );
 
+    normal model( "identity" ); 
     glm_info null_info;
-    lm( m_null_matrix, get_data( )->phenotype, missing, null_info );
+    glm_fit( m_null_matrix, get_data( )->phenotype, missing, model, null_info );
     
     glm_info snp_info;
-    lm( m_snp_matrix, get_data( )->phenotype, missing, snp_info );
+    glm_fit( m_snp_matrix, get_data( )->phenotype, missing, model, snp_info );
     
     glm_info env_info;
-    lm( m_env_matrix, get_data( )->phenotype, missing, env_info );
+    glm_fit( m_env_matrix, get_data( )->phenotype, missing, model, env_info );
     
     glm_info add_info;
-    lm( m_add_matrix, get_data( )->phenotype, missing, add_info );
+    glm_fit( m_add_matrix, get_data( )->phenotype, missing, model, add_info );
 
     glm_info alt_info;
-    lm( m_alt_matrix, get_data( )->phenotype, missing, alt_info );
+    glm_fit( m_alt_matrix, get_data( )->phenotype, missing, model, alt_info );
 
     if( null_info.success && snp_info.success && env_info.success && add_info.success && alt_info.success && valid )
     {

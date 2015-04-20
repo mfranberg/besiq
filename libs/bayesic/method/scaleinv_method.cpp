@@ -1,32 +1,44 @@
 #include <dcdflib/libdcdf.hpp>
 #include <glm/models/binomial.hpp>
-#include <glm/irls.hpp>
+#include <glm/models/normal.hpp>
 
 #include <bayesic/method/scaleinv_method.hpp>
 
 scaleinv_method::scaleinv_method(method_data_ptr data, model_matrix &model_matrix, bool is_lm)
 : method_type::method_type( data ),
-  m_model_matrix( model_matrix ),
-  m_is_lm( is_lm )
+  m_model_matrix( model_matrix )
 {
-    if( !m_is_lm )
+    if( !is_lm )
     {
-        m_header.push_back( "identity" );
-        m_header.push_back( "log" );
-        m_header.push_back( "logc" );
-        m_header.push_back( "odds" );
-        m_header.push_back( "logit" );
+        m_model.push_back( new binomial( "identity" ) );
+        m_model.push_back( new binomial( "log" ) );
+        m_model.push_back( new binomial( "logc" ) );
+        m_model.push_back( new binomial( "odds" ) );
+        m_model.push_back( new binomial( "logit" ) );
     }
     else
     {
-        m_header.push_back( "identity" );
+        m_model.push_back( new normal( "identity" ) );
+    }
+}
+
+scaleinv_method::~scaleinv_method()
+{
+    for(int i = 0; i < m_model.size( ); i++)
+    {
+        delete m_model[ i ];
     }
 }
 
 std::vector<std::string>
 scaleinv_method::init()
 {
-    return m_header;
+    std::vector<std::string> header;
+    for(int i = 0; i < m_model.size( ); i++)
+    {
+        header.push_back( m_model[ i ]->get_link( ).get_name( ) );
+    }
+    return header;
 }
 
 void scaleinv_method::run(const snp_row &row1, const snp_row &row2, float *output)
@@ -35,50 +47,24 @@ void scaleinv_method::run(const snp_row &row1, const snp_row &row2, float *outpu
     m_model_matrix.update_matrix( row1, row2, missing );
     set_num_ok_samples( missing.n_elem - sum( missing ) );
     
-    if( !m_is_lm )
+    for(int i = 0; i < m_model.size( ); i++)
     {
-        for(int i = 0; i < m_header.size( ); i++)
-        {
-            binomial model( m_header[ i ] );
-            glm_info alt_info;
-            irls( m_model_matrix.get_alt( ), get_data( )->phenotype, missing, model, alt_info );
-
-            glm_info null_info;
-            irls( m_model_matrix.get_null( ), get_data( )->phenotype, missing, model, null_info );
-
-            if( !null_info.success || !alt_info.success )
-            {
-                continue;
-            }
-
-            try
-            {
-                double LR = -2 * ( null_info.logl - alt_info.logl );
-                double p = 1.0 - chi_square_cdf( LR, m_model_matrix.num_df( ) );
-                output[ i ] = p;
-            }
-            catch(bad_domain_value &e)
-            {
-            }
-        }
-    }
-    else
-    {
-        glm_info null_info;
-        lm( m_model_matrix.get_null( ), get_data( )->phenotype, missing, null_info );
-
         glm_info alt_info;
-        arma::vec b = lm( m_model_matrix.get_alt( ), get_data( )->phenotype, missing, alt_info );
+        glm_fit( m_model_matrix.get_alt( ), get_data( )->phenotype, missing, *m_model[ i ], alt_info );
+
+        glm_info null_info;
+        glm_fit( m_model_matrix.get_null( ), get_data( )->phenotype, missing, *m_model[ i ], null_info );
+
         if( !null_info.success || !alt_info.success )
         {
-            return;
+            continue;
         }
 
         try
         {
             double LR = -2 * ( null_info.logl - alt_info.logl );
             double p = 1.0 - chi_square_cdf( LR, m_model_matrix.num_df( ) );
-            output[ 0 ] = p;
+            output[ i ] = p;
         }
         catch(bad_domain_value &e)
         {

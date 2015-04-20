@@ -10,6 +10,11 @@ class log_link : public glm_link
 {
 public:
     /**
+     * Constructor.
+     */
+    log_link();
+
+    /**
      * @see glm_model.init_beta.
      */
     virtual arma::vec init_beta(const arma::mat &X, const arma::vec &y) const;

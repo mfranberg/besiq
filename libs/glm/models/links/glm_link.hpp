@@ -7,9 +7,29 @@ class glm_link
 {
 public:
     /**
+     * Constructor.
+     *
+     * @param name The name of link function.
+     */
+    glm_link(const std::string &name)
+        : m_name( name )
+    {
+    }
+
+    /**
      * Destructor.
      */
     virtual ~glm_link(){ };
+
+    /**
+     * Returns the name of this link function.
+     *
+     * @return the name of this link function.
+     */
+    std::string get_name() const
+    {
+        return m_name;
+    }
 
     /**
      * Generate starting values for the beta coefficients.
@@ -30,7 +50,7 @@ public:
      * @return The derivative of mu with respect to eta.
      */
     virtual arma::vec mu_eta(const arma::vec &mu) const = 0;
-    
+
     /**
      * Compute the mean value parameter from the linearized parameter.
      *
@@ -39,6 +59,9 @@ public:
      * @return The mean value parameter.
      */
     virtual arma::vec mu(const arma::vec &eta) const = 0;
+
+private:
+    std::string m_name;
 };
 
 /**

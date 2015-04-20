@@ -4,6 +4,11 @@
 
 using namespace arma;
 
+logc_link::logc_link()
+    : glm_link::glm_link( "logc" )
+{
+}
+
 vec
 logc_link::init_beta(const mat &X, const vec &y) const
 {

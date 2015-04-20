@@ -5,19 +5,12 @@
 using namespace arma;
 
 binomial::binomial(const std::string &link_name)
+    : glm_model( "binomial", link_name )
 {
-    m_link = make_link( link_name );
 }
 
 binomial::~binomial()
 {
-    delete m_link;
-}
-
-const glm_link &
-binomial::get_link() const
-{
-    return *m_link;
 }
 
 bool
@@ -38,6 +31,12 @@ vec
 binomial::var(const arma::vec &mu) const
 {
     return mu % ( 1.0 - mu );
+}
+
+double
+binomial::dispersion(const arma::vec &mu, const arma::vec &y, const arma::uvec &missing, float k) const
+{
+    return 1.0;
 }
 
 double

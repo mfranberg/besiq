@@ -26,10 +26,10 @@ void glm_method::run(const snp_row &row1, const snp_row &row2, float *output)
     m_model_matrix.update_matrix( row1, row2, missing );
 
     glm_info null_info;
-    irls( m_model_matrix.get_null( ), get_data( )->phenotype, missing, m_model, null_info );
+    glm_fit( m_model_matrix.get_null( ), get_data( )->phenotype, missing, m_model, null_info );
 
     glm_info alt_info;
-    arma::vec b = irls( m_model_matrix.get_alt( ), get_data( )->phenotype, missing, m_model, alt_info );
+    arma::vec b = glm_fit( m_model_matrix.get_alt( ), get_data( )->phenotype, missing, m_model, alt_info );
 
     set_num_ok_samples( missing.n_elem - sum( missing ) );
 

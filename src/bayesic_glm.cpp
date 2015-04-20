@@ -2,11 +2,10 @@
 
 #include <armadillo>
 
-#include <glm/irls.hpp>
 #include <glm/models/binomial.hpp>
+#include <glm/models/normal.hpp>
 #include <cpp-argparse/OptionParser.h>
 
-#include <bayesic/method/lm_method.hpp>
 #include <bayesic/method/glm_method.hpp>
 #include <bayesic/method/method.hpp>
 
@@ -46,12 +45,13 @@ main(int argc, char *argv[])
     method_type *m = NULL;
     if( options[ "model" ] == "binomial" )
     {
-        binomial *glm = new binomial( options[ "link_function" ] );
-        m = new glm_method( parsed_data->data, *glm, *model_matrix );
+        binomial *model = new binomial( options[ "link_function" ] );
+        m = new glm_method( parsed_data->data, *model, *model_matrix );
     }
     else if( options[ "model" ] == "normal" )
     {
-        m = new lm_method( parsed_data->data, *model_matrix );
+        normal *model = new normal( options[ "link_function" ] );
+        m = new glm_method( parsed_data->data, *model, *model_matrix );
     }
 
     run_method( *m, parsed_data->genotypes, *parsed_data->pairs, *parsed_data->result_file );

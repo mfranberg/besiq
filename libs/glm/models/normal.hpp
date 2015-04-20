@@ -1,13 +1,13 @@
-#ifndef __BINOMIAL_H__
-#define __BINOMIAL_H__
+#ifndef __NORMAL_H__
+#define __NORMAL_H__
 
 #include <glm/models/glm_model.hpp>
 #include <glm/models/links/glm_link.hpp>
 
 /**
- * Implements the binomial or logistic regression model.
+ * Implements the normal linear regression model.
  */
-class binomial : public glm_model
+class normal : public glm_model
 {
 public:
     /**
@@ -15,12 +15,12 @@ public:
      *
      * @param link_name Name of the link function.
      */
-    binomial(const std::string &link_name);
+    normal(const std::string &link_name);
 
     /**
      * Destructor.
      */
-    ~binomial();
+    ~normal();
 
     /**
      * @see glm_model.valid_mu.
@@ -43,4 +43,4 @@ public:
     virtual double likelihood(const arma::vec &mu, const arma::vec &y, const arma::uvec &missing) const;
 };
 
-#endif /* End of __BINOMIAL_H__ */
+#endif /* End of __NORMAL_H__ */

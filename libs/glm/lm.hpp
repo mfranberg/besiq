@@ -3,7 +3,8 @@
 
 #include <armadillo>
 
-#include <glm/glm.hpp>
+#include <glm/glm_info.hpp>
+#include <glm/models/glm_model.hpp>
 
 /**
  * Computes the log-likelihood of the linear model.
@@ -27,6 +28,6 @@ double loglikelihood(const arma::vec &residuals, double sigma_square, double n);
  *
  * @return Estimated beta coefficients.
  */
-arma::vec lm(const arma::mat &X, const arma::vec &y, const arma::uvec &missing, glm_info &output);
+arma::vec lm(const arma::mat &X, const arma::vec &y, const arma::uvec &missing, const glm_model &model, glm_info &output);
 
 #endif /* End of __LM_H__ */
