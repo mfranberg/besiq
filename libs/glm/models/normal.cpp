@@ -16,7 +16,7 @@ normal::~normal()
 bool
 normal::valid_mu(const arma::vec &mu) const
 { 
-    return true;
+    return mu.is_finite( );
 }
 
 vec
@@ -28,11 +28,11 @@ normal::var(const arma::vec &mu) const
 double 
 normal::dispersion(const arma::vec &mu, const arma::vec &y, const arma::uvec &missing, float k) const
 {
-    return as_scalar( ( ( (y - mu) % ( y - mu ) ) % ( 1 - missing ) ) / ( sum( missing ) - k ) );
+    return arma::as_scalar( ( arma::trans( (y - mu) % ( y - mu ) ) * ( 1 - missing ) ) / ( arma::sum( missing ) - k ) );
 }
 
 double
 normal::likelihood(const arma::vec &mu, const arma::vec &y, const arma::uvec &missing) const
 {
-    return as_scalar( ( - ( ( y - mu ) % ( y - mu ) ) ) * ( 1 - missing ) );
+    return arma::as_scalar( arma::trans( - ( ( y - mu ) % ( y - mu ) ) ) * ( 1 - missing ) );
 }
