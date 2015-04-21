@@ -9,6 +9,11 @@ binomial::binomial(const std::string &link_name)
 {
 }
 
+binomial::binomial(glm_link *link)
+    : glm_model( "binomial", link )
+{
+}
+
 binomial::~binomial()
 {
 }

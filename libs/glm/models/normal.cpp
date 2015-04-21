@@ -9,6 +9,11 @@ normal::normal(const std::string &link_name)
 {
 }
 
+normal::normal(glm_link *link)
+    : glm_model( "normal", link )
+{
+}
+
 normal::~normal()
 {
 }

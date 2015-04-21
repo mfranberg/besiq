@@ -16,6 +16,13 @@ public:
      * @param link_name Name of the link function.
      */
     binomial(const std::string &link_name);
+    
+    /**
+     * Constructor.
+     *
+     * @param link A link function, this class will be responsible for freeing it.
+     */
+    binomial(glm_link *link);
 
     /**
      * Destructor.

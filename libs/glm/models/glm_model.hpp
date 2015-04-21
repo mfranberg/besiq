@@ -15,12 +15,25 @@ public:
     /**
      * Constructor.
      *
+     * @param model_name Name of the model.
      * @param link_name Name of the link function.
      */
     glm_model(const std::string &model_name, const std::string &link_name)
         : m_model( model_name )
     {
         m_link = make_link( link_name );
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param model_name Name of the model.
+     * @param link A link function, this class will be responsible for freeing it.
+     */
+    glm_model(const std::string &model_name, glm_link *link)
+        : m_model( model_name )
+    {
+        m_link = link;
     }
 
     /**
