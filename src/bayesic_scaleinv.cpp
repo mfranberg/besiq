@@ -30,8 +30,8 @@ main(int argc, char *argv[])
     group.add_option( "-m", "--model" ).choices( &model_choices[ 0 ], &model_choices[ 2 ] ).metavar( "model" ).help( "The model to use for the phenotype, 'binomial' or 'normal', default = 'binomial'." ).set_default( "binomial" );
     group.add_option( "-f", "--factor" ).choices( &factor_choices[ 0 ], &factor_choices[ 3 ] ).help( "Determines how to code the SNPs, in 'factor' no order of the alleles is assumed, in 'additive' the SNPs are coded as the number of minor alleles, in 'tukey' the coding is the same as factor except that a single parameter for the interaction is used." ).set_default( "factor" );
     group.add_option( "-b", "--box-cox" ).action( "store_true" ).set_default( false ).help(  "Runs a box-cox:ish methodology instead of testing specific link functions." );
-    group.add_option( "--bc-start" ).set_default( -3.0 ).help(  "Start lambda for box-cox (default=-3.0)." );
-    group.add_option( "--bc-end" ).set_default( -3.0 ).help(  "End lambda for box-cox (default=3.0)." );
+    group.add_option( "--bc-start" ).set_default( -2.0 ).help(  "Start lambda for box-cox (default=-2.0)." );
+    group.add_option( "--bc-end" ).set_default( 3.0 ).help(  "End lambda for box-cox (default=3.0)." );
     group.add_option( "--bc-step" ).set_default( 0.5 ).help(  "Step lambda for box-cox (default=0.5)." );
     parser.add_option_group( group );
 
@@ -63,6 +63,7 @@ main(int argc, char *argv[])
         float lambda_start = (float) options.get( "bc_start" );
         float lambda_end = (float) options.get( "bc_end" );
         float lambda_step = (float) options.get( "bc_step" );
+
         if( options[ "model" ] == "binomial" )
         {
             m = new boxcox_method( parsed_data->data, *model_matrix, false, lambda_start, lambda_end, lambda_step );

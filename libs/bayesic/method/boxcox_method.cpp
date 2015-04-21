@@ -10,19 +10,12 @@ boxcox_method::boxcox_method(method_data_ptr data, model_matrix &model_matrix, b
 : method_type::method_type( data ),
   m_model_matrix( model_matrix )
 {
-    float min_pheno = arma::min( data->phenotype % (1 - data->missing) );
-    m_lambda2 = 0.0;
-    if( min_pheno < 0 )
-    {
-        m_lambda2 = -min_pheno + 1;
-    }
-
     for(float lambda = lambda_start; lambda <= lambda_end; lambda += lambda_step)
     {
         m_lambda.push_back( lambda );
         if( is_lm )
         {
-            m_model.push_back( new normal( new power_link( lambda, m_lambda2 ) ) );
+            m_model.push_back( new normal( new power_link( lambda ) ) );
         }
         else
         {
@@ -44,7 +37,6 @@ boxcox_method::init()
 {
     std::vector<std::string> header;
     header.push_back( "lambda" );
-    header.push_back( "lambda2" );
     header.push_back( "LR" );
     header.push_back( "P" );
     
@@ -65,7 +57,7 @@ void boxcox_method::run(const snp_row &row1, const snp_row &row2, float *output)
     {
         glm_info null_info;
         glm_fit( m_model_matrix.get_null( ), get_data( )->phenotype, missing, *m_model[ i ], null_info );
-        
+
         if( !null_info.success )
         {
             continue;
@@ -89,16 +81,19 @@ void boxcox_method::run(const snp_row &row1, const snp_row &row2, float *output)
 
     if( alt_info.success )
     {
-
         try
         {
             double LR = -2 * ( max_logl - alt_info.logl );
             double p = 1.0 - chi_square_cdf( LR, m_model_matrix.num_df( ) );
-            
+
             output[ 0 ] = m_lambda[ best_index ];
-            output[ 1 ] = m_lambda2;
-            output[ 2 ] = LR;
-            output[ 3 ] = p;
+            if( std::abs( m_lambda[ best_index ] ) < 1e-5 )
+            {
+                output[ 0 ] = 0.0;
+            }
+
+            output[ 1 ] = LR;
+            output[ 2 ] = p;
         }
         catch(bad_domain_value &e)
         {

@@ -12,7 +12,7 @@ public:
     /**
      * Constructor.
      */
-    power_link(float lambda, float lambda2);
+    power_link(float lambda);
 
     /**
      * @see glm_model.init_beta.
@@ -34,11 +34,6 @@ private:
      * Choose how to transform.
      */
     float m_lambda;
-
-    /**
-     * Move observations away from zero.
-     */
-    float m_lambda2;
 };
 
 #endif /* End of __POWER_H__ */

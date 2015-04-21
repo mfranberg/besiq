@@ -37,14 +37,14 @@ chi_square_cdf(const vec &x, unsigned int df)
 vec
 weighted_least_squares(const mat &X, const vec &y, const vec &w)
 {
-    /* A = sqrt( w) * X */
+    /* A = sqrt( w ) * X */
     mat A = diagmat( sqrt( w ) ) * X;
 
     /* ty = sqrt( w ) * y */
     vec ty = y % sqrt( w );
 
     mat Ainv;
-    if( pinv( Ainv, A ) )
+    if( A.is_finite( ) && pinv( Ainv, A ) )
     {
         return Ainv * ty;
     }
@@ -75,6 +75,7 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, gl
     vec z( X.n_rows );
     vec eta = X * b;
     vec mu = link.mu( eta );
+
     vec mu_eta = link.mu_eta( mu );
 
     int num_iter = 0;
@@ -112,9 +113,9 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, gl
 
     if( num_iter < IRLS_MAX_ITERS && !invalid_mu && !inverse_fail )
     {
-        mat C( b.n_elem, b.n_elem );
-        bool inverted = inv( C, X.t( ) *  diagmat( w ) * X );
-        if( inverted )
+        mat I = X.t( ) * diagmat( w ) * X;
+        mat C;
+        if( I.is_finite( ) && inv( C, I ) )
         {
             float dispersion = model.dispersion( mu, y, missing, b.n_elem );
             output.se_beta = sqrt( model.dispersion( mu, y, missing, dispersion ) * diagvec( C ) );

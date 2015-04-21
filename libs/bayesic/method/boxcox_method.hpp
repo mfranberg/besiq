@@ -62,11 +62,6 @@ private:
      * List of lambda for each link.
      */
     std::vector<float> m_lambda;
-
-    /**
-     * Lambda2 to make quantative observations > 0.
-     */
-    float m_lambda2;
 };
 
 #endif /* End of __BOXCOX_METHOD_H__ */
