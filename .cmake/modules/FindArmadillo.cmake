@@ -78,14 +78,14 @@ endif (ARMADILLO_INCLUDE_DIR)
 # config.hpp.
 if(EXISTS "${ARMADILLO_INCLUDE_DIR}/armadillo_bits/config.hpp")
   # Look for #define ARMA_USE_HDF5.
-  file(READ "${ARMADILLO_INCLUDE_DIR}/armadillo_bits/config.hpp" _armadillo_CONFIG_CONTENTS)
-  string(REGEX MATCH "[\r\n][\t ]*#define[ \t]+ARMA_USE_HDF5[ \t\r\n]" ARMA_USE_HDF5 "${_armadillo_CONFIG_CONTENTS}")
+  include(CheckSymbolExists)
+  check_symbol_exists(ARMA_USE_HDF5 "${ARMADILLO_INCLUDE_DIR}/armadillo_bits/config.hpp" ARMA_USE_HDF5)
 
-  if(NOT "${ARMA_USE_HDF5}" STREQUAL "")
+  if(ARMA_USE_HDF5)
     message(STATUS "Armadillo HDF5 support is enabled.")
     # We have HDF5 support and need to link against HDF5.
     find_package(HDF5 REQUIRED)
-  endif(NOT "${ARMA_USE_HDF5}" STREQUAL "")
+  endif()
 endif(EXISTS "${ARMADILLO_INCLUDE_DIR}/armadillo_bits/config.hpp")
 
 #======================
