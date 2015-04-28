@@ -1,3 +1,5 @@
+#include <sys/stat.h>
+
 #include <bayesic/io/misc.hpp>
 #include <bayesic/io/resultfile.hpp>
 
@@ -225,6 +227,22 @@ bresultfile::set_header(const std::vector<std::string> &col_names)
     }
 
     return true;
+}
+
+bool
+bresultfile::is_corrupted()
+{
+    struct stat st;
+    if( fstat( fileno( m_fp ), &st ) != 0 )
+    {
+        return false;
+    }
+
+    uint64_t pair_size = (st.st_size - sizeof( result_header ) - m_header.snp_names_length - m_header.col_names_length);
+    uint64_t row_size = sizeof( uint32_t ) * 2 + m_header.num_float_cols * sizeof( float );
+
+    uint64_t num_pairs = pair_size / row_size;
+    return num_pairs != m_header.num_pairs;
 }
 
 tresultfile::tresultfile(const std::string &path, const std::string &mode, const std::vector<std::string> &snp_names)

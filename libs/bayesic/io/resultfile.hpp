@@ -190,6 +190,13 @@ class bresultfile : public resultfile
          */
         bool set_header(const std::vector<std::string> &header);
 
+        /**
+         * Returns true if the file seems corrupted.
+         *
+         * @return True if the file seems corrupted.
+         */
+        bool is_corrupted();
+
     private:
         /**
          * Read or writing mode.
