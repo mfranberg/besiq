@@ -22,13 +22,14 @@ public:
      *
      * @param data Additional data required by all methods, such as
      *             covariates.
+     * @param method The method to use, 'r2' or 'css'.
      */
-    caseonly_method(method_data_ptr data);
+    caseonly_method(method_data_ptr data, const std::string &method);
     
     /**
      * @see method_type::init.
      */
-    virtual std::vector<std::string>  init();
+    virtual std::vector<std::string> init();
 
     /**
      * @see method_type::run.
@@ -36,11 +37,18 @@ public:
     virtual void run(const snp_row &row1, const snp_row &row2, float *output);
 
 private: 
+    virtual void compute_r2(const snp_row &row1, const snp_row &row2, float *output);
+    virtual void compute_css(const snp_row &row1, const snp_row &row2, float *output);
     /**
      * A weight > 0 associated with each sample, that allows for
      * covariate adjustment.
      */
     arma::vec m_weight;
+
+    /**
+     * What type of method to use 'r2' or 'css'.
+     */
+    std::string m_method;
 };
 
 #endif /* End of __CASEONLY_METHOD_H__ */
