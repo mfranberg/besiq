@@ -7,6 +7,7 @@
 #include <armadillo>
 
 #include <bayesic/method/method.hpp>
+#include <bayesic/method/wald_method.hpp>
 #include <bayesic/stats/log_scale.hpp>
 
 /**
@@ -49,6 +50,11 @@ private:
      * What type of method to use 'r2' or 'css'.
      */
     std::string m_method;
+
+    /**
+     * To run the LR test.
+     */
+    wald_method m_wald;
 };
 
 #endif /* End of __CASEONLY_METHOD_H__ */

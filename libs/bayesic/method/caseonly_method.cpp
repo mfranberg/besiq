@@ -4,7 +4,8 @@
 
 caseonly_method::caseonly_method(method_data_ptr data, const std::string &method)
 : method_type::method_type( data ),
-  m_method( method )
+  m_method( method ),
+  m_wald( data )
 {
     m_weight = arma::ones<arma::vec>( data->phenotype.size( ) );
 }
@@ -22,7 +23,11 @@ caseonly_method::init()
         header.push_back( "CSS" );
     }
 
-    header.push_back( "P" );
+    header.push_back( "P_ld" );
+
+    std::vector<std::string> wald_header = m_wald.init( );
+
+    header.insert( header.end( ), wald_header.begin( ), wald_header.end( ) );
 
     return header;
 }
@@ -38,6 +43,8 @@ caseonly_method::run(const snp_row &row1, const snp_row &row2, float *output)
     {
         compute_css( row1, row2, output );
     }
+
+    m_wald.run( row1, row2, &output[ 2 ] );
 }
 
 void
