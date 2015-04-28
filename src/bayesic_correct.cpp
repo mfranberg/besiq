@@ -88,13 +88,13 @@ main(int argc, char *argv[])
     parser.add_option( "-m", "--method" ).set_default( "none" ).choices( &methods[ 0 ], &methods[ 3 ] ).help( "The multiple testing correction to use 'bonferroni', 'static' or 'adaptive (default = bonferroni)." );
     parser.add_option( "-b", "--bfile" ).help( "Plink prefix, needed for static and adaptive." );
     parser.add_option( "-e", "--model" ).set_default( "binomial" ).choices( &models[ 0 ], &models[ 2 ] ).help( "Type of model, binomial or normal (default = binomial)." );
-    parser.add_option( "-p", "--pheno" ).help( "Phenotype file, possibly needed for static and adaptive." );
+    parser.add_option( "-p", "--pheno" ).help( "Phenotype file, only needed for static and adaptive." );
     parser.add_option( "-e", "--mpheno" ).help( "Name of the phenotype." );
     parser.add_option( "-a", "--alpha" ).set_default( 0.05 ).help( "The significance threshold." );
     parser.add_option( "-f", "--field" ).set_default( 1 ).help( "For 'bonferroni', the column that contains the p-value, the first column after the snp names is 0 (default = 1)." );
     parser.add_option( "-n", "--num-tests" ).set_default( "0" ).help( "The number of tests to perform, if multiple, separate by ',' and 0 indicates let the program decide, typically the number of pairs." );
     parser.add_option( "-w", "--weight" ).help( "Used in 'static' and 'adaptive', 4 weights that sum to 1 separated by ','." );
-    parser.add_option( "-o", "--output-prefix" ).help( "The output prefix, must be set!" );
+    parser.add_option( "-o", "--output-prefix" ).help( "The output prefix, must be set for non-bonferroni methods!" );
     
     Values options = parser.parse_args( argc, argv );
     std::vector<std::string> args = parser.args( );
@@ -104,13 +104,6 @@ main(int argc, char *argv[])
         parser.print_help( );
         exit( 1 );
     }
-    
-    if( !options.is_set( "bfile" ) )
-    {
-        std::cerr << "bayesic-correct: error: Need to supply plink file with --bfile." << std::endl;
-        exit( 1 );
-    }
-    plink_file_ptr genotype_file = open_plink_file( options[ "bfile" ] );
     
     correction_options correct;
 
@@ -122,13 +115,26 @@ main(int argc, char *argv[])
     correct.model = options[ "model" ];
     std::string output_prefix = (std::string) options.get( "output_prefix" );
 
-    metaresultfile *meta_result_file = open_meta_result_file( args, genotype_file->get_locus_names( ) );
+    metaresultfile *meta_result_file = open_meta_result_file( args );
     if( method == "bonferroni" )
     {
-        run_bonferroni( meta_result_file, correct.alpha, correct.num_tests[ 0 ], field, output_prefix );
+        std::string output_path = "-";
+        if( options.is_set( "output_prefix" ) )
+        {
+            output_path = output_prefix;
+        }
+
+        run_bonferroni( meta_result_file, correct.alpha, correct.num_tests[ 0 ], field, output_path );
     }
     else
     {
+        if( !options.is_set( "bfile" ) )
+        {
+            std::cerr << "bayesic-correct: error: Need to supply plink file with --bfile." << std::endl;
+            exit( 1 );
+        }
+
+        plink_file_ptr genotype_file = open_plink_file( options[ "bfile" ] );
         if( !options.is_set( "output_prefix" ) )
         {
             std::cerr << "bayesic-correct: error: With static and adaptive an output prefix must be set with --output-prefix." << std::endl;

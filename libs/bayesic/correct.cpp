@@ -50,12 +50,12 @@ run_bonferroni(metaresultfile *result, float alpha, uint64_t num_tests, size_t c
 }
 
 resultfile *
-do_common_stages(metaresultfile *result, const correction_options &options, const std::string &output_path)
+do_common_stages(metaresultfile *result, const std::vector<std::string> &snp_names, const correction_options &options, const std::string &output_path)
 {
     float *values = new float[ result->get_header( ).size( ) ];
     char const *levels[] = { "1", "2", "3", "4" };
     std::string filename = output_path + std::string( ".level" ) + levels[ 0 ];
-    bresultfile *stage_file = new bresultfile( filename, result->get_snp_names( ) );
+    bresultfile *stage_file = new bresultfile( filename, snp_names );
     if( stage_file == NULL || !stage_file->open( ) )
     {
         return NULL;
@@ -94,7 +94,7 @@ do_common_stages(metaresultfile *result, const correction_options &options, cons
         }
 
         filename = output_path + std::string( ".level" ) + levels[ i ];
-        stage_file = new bresultfile( filename, result->get_snp_names( ) );
+        stage_file = new bresultfile( filename, snp_names );
         if( stage_file == NULL || !stage_file->open( ) )
         {
             return NULL;
@@ -227,7 +227,7 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
 void
 run_static(metaresultfile *result, genotype_matrix_ptr genotypes, method_data_ptr data, const correction_options &options, const std::string &output_path)
 {
-    resultfile *last_stage = do_common_stages( result, options, output_path );
+    resultfile *last_stage = do_common_stages( result, genotypes->get_snp_names( ), options, output_path );
     if( last_stage == NULL )
     {
         return;

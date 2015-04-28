@@ -52,15 +52,14 @@ public:
     bool read(std::pair<std::string, std::string> *pair, float *value);
     uint64_t num_pairs();
     std::vector<std::string> get_header();
-    std::vector<std::string> get_snp_names();
 
 private:
     std::vector<resultfile *> m_results;
     size_t m_cur_file;
 };
 
-std::vector<resultfile *> open_result_files(const std::vector<std::string> &paths, const std::vector<std::string> &snp_names);
+std::vector<resultfile *> open_result_files(const std::vector<std::string> &paths);
 
-metaresultfile *open_meta_result_file(const std::vector<std::string> &paths, const std::vector<std::string> &snp_names);
+metaresultfile *open_meta_result_file(const std::vector<std::string> &paths);
 
 #endif

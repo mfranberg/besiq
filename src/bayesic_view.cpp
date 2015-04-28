@@ -120,7 +120,7 @@ main(int argc, char *argv[])
     }
     else
     {
-        output_file = new tresultfile( "-", "w", result_files[ 0 ]->get_snp_names( ) );
+        output_file = new tresultfile( "-", "w" );
     }
     output_file->set_header( header );
 

@@ -89,7 +89,7 @@ parse_common_options(optparse::Values &options, const std::vector<std::string> &
     else
     {
         std::ios_base::sync_with_stdio( false );
-        result_file = new tresultfile( "-", "w", genotype_file->get_locus_names( ) );
+        result_file = new tresultfile( "-", "w" );
     }
     if( result_file == NULL || !result_file->open( ) )
     {

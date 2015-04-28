@@ -245,14 +245,13 @@ bresultfile::is_corrupted()
     return num_pairs != m_header.num_pairs;
 }
 
-tresultfile::tresultfile(const std::string &path, const std::string &mode, const std::vector<std::string> &snp_names)
+tresultfile::tresultfile(const std::string &path, const std::string &mode)
     : m_mode( mode ), 
       m_path( path ),
       m_input( NULL ),
       m_output( NULL ),
       m_num_pairs( 0 ),
-      m_written( false ),
-      m_snp_names( snp_names )
+      m_written( false )
 {
 
 }
@@ -428,7 +427,7 @@ tresultfile::close()
 }
 
 resultfile *
-open_result_file(const std::string &path, const std::vector<std::string> &snp_names)
+open_result_file(const std::string &path)
 {
     FILE *fp = fopen( path.c_str( ), "r" );
     if( fp == NULL )
@@ -450,7 +449,7 @@ open_result_file(const std::string &path, const std::vector<std::string> &snp_na
     }
     else
     {
-        return new tresultfile( path, "r", snp_names );
+        return new tresultfile( path, "r" );
     }
 }
 

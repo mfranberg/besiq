@@ -245,9 +245,8 @@ class tresultfile : public resultfile
          *
          * @param path Path to the input file.
          * @param mode Reading or writing, "r" or "w".
-         * @param snp_names List of variants (required for interface).
          */
-        tresultfile(const std::string &path, const std::string &mode, const std::vector<std::string> &snp_names);
+        tresultfile(const std::string &path, const std::string &mode);
 
         /**
          * Destructor.
@@ -332,11 +331,10 @@ class tresultfile : public resultfile
  * Opens a result file (binary or text) and returns a pointer to it.
  *
  * @param path Path to the file.
- * @param snp_names Name of each variant to be included.
  *
  * @return A result file, or a null pointer if it could not be opened.
  */
-resultfile * open_result_file(const std::string &path, const std::vector<std::string> &snp_names);
+resultfile * open_result_file(const std::string &path);
 
 /**
  * Returns a missing value.

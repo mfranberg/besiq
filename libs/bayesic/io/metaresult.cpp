@@ -49,25 +49,12 @@ metaresultfile::get_header()
     }
 }
 
-std::vector<std::string>
-metaresultfile::get_snp_names()
-{
-    if( m_results.size( ) > 0 )
-    {
-        return m_results[ 0 ]->get_snp_names( );
-    }
-    else
-    {
-        return std::vector<std::string>( );
-    }
-}
-
-std::vector<resultfile *> open_result_files(const std::vector<std::string> &paths, const std::vector<std::string> &snp_names)
+std::vector<resultfile *> open_result_files(const std::vector<std::string> &paths)
 {
     std::vector<resultfile *> result_files;
     for(int i = 0; i < paths.size( ); i++)
     {
-        resultfile *result = open_result_file( paths[ i ], snp_names );
+        resultfile *result = open_result_file( paths[ i ] );
         result_files.push_back( result );
         if( result != NULL && !result->open( ) )
         {
@@ -87,8 +74,8 @@ std::vector<resultfile *> open_result_files(const std::vector<std::string> &path
     return result_files;
 }
 
-metaresultfile *open_meta_result_file(const std::vector<std::string> &paths, const std::vector<std::string> &snp_names)
+metaresultfile *open_meta_result_file(const std::vector<std::string> &paths)
 {
-    std::vector<resultfile *> results = open_result_files( paths, snp_names );
+    std::vector<resultfile *> results = open_result_files( paths );
     return new metaresultfile( results );
 }
