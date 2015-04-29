@@ -14,20 +14,26 @@ std::vector<std::string>
 caseonly_method::init()
 {
     std::vector<std::string> header;
-    if( m_method == "r2" )
+    if( m_method == "r2" || m_method == "css" )
     {
-        header.push_back( "R2" );
+        if( m_method == "r2" )
+        {
+            header.push_back( "R2" );
+        }
+        else if( m_method == "css" )
+        {
+            header.push_back( "CSS" );
+        }
+        
+        header.push_back( "P_ld" );
+        std::vector<std::string> wald_header = m_wald.init( );
+        header.insert( header.end( ), wald_header.begin( ), wald_header.end( ) );
     }
-    else if( m_method == "css" )
+    else if( m_method == "contrast" )
     {
-        header.push_back( "CSS" );
+        header.push_back( "LDdiff" );
+        header.push_back( "P" );
     }
-
-    header.push_back( "P_ld" );
-
-    std::vector<std::string> wald_header = m_wald.init( );
-
-    header.insert( header.end( ), wald_header.begin( ), wald_header.end( ) );
 
     return header;
 }
@@ -38,13 +44,17 @@ caseonly_method::run(const snp_row &row1, const snp_row &row2, float *output)
     if( m_method == "r2" )
     {
         compute_r2( row1, row2, output );
+        m_wald.run( row1, row2, &output[ 2 ] );
     }
     else if( m_method == "css" )
     {
         compute_css( row1, row2, output );
+        m_wald.run( row1, row2, &output[ 2 ] );
     }
-
-    m_wald.run( row1, row2, &output[ 2 ] );
+    else if( m_method == "contrast" )
+    {
+        compute_contrast( row1, row2, output );
+    }
 }
 
 void
@@ -130,4 +140,39 @@ caseonly_method::compute_css(const snp_row &row1, const snp_row &row2, float *ou
     double chi2 = sum( pow( o - N * e, 2 ) / ( N * e ) );
     output[ 0 ] = chi2;
     output[ 1 ] = 1.0 - chi_square_cdf( chi2, 3 );
+}
+
+void
+caseonly_method::compute_contrast(const snp_row &row1, const snp_row &row2, float *output)
+{
+    arma::mat counts = joint_count( row1, row2, get_data( )->phenotype, m_weight );
+    arma::vec snp_snp = sum( counts, 1 );
+
+    if( arma::min( arma::min( counts ) ) < 5 )
+    {
+        return;
+    }
+    
+    double N = arma::accu( counts );
+    double N_controls = sum( counts.col( 0 ) );
+    double N_cases = sum( counts.col( 1 ) );
+    set_num_ok_samples( (size_t) N );
+
+    double p_a = (2 * (snp_snp[ 0 ] + snp_snp[ 1 ] + snp_snp[ 2 ] ) + snp_snp[ 3 ] + snp_snp[ 4 ] + snp_snp[ 5 ] ) / ( 2 * N );
+    double p_b = (2 * (snp_snp[ 0 ] + snp_snp[ 3 ] + snp_snp[ 6 ] ) + snp_snp[ 1 ] + snp_snp[ 4 ] + snp_snp[ 7 ] ) / ( 2 * N );
+
+    double p_ab_case = ( 0.5 * counts( 4, 1 ) + counts( 5, 1 ) + counts( 7, 1 ) + 2 * counts( 8, 1 ) ) / N_cases;
+    double p_ab_control = ( 0.5 * counts( 4, 0 ) + counts( 5, 0 ) + counts( 7, 0 ) + 2 * counts( 8, 0 ) ) / N_controls;
+
+    double delta_case = ( p_ab_case - p_a * p_b );
+    double delta_control = ( p_ab_control - p_a * p_b );
+
+    double sigma_case = sqrt( (p_a *(1-p_a) * p_b *(1-p_b )) / N_cases ); 
+    double sigma_control = sqrt( (p_a *(1-p_a) * p_b *(1-p_b )) / N_controls );
+
+    double z = (delta_case - delta_control) / sqrt( pow( sigma_case, 2 ) + pow( sigma_control, 2 ) );
+    double cdf = norm_cdf( z, 0.0, 1.0 );
+
+    output[ 0 ] = z;
+    output[ 1 ] = 2 * std::min( cdf, 1 - cdf );
 }

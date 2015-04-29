@@ -122,6 +122,12 @@ main(int argc, char *argv[])
     {
         output_file = new tresultfile( "-", "w" );
     }
+    if( !output_file->open( ) )
+    {
+        std::cerr << "bayesic-view: error: Could not open output file/stream" << std::endl;
+        return 1;
+    }
+
     output_file->set_header( header );
 
     std::setprecision( 4 );

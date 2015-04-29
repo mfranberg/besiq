@@ -18,9 +18,9 @@ const std::string DESCRIPTION = "A stage-wise case-only filter for genetic inter
 int
 main(int argc, char *argv[])
 {
-    char const* const method_choices[] = { "css", "r2" };
+    char const* const method_choices[] = { "css", "r2", "contrast" };
     OptionParser parser = create_common_options( USAGE, DESCRIPTION, false );
-    parser.add_option( "-m", "--method" ).choices( &method_choices[ 0 ], &method_choices[ 2 ] ).metavar( "method" ).help( "The type of test statistic to compute 'r2' or 'css'." ).set_default( "css" );
+    parser.add_option( "-m", "--method" ).choices( &method_choices[ 0 ], &method_choices[ 3 ] ).metavar( "method" ).help( "The type of test statistic to compute 'r2' or 'css'." ).set_default( "css" );
     
     Values options = parser.parse_args( argc, argv );
     if( parser.args( ).size( ) != 2 )

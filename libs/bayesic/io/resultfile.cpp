@@ -324,11 +324,21 @@ tresultfile::read(std::pair<std::string, std::string> *pair, float *values)
     pair->first = snp1;
     pair->second = snp2;
 
+    std::string value;
     for(int i = 0; i < m_col_names.size( ); i++)
     {
-        if( !(*m_input >> values[ i ] ) )
+        if( !(*m_input >> value ) )
         {
             return false;
+        }
+
+        if( value != "NA" )
+        {
+            values[ i ] = atof( value.c_str( ) );
+        }
+        else
+        {
+            values[ i ] = result_get_missing( );
         }
     }
 

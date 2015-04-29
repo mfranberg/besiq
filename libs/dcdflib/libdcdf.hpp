@@ -55,6 +55,18 @@ private:
 double chi_square_cdf(double x, unsigned int df);
 
 /**
+ * Computes the probability Pr[ X < x ] where X has a normal
+ * distribution.
+ *
+ * @param x Observed normal value.
+ * @param mu The mean value.
+ * @param sd The standard deviation.
+ *
+ * @return The probability Pr[ X < x ].
+ */
+double norm_cdf(double x, double mu, double sd);
+
+/**
  * Computes f^-1(p) where f^-1 is the inverse of the cumulative
  * distribution function for a gamma distributed variable.
  *

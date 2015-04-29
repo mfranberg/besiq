@@ -29,6 +29,31 @@ chi_square_cdf(double x, unsigned int df)
 }
 
 double
+norm_cdf(double x, double mu, double sd)
+{
+    int which = 1;
+    double p;
+    double q;
+    double x_norm = x;
+    double mu_norm = mu;
+    double sd_norm = sd;
+
+    int status;
+    double bound;
+
+    cdfnor( &which, &p, &q, &x_norm, &mu_norm, &sd_norm, &status, &bound );
+
+    if( status == 0 )
+    {
+        return p;
+    }
+    else
+    {
+        throw bad_domain_value( x );
+    }
+}
+
+double
 gamma_cdf_inv(double p, double a, double b)
 {
     int which = 2;
