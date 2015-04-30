@@ -23,6 +23,11 @@ public:
      * @see glm_model.mu.
      */
     virtual arma::vec mu(const arma::vec &eta) const;
+    
+    /**
+     * @see glm_model.eta.
+     */
+    virtual arma::vec eta(const arma::vec &mu) const;
 
     /**
      * @see glm_model.mu_eta.

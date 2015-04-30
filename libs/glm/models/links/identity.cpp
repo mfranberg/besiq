@@ -24,6 +24,12 @@ identity_link::mu(const arma::vec &eta) const
 }
 
 vec
+identity_link::eta(const arma::vec &mu) const
+{
+    return mu;
+}
+
+vec
 identity_link::mu_eta(const arma::vec &mu) const
 {
     return arma::ones<arma::vec>( mu.n_elem );

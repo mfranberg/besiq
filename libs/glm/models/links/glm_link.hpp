@@ -32,14 +32,13 @@ public:
     }
 
     /**
-     * Generate starting values for the beta coefficients.
+     * Compute eta from the mean value parameter (the link function).
      *
-     * @param X The design matrix, including an intercept if desired.
-     * @param y The outcome or observations.
+     * @param mu The mean value parameter.
      *
-     * @return A vector containing the starting values for beta.
+     * @return The linearized parameter eta.
      */
-    virtual arma::vec init_beta(const arma::mat &X, const arma::vec &y) const = 0;
+    virtual arma::vec eta(const arma::vec &mu) const = 0;
     
     /**
      * The derivative of mu with respect to eta. It is often good to

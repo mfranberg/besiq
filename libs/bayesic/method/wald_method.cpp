@@ -23,7 +23,7 @@ void
 wald_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::mat n = joint_count( row1, row2, get_data( )->phenotype, m_weight );
-    if( arma::min( arma::min( n ) ) < 10 )
+    if( arma::min( arma::min( n ) ) < METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
     {
         return;
     }

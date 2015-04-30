@@ -48,7 +48,6 @@ void boxcox_method::run(const snp_row &row1, const snp_row &row2, float *output)
     arma::uvec missing = get_data( )->missing;
     m_model_matrix.update_matrix( row1, row2, missing );
     set_num_ok_samples( missing.n_elem - sum( missing ) );
-    
 
     double max_logl = -DBL_MAX;
     int best_index = -1;

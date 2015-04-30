@@ -29,7 +29,7 @@ loglinear_method::run(const snp_row &row1, const snp_row &row2, float *output)
     arma::mat count = joint_count( row1, row2, get_data( )->phenotype, m_weight );
     size_t num_samples = arma::accu( count );
     set_num_ok_samples( num_samples );
-    if( arma::min( arma::min( count ) ) < 10 )
+    if( arma::min( arma::min( count ) ) < METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
     {
         return;
     }

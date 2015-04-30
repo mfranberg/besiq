@@ -67,10 +67,17 @@ compute_w(const vec &var, const vec& mu_eta)
 }
 
 vec
+init_beta(const mat &X, const vec&y, const uvec &missing, const glm_model &model)
+{
+    vec eta = model.get_link( ).eta( (y + 0.5) / 2.0 );
+    return weighted_least_squares( X, eta, ones<vec>( missing.n_elem ) - missing );
+}
+
+vec
 irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, glm_info &output)
 {
     const glm_link &link = model.get_link( );
-    vec b = link.init_beta( X, y );
+    vec b = init_beta( X, y, missing, model );
     vec w( X.n_rows );
     vec z( X.n_rows );
     vec eta = X * b;
@@ -94,7 +101,7 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, gl
             inverse_fail = true;
             break;
         }
-        
+       
         eta = X * b;
         mu = link.mu( eta );
         mu_eta = link.mu_eta( mu );

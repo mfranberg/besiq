@@ -25,6 +25,12 @@ log_link::mu(const arma::vec &eta) const
 }
 
 vec
+log_link::eta(const arma::vec &mu) const
+{
+    return log( mu );
+}
+
+vec
 log_link::mu_eta(const arma::vec &mu) const
 {
     return 1.0 / mu;

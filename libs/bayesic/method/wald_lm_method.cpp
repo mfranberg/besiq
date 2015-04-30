@@ -44,7 +44,7 @@ wald_lm_method::run(const snp_row &row1, const snp_row &row2, float *output)
 
     set_num_ok_samples( (size_t)num_samples );
     
-    if( arma::min( arma::min( n ) ) < 10 )
+    if( arma::min( arma::min( n ) ) < METHOD_SMALLEST_CELL_SIZE_NORMAL )
     {
         return;
     }

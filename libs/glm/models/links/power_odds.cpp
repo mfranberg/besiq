@@ -37,6 +37,19 @@ power_odds_link::mu(const arma::vec &eta) const
 }
 
 vec
+power_odds_link::eta(const arma::vec &mu) const
+{
+    if( m_lambda == 0.0 )
+    {
+        return log( mu / ( 1 - mu ) );
+    }
+    else
+    {
+        return ( pow( mu / ( 1 - mu ), m_lambda ) - 1 ) / m_lambda;
+    }
+}
+
+vec
 power_odds_link::mu_eta(const arma::vec &mu) const
 {
     if( m_lambda == 0.0 )

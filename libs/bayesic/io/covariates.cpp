@@ -154,6 +154,7 @@ parse_covariate_matrix(std::istream &stream, arma::uvec &missing, const std::vec
         for(it = iid_index.begin( ); it != iid_index.end( ); ++it)
         {
             missing[ it->second ] = 1;
+            X.row( it->second ) = zeros<rowvec>( header_fields.size( ) - 2 );
         }
     }
 

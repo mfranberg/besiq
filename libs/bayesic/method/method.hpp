@@ -15,6 +15,18 @@ class genotype_matrix;
 typedef shared_ptr<genotype_matrix> genotype_matrix_ptr;
 
 /**
+ * Smallest number of samples with a specific genotype for case/control data,
+ * for the normal statistical tests to be reasonably valid.
+ */
+const unsigned int METHOD_SMALLEST_CELL_SIZE_BINOMIAL = 5;
+
+/**
+ * Smallest number of samples with a specific genotype for quantative data,
+ * for the normal statistical tests to be reasonably valid.
+ */
+const unsigned int METHOD_SMALLEST_CELL_SIZE_NORMAL = 10;
+
+/**
  * Represents additional data that is required by the method.
  */
 struct method_data

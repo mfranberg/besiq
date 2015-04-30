@@ -45,6 +45,7 @@ stagewise_method::run(const snp_row &row1, const snp_row &row2, float *output)
 
     arma::mat count;
     float min_samples = 0.0;
+    unsigned int sample_threshold = METHOD_SMALLEST_CELL_SIZE_BINOMIAL;
     if( m_model == "binomial" )
     {
         count = joint_count( row1, row2, get_data( )->phenotype, m_weight );
@@ -56,9 +57,10 @@ stagewise_method::run(const snp_row &row1, const snp_row &row2, float *output)
         count = joint_count_cont( row1, row2, get_data( )->phenotype, m_weight );
         set_num_ok_samples( (size_t) arma::accu( count.col( 1 ) ) );
         min_samples = arma::min( count.col( 1 ) );
+        sample_threshold = METHOD_SMALLEST_CELL_SIZE_NORMAL;
     }
     
-    if( min_samples < 10 )
+    if( min_samples < sample_threshold )
     {
         return;
     }

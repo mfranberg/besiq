@@ -68,6 +68,10 @@ caseonly_method::compute_r2(const snp_row &row1, const snp_row &row2, float *out
     arma::vec v = arma::zeros<arma::vec>( 3 );
     double N = arma::accu( counts );
     set_num_ok_samples( (size_t) N );
+    if( arma::min( arma::min( counts ) ) < METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
+    {
+        return;
+    }
 
     for(int i = 0; i < 3; i++)
     {
@@ -105,7 +109,7 @@ caseonly_method::compute_css(const snp_row &row1, const snp_row &row2, float *ou
     arma::vec snp_snp = sum( counts, 1 );
     arma::vec snp1 = arma::zeros<arma::vec>( 3 );
     arma::vec snp2 = arma::zeros<arma::vec>( 3 );
-    if( arma::min( arma::min( snp_snp ) ) < 5 )
+    if( arma::min( arma::min( counts ) ) < METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
     {
         return;
     }
@@ -148,7 +152,7 @@ caseonly_method::compute_contrast(const snp_row &row1, const snp_row &row2, floa
     arma::mat counts = joint_count( row1, row2, get_data( )->phenotype, m_weight );
     arma::vec snp_snp = sum( counts, 1 );
 
-    if( arma::min( arma::min( counts ) ) < 5 )
+    if( arma::min( arma::min( counts ) ) < METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
     {
         return;
     }

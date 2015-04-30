@@ -44,6 +44,19 @@ power_link::mu(const arma::vec &eta) const
 }
 
 vec
+power_link::eta(const arma::vec &mu) const
+{
+    if( m_lambda == 0.0 )
+    {
+        return log( mu );
+    }
+    else
+    {
+        return sign( mu ) % pow( abs( mu ), m_lambda );
+    }
+}
+
+vec
 power_link::mu_eta(const arma::vec &mu) const
 {
     if( m_lambda == 0.0 )

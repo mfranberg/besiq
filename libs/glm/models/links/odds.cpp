@@ -29,6 +29,12 @@ odds_link::mu(const arma::vec &eta) const
 }
 
 vec
+odds_link::eta(const arma::vec &mu) const
+{
+    return mu / ( 1 - mu );
+}
+
+vec
 odds_link::mu_eta(const arma::vec &mu) const
 {
     return 1 / ( (mu - 1) % (mu - 1) );
