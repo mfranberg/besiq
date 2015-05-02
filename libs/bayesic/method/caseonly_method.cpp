@@ -150,7 +150,6 @@ void
 caseonly_method::compute_contrast(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::mat counts = joint_count( row1, row2, get_data( )->phenotype, m_weight );
-    arma::vec snp_snp = sum( counts, 1 );
 
     if( arma::min( arma::min( counts ) ) < METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
     {
@@ -162,21 +161,23 @@ caseonly_method::compute_contrast(const snp_row &row1, const snp_row &row2, floa
     double N_cases = sum( counts.col( 1 ) );
     set_num_ok_samples( (size_t) N );
 
-    double p_a = (2 * (snp_snp[ 0 ] + snp_snp[ 1 ] + snp_snp[ 2 ] ) + snp_snp[ 3 ] + snp_snp[ 4 ] + snp_snp[ 5 ] ) / ( 2 * N );
-    double p_b = (2 * (snp_snp[ 0 ] + snp_snp[ 3 ] + snp_snp[ 6 ] ) + snp_snp[ 1 ] + snp_snp[ 4 ] + snp_snp[ 7 ] ) / ( 2 * N );
+    double p_a_case = ( 2 * (counts( 6 , 1 ) + counts( 7 , 1 ) + counts( 8 , 1 ) ) + counts( 3 , 1 ) + counts( 4 , 1 ) + counts( 5 , 1 ) ) / ( 2 * N_cases );
+    double p_a_control = ( 2 * (counts( 6 , 0 ) + counts( 7 , 0 ) + counts( 8 , 0 ) ) + counts( 3 , 0 ) + counts( 4 , 0 ) + counts( 5 , 0 ) ) / ( 2 * N_controls );
+    double p_b_case = ( 2 * (counts( 2 , 1 ) + counts( 5 , 1 ) + counts( 8 , 1 ) ) + counts( 1 , 1 ) + counts( 4 , 1 ) + counts( 7 , 1 ) ) / ( 2 * N_cases );
+    double p_b_control = ( 2 * (counts( 2 , 0 ) + counts( 5 , 0 ) + counts( 8 , 0 ) ) + counts( 1 , 0 ) + counts( 4 , 0 ) + counts( 7 , 0 ) ) / ( 2 * N_controls );
 
-    double p_ab_case = ( 0.5 * counts( 4, 1 ) + counts( 5, 1 ) + counts( 7, 1 ) + 2 * counts( 8, 1 ) ) / N_cases;
-    double p_ab_control = ( 0.5 * counts( 4, 0 ) + counts( 5, 0 ) + counts( 7, 0 ) + 2 * counts( 8, 0 ) ) / N_controls;
+    double p_ab_case = ( 0.5 * counts( 4, 1 ) + counts( 5, 1 ) + counts( 7, 1 ) + 2 * counts( 8, 1 ) ) / ( 2 * N_cases );
+    double p_ab_control = ( 0.5 * counts( 4, 0 ) + counts( 5, 0 ) + counts( 7, 0 ) + 2 * counts( 8, 0 ) ) / ( 2 * N_controls );
 
-    double delta_case = ( p_ab_case - p_a * p_b );
-    double delta_control = ( p_ab_control - p_a * p_b );
+    double delta_case = ( p_ab_case - p_a_case * p_b_case );
+    double delta_control = ( p_ab_control - p_a_control * p_b_control );
 
-    double sigma_case = sqrt( (p_a *(1-p_a) * p_b *(1-p_b )) / N_cases ); 
-    double sigma_control = sqrt( (p_a *(1-p_a) * p_b *(1-p_b )) / N_controls );
+    double sigma2_case = ( p_a_case * (1 - p_a_case) * p_b_case * (1 - p_b_case ) ) / N_cases; 
+    double sigma2_control = ( p_a_control * (1 - p_a_control) * p_b_control * (1 - p_b_control ) ) / N_controls;
+    double sigma_diff = sqrt( sigma2_case + sigma2_control );
 
-    double z = (delta_case - delta_control) / sqrt( pow( sigma_case, 2 ) + pow( sigma_control, 2 ) );
-    double cdf = norm_cdf( z, 0.0, 1.0 );
+    double z = ( delta_case - delta_control ) / (0.5*sigma_diff);
 
     output[ 0 ] = z;
-    output[ 1 ] = 2 * std::min( cdf, 1 - cdf );
+    output[ 1 ] = 1 - norm_cdf( z, 0.0, 1.0 );
 }
