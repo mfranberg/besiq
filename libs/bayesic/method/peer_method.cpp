@@ -93,6 +93,7 @@ peer_method::run(const snp_row &row1, const snp_row &row2, float *output)
     {
         return;
     }
+    set_num_ok_samples( (size_t) arma::accu( counts ) );
 
     size_t output_index = 0;
     for(int i = 1; i <= 2; i++)
