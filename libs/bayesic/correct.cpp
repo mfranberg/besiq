@@ -76,7 +76,7 @@ do_common_stages(metaresultfile *result, const std::vector<std::string> &snp_nam
             continue;
         }
         
-        float adjusted = values[ 0 ] * num_tests[ 0 ] / options.weight[ 0 ];
+        float adjusted = std::min( 1.0f, values[ 0 ] * num_tests[ 0 ] / options.weight[ 0 ] );
         if( adjusted <= options.alpha )
         {
             values[ 0 ] = adjusted;
@@ -114,7 +114,7 @@ do_common_stages(metaresultfile *result, const std::vector<std::string> &snp_nam
                 continue;
             }
             
-            float adjusted = values[ i ] * num_tests[ i ] / options.weight[ i ];
+            float adjusted = std::min( values[ i ] * num_tests[ i ] / options.weight[ i ], 1.0f );
             if( adjusted <= options.alpha )
             {
                 values[ i ] = adjusted;
@@ -167,6 +167,7 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
     float *method_values = new float[ method_header.size( ) ];
     while( last_stage->read( &pair, values ) )
     {
+        std::fill( method_values, method_values + method_header.size( ), result_get_missing( ) );
         /* Skip N and last p-value */
         float pre_p = *std::max_element( values, values + header.size( ) - 2 );
         float min_p = 1.0;
@@ -182,10 +183,11 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
             float adjusted_p = result_get_missing( );    
             if( method_values[ i ] != result_get_missing( ) )
             {
-                adjusted_p = std::max( method_values[ i ] * num_tests / options.weight[ header.size( ) - 2 ], pre_p );
+                adjusted_p = std::min( std::max( method_values[ i ] * num_tests / options.weight[ header.size( ) - 2 ], pre_p ), 1.0f );
                 min_p = std::min( min_p, adjusted_p );
                 max_p = std::max( max_p, adjusted_p );
             }
+
             p_values.push_back( adjusted_p );
         }
 

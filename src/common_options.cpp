@@ -77,8 +77,8 @@ parse_common_options(optparse::Values &options, const std::vector<std::string> &
     }
 
     /* XXX: Implement proper log file. */
-    std::ostream nullstream( 0 );
-    arma::set_stream_err2( nullstream );
+    arma::set_stream_err1( std::cerr );
+    arma::set_stream_err2( std::cerr );
     
     /* Open results. */
     resultfile *result_file = NULL;
