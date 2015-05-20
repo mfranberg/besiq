@@ -178,7 +178,9 @@ caseonly_method::compute_contrast(const snp_row &row1, const snp_row &row2, floa
     double sigma_diff = sqrt( sigma2_case + sigma2_control );
 
     double z = ( delta_case - delta_control ) / (0.5*sigma_diff);
+    
+    double cdf = 1 - norm_cdf( z, 0.0, 1.0 );
 
     output[ 0 ] = z;
-    output[ 1 ] = 1 - norm_cdf( z, 0.0, 1.0 );
+    output[ 1 ] = 2*std::min( cdf, 1 - cdf );
 }
