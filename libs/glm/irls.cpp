@@ -69,7 +69,7 @@ compute_w(const vec &var, const vec& mu_eta)
 vec
 init_beta(const mat &X, const vec&y, const uvec &missing, const glm_model &model)
 {
-    vec eta = model.get_link( ).eta( (y + 0.5) / 2.0 );
+    vec eta = model.get_link( ).eta( (y + 0.5) / 3.0 );
     return weighted_least_squares( X, eta, ones<vec>( missing.n_elem ) - missing );
 }
 
@@ -90,6 +90,8 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, gl
     double logl = model.likelihood( mu, y, missing );
     bool invalid_mu = false;
     bool inverse_fail = false;
+    vec b_old = b;
+    bool first_attempt = true;
     while( num_iter < IRLS_MAX_ITERS && ! ( fabs( logl - old_logl ) / ( 0.1 + fabs( logl ) ) < IRLS_TOLERANCE ) )
     {
         w = compute_w( model.var( mu ), mu_eta );
@@ -101,18 +103,30 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, gl
             inverse_fail = true;
             break;
         }
-       
+
+compute_eta: 
         eta = X * b;
         mu = link.mu( eta );
         mu_eta = link.mu_eta( mu );
 
         if( !model.valid_mu( mu ) )
         {
-            invalid_mu = true;
-            break;
+            if( first_attempt )
+            {
+                /* Try a smaller step */
+                b = 0.5*b_old + 0.5*b;
+                first_attempt = false;
+                goto compute_eta;
+            }
+            else
+            {
+                invalid_mu = true;
+                break;
+            }
         }
 
         old_logl = logl;
+        b_old = b;
         logl = model.likelihood( mu, y, missing );
 
         num_iter++;
