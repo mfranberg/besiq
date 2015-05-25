@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <bayesic/stats/dirichlet.hpp>
+#include <besiq/stats/dirichlet.hpp>
 
 using namespace arma;
 

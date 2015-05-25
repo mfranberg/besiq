@@ -1,6 +1,6 @@
-# Bayesic
+# Besiq
 
-Bayesic is an application for analysing pairwise genetic interactions in genome-wide association studies. It provides several methods to choose from and is efficiently implemented in C++.
+Besiq is an application for analysing pairwise genetic interactions in genome-wide association studies. It provides several methods to choose from and is efficiently implemented in C++.
 
 The following methods are currently implemented for gene-gene tests:
 
@@ -25,8 +25,8 @@ The following things will be added at some point:
 
 Make sure you have the Armadillo matrix library installed. Then to build and run (note --recursive flag to get submodules):
 
-    > git clone --recursive https://github.com/fadern/bayesic
-    > cd bayesic
+    > git clone --recursive https://github.com/fadern/besiq
+    > cd besiq
     > git submodule init
     > git submodule update
     > mkdir build
@@ -45,7 +45,7 @@ Make sure you have the Armadillo matrix library installed. Then to build and run
     rs51512 rs151251
     rs51512 rs516163
 
-    > ./src/bayesic wald /data/dataset.pair /data/dataset
+    > ./src/besiq wald /data/dataset.pair /data/dataset
     snp1        snp2        LR  P   N
     rs412512    rs516161    4.1500    0.386 3418
     rs51512     rs151251    3.1200    0.5379    3412
@@ -53,7 +53,7 @@ Make sure you have the Armadillo matrix library installed. Then to build and run
 
 ## Dependencies
 
-Bayesic requires you to have the following packages installed:
+Besiq requires you to have the following packages installed:
 
 * [CMake](http://www.cmake.org/cmake/resources/software.html) (A build system for C and C++)
 * [Armadillo](http://arma.sourceforge.net/download.html) (C++ matrix library which in turn depends on BLAS and LAPACK)
@@ -63,7 +63,7 @@ If you install them locally (as on a cluster) just specify -DCMAKE_PREFIX_PATH t
 ## Installing
 
 Before starting it is important to note when building armadillo you need to edit the config.hpp, and add support for
-blas and lapack, otherwise you may experience linking errors when building bayesic.
+blas and lapack, otherwise you may experience linking errors when building besiq.
 
 To build with dependencies without root access (note --recursive flag to get submodules):
 
@@ -77,8 +77,8 @@ To build with dependencies without root access (note --recursive flag to get sub
     > cmake ../ -DCMAKE_INSTALL_PREFIX=$HOME/prefix
     > make install
 
-    > git clone --recursive https://github.com/fadern/bayesic
-    > cd bayesic
+    > git clone --recursive https://github.com/fadern/besiq
+    > cd besiq
     > mkdir build
     > cd build
     > cmake ../ -DCMAKE_PREFIX_PATH=$HOME/prefix
@@ -94,8 +94,8 @@ To build with dependencies with root access:
     > cmake ../
     > sudo make install
 
-    > git clone --recursive https://github.com/fadern/bayesic
-    > cd bayesic
+    > git clone --recursive https://github.com/fadern/besiq
+    > cd besiq
     > mkdir build
     > cd build
     > cmake ../
@@ -121,15 +121,15 @@ or
 
 Generate a list of all possible pairs with a combined maf of greater than 0.04, a marginal maf greater than 0.2 and with a distance of at least 1 Mbp between variants in the same pair.
 
-    > bayesic pairs -c 0.04 -m 0.2 -d 1000000 /data/dataset > dataset.pair
+    > besiq pairs -c 0.04 -m 0.2 -d 1000000 /data/dataset > dataset.pair
 
 Run the stepwise command, this should preferebly be parallelized on a cluster with more than 100k variants in the genotype file. It is also recommended to filter out pairs with a p-value higher than 0.05 / num_pairs. This command will use the phenotype in the plink file, if in another file specify with -p.
 
-    > bayesic stagewise /data/dataset.pair /data/dataset > results.out
+    > besiq stagewise /data/dataset.pair /data/dataset > results.out
     
 Use closed testing to perform multiple testing correction assuming 50 marginally associated variants and 100k variants.
 
-    > bayesic correct --weight 0.25,0.25,0.25,0.25 --num-tests 4999950000,5000000,5000000,1225 results.out /data/dataset
+    > besiq correct --weight 0.25,0.25,0.25,0.25 --num-tests 4999950000,5000000,5000000,1225 results.out /data/dataset
     
 This will output all pairs significant on at least one scale, and the adjusted p-values.
 
@@ -137,14 +137,14 @@ This will output all pairs significant on at least one scale, and the adjusted p
 
 These are all run similiarly. First pairs should be created
 
-    > bayesic pairs -c 0.04 -m 0.2 -d 1000000 /data/dataset > dataset.pair
+    > besiq pairs -c 0.04 -m 0.2 -d 1000000 /data/dataset > dataset.pair
     
 Then these methods are simply run by the following. These commands will use the phenotype in the plink file, if in another file specify with -p.
 
-    > bayesic wald /data/dataset.pair /data/dataset > result.wald.out
-    > bayesic glm -f factor -l logistic /data/dataset.pair /data/dataset > results.logistic.out
-    > bayesic loglinear /data/dataset.pair /data/dataset > results.loglinear.out
+    > besiq wald /data/dataset.pair /data/dataset > result.wald.out
+    > besiq glm -f factor -l logistic /data/dataset.pair /data/dataset > results.logistic.out
+    > besiq loglinear /data/dataset.pair /data/dataset > results.loglinear.out
 
 # Evaluation
 
-If you want to evaluate your own method, or the methods implemented in bayesic under various simulation settings, then check out the Python packages [epibench](https://github.com/mfranberg/epibench) for benchmarking, and [epigen](https://github.com/mfranberg/epigen) for generating data.
+If you want to evaluate your own method, or the methods implemented in besiq under various simulation settings, then check out the Python packages [epibench](https://github.com/mfranberg/epibench) for benchmarking, and [epigen](https://github.com/mfranberg/epigen) for generating data.

@@ -1,4 +1,4 @@
-add_subdirectory( bayesic )
+add_subdirectory( besiq )
 add_subdirectory( cpp-argparse )
 add_subdirectory( glm )
 add_subdirectory( plink )
