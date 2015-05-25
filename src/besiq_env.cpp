@@ -5,13 +5,13 @@
 #include <plinkio/plinkio.h>
 
 #include <gzstream/gzutil.hpp>
-#include <bayesic/io/covariates.hpp>
+#include <besiq/io/covariates.hpp>
 #include <cpp-argparse/OptionParser.h>
 
 #include <plink/plink_file.hpp>
-#include <bayesic/env_method/lm_env_stepwise.hpp>
-#include <bayesic/method/method.hpp>
-#include <bayesic/method/env_method.hpp>
+#include <besiq/env_method/lm_env_stepwise.hpp>
+#include <besiq/method/method.hpp>
+#include <besiq/method/env_method.hpp>
 
 using namespace arma;
 using namespace optparse;
@@ -45,13 +45,13 @@ main(int argc, char *argv[])
     std::vector<std::string> args = parser.args( );
     if( args.size( ) != 2 )
     {
-        std::cerr << "bayesic: error: Genotypes or environment factor is missing." << std::endl;
+        std::cerr << "besiq: error: Genotypes or environment factor is missing." << std::endl;
         parser.print_help( );
         exit( 1 );
     }
     else if( !options.is_set( "method" ) )
     {
-        std::cerr << "bayesic:error: No method selected." << std::endl;
+        std::cerr << "besiq: error: No method selected." << std::endl;
         exit( 1 );
     }
 

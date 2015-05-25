@@ -6,10 +6,10 @@
 #include <fstream>
 
 #include <plink/plink_file.hpp>
-#include <bayesic/io/covariates.hpp>
-#include <bayesic/io/pairfile.hpp>
-#include <bayesic/io/resultfile.hpp>
-#include <bayesic/method/method.hpp>
+#include <besiq/io/covariates.hpp>
+#include <besiq/io/pairfile.hpp>
+#include <besiq/io/resultfile.hpp>
+#include <besiq/method/method.hpp>
 #include <shared_ptr/shared_ptr.hpp>
 
 #include <cpp-argparse/OptionParser.h>

@@ -2,12 +2,12 @@
 #include <string>
 #include <vector>
 
-#include <bayesic/io/pairfile.hpp>
+#include <besiq/io/pairfile.hpp>
 
 #include <plink/plink_file.hpp>
 #include <cpp-argparse/OptionParser.h>
 
-#include <bayesic/stats/snp_count.hpp>
+#include <besiq/stats/snp_count.hpp>
 
 using namespace optparse;
 

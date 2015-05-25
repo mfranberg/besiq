@@ -3,7 +3,7 @@
 
 #include <cpp-argparse/OptionParser.h>
 
-#include <bayesic/io/resultfile.hpp>
+#include <besiq/io/resultfile.hpp>
 
 using namespace optparse;
 

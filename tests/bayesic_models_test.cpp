@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <plink/snp_row.hpp>
-#include <bayesic/stats/bayesic_models.hpp>
+#include <besiq/stats/besiq_models.hpp>
 
 using namespace arma;
 

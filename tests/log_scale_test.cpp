@@ -3,7 +3,7 @@
 #include <cmath>
 #include <stdexcept>
 
-#include <bayesic/stats/log_scale.hpp>
+#include <besiq/stats/log_scale.hpp>
 
 TEST(log_scale_test, Init)
 {

@@ -4,8 +4,8 @@
 
 #include <cpp-argparse/OptionParser.h>
 
-#include <bayesic/method/stagewise_method.hpp>
-#include <bayesic/method/method.hpp>
+#include <besiq/method/stagewise_method.hpp>
+#include <besiq/method/method.hpp>
 
 #include "common_options.hpp"
 

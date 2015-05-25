@@ -6,9 +6,9 @@
 #include <glm/models/binomial.hpp>
 #include <cpp-argparse/OptionParser.h>
 
-#include <bayesic/method/scaleinv_method.hpp>
-#include <bayesic/method/boxcox_method.hpp>
-#include <bayesic/method/method.hpp>
+#include <besiq/method/scaleinv_method.hpp>
+#include <besiq/method/boxcox_method.hpp>
+#include <besiq/method/method.hpp>
 
 #include "common_options.hpp"
 

@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-#include <bayesic/io/covariates.hpp>
+#include <besiq/io/covariates.hpp>
 
 using namespace arma;
 

@@ -19,7 +19,7 @@ find_package( BLAS REQUIRED )
 
 include( CheckIncludeFiles )
 check_include_files( "tr1/random", HAVE_TR1_RANDOM )
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/libs/bayesic/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/libs/bayesic/config.h )
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/libs/besiq/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/libs/besiq/config.h )
 include_directories( ${CMAKE_BINARY_DIR}/libs/ )
 if( NOT HAVE_TR1_RANDOM )
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )

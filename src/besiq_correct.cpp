@@ -3,10 +3,10 @@
 
 #include <cpp-argparse/OptionParser.h>
 
-#include <bayesic/correct.hpp>
-#include <bayesic/io/covariates.hpp>
-#include <bayesic/io/metaresult.hpp>
-#include <bayesic/io/resultfile.hpp>
+#include <besiq/correct.hpp>
+#include <besiq/io/covariates.hpp>
+#include <besiq/io/metaresult.hpp>
+#include <besiq/io/resultfile.hpp>
 #include <plink/plink_file.hpp>
 
 using namespace optparse;

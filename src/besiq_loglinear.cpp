@@ -4,8 +4,8 @@
 
 #include <cpp-argparse/OptionParser.h>
 
-#include <bayesic/method/loglinear_method.hpp>
-#include <bayesic/method/method.hpp>
+#include <besiq/method/loglinear_method.hpp>
+#include <besiq/method/method.hpp>
 
 #include "common_options.hpp"
 

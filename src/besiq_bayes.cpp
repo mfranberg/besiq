@@ -4,9 +4,9 @@
 
 #include <cpp-argparse/OptionParser.h>
 
-#include <bayesic/prior.hpp>
-#include <bayesic/method/bayesic_method.hpp>
-#include <bayesic/method/bayesic_fine_method.hpp>
+#include <besiq/prior.hpp>
+#include <besiq/method/besiq_method.hpp>
+#include <besiq/method/besiq_fine_method.hpp>
 
 #include "common_options.hpp"
 
@@ -55,14 +55,14 @@ main(int argc, char *argv[])
     parsed_data->data->num_single = (unsigned int) options.get( "num_single" );
     parsed_data->data->num_interactions = (unsigned int) options.get( "num_interactions" );
 
-    method_type *m = new bayesic_method( parsed_data->data, alpha );
+    method_type *m = new besiq_method( parsed_data->data, alpha );
     if( options.is_set( "additive" ) )
     {
-        m = new bayesic_method( parsed_data->data, alpha );
+        m = new besiq_method( parsed_data->data, alpha );
     }
     else
     {
-        m = new bayesic_fine_method( parsed_data->data, (int) options.get( "mc_iterations" ), alpha );
+        m = new besiq_fine_method( parsed_data->data, (int) options.get( "mc_iterations" ), alpha );
     }
     
     run_method( *m, parsed_data->genotypes, *parsed_data->pairs, *parsed_data->result_file );
