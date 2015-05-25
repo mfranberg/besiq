@@ -16,8 +16,8 @@
 using namespace arma;
 using namespace optparse;
 
-const std::string USAGE = "bayesic-env [-c covariates.csv] [-m method] environment_file genotype_plink_prefix";
-const std::string VERSION = "Bayesic 0.0.1";
+const std::string USAGE = "besiq-env [-c covariates.csv] [-m method] environment_file genotype_plink_prefix";
+const std::string VERSION = "Besiq 0.0.1";
 const std::string DESCRIPTION = "A tool for inferring variant-environment interactions.";
 const std::string EPILOG = "";
 

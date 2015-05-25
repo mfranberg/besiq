@@ -11,8 +11,8 @@
 
 using namespace optparse;
 
-const std::string USAGE = "bayesic-pairs genotype_plink_prefix";
-const std::string VERSION = "bayesic-pairs 1.0.0";
+const std::string USAGE = "besiq-pairs genotype_plink_prefix";
+const std::string VERSION = "besiq-pairs 1.0.0";
 const std::string DESCRIPTION = "Generates a list of interactions to test with Bayesic.";
 const std::string EPILOG = "";
 
@@ -414,7 +414,7 @@ main(int argc, char *argv[])
     std::vector<std::string> args = parser.args( );
     if( args.size( ) != 1 )
     {
-        printf( "bayesic-pairs: error: Genotypes are missing.\n" );
+        printf( "besiq-pairs: error: Genotypes are missing.\n" );
         parser.print_help( );
         exit( 1 );
     }
@@ -433,7 +433,7 @@ main(int argc, char *argv[])
 
     if( !options.is_set( "out" ) )
     {
-        printf( "bayesic-pairs: error: No output file set.\n" );
+        printf( "besiq-pairs: error: No output file set.\n" );
         exit( 1 );
     }
 
@@ -442,7 +442,7 @@ main(int argc, char *argv[])
     
     if( output.open( ) != true )
     {
-        printf( "bayesic-pairs: error: Could not open output file\n" );
+        printf( "besiq-pairs: error: Could not open output file\n" );
         exit( 1 );
     }
 
@@ -485,7 +485,7 @@ main(int argc, char *argv[])
 
         if( !split_pair_file( output_path, (size_t) options.get( "split" ), output_path ) )
         {
-            printf( "bayesic-pairs: error: Could output pairs but failed to split file.\n" );
+            printf( "besiq-pairs: error: Could output pairs but failed to split file.\n" );
             exit( 1 );
         }
     }

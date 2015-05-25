@@ -13,7 +13,7 @@
 using namespace arma;
 using namespace optparse;
 
-const std::string USAGE = "bayesic-caseonly [OPTIONS] pairs genotype_plink_prefix";
+const std::string USAGE = "besiq-caseonly [OPTIONS] pairs genotype_plink_prefix";
 const std::string DESCRIPTION = "A stage-wise case-only filter for genetic interactions.";
 
 int

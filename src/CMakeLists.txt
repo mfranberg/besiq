@@ -6,43 +6,43 @@ include_directories( ${ARMADILLO_INCLUDE_DIR} )
 
 add_library( common_options common_options.cpp )
 
-add_executable( bayesic bayesic.cpp )
-target_link_libraries( bayesic )
+add_executable( besiq besiq.cpp )
+target_link_libraries( besiq )
 
-add_executable( bayesic-stagewise bayesic_stagewise.cpp )
-target_link_libraries( bayesic-stagewise common_options libdcdf libbayesic libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+add_executable( besiq-stagewise besiq_stagewise.cpp )
+target_link_libraries( besiq-stagewise common_options libdcdf libbayesic libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
-add_executable( bayesic-bayes bayesic_bayes.cpp )
-target_link_libraries( bayesic-bayes common_options libdcdf libbayesic libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+add_executable( besiq-bayes besiq_bayes.cpp )
+target_link_libraries( besiq-bayes common_options libdcdf libbayesic libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
-add_executable( bayesic-caseonly bayesic_caseonly.cpp )
-target_link_libraries( bayesic-caseonly common_options libdcdf libbayesic libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+add_executable( besiq-caseonly besiq_caseonly.cpp )
+target_link_libraries( besiq-caseonly common_options libdcdf libbayesic libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
-add_executable( bayesic-glm bayesic_glm.cpp )
-target_link_libraries( bayesic-glm common_options libdcdf libbayesic libglm libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+add_executable( besiq-glm besiq_glm.cpp )
+target_link_libraries( besiq-glm common_options libdcdf libbayesic libglm libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
-add_executable( bayesic-scaleinv bayesic_scaleinv.cpp )
-target_link_libraries( bayesic-scaleinv common_options libdcdf libbayesic libglm libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+add_executable( besiq-scaleinv besiq_scaleinv.cpp )
+target_link_libraries( besiq-scaleinv common_options libdcdf libbayesic libglm libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
-add_executable( bayesic-loglinear bayesic_loglinear.cpp )
-target_link_libraries( bayesic-loglinear common_options libdcdf libbayesic libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+add_executable( besiq-loglinear besiq_loglinear.cpp )
+target_link_libraries( besiq-loglinear common_options libdcdf libbayesic libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
-add_executable( bayesic-wald bayesic_wald.cpp )
-target_link_libraries( bayesic-wald common_options libdcdf libbayesic libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+add_executable( besiq-wald besiq_wald.cpp )
+target_link_libraries( besiq-wald common_options libdcdf libbayesic libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
-add_executable( bayesic-env bayesic_env.cpp )
-target_link_libraries( bayesic-env libdcdf libglm libbayesic libplink libcpp-argparse libgzstream ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+add_executable( besiq-env besiq_env.cpp )
+target_link_libraries( besiq-env libdcdf libglm libbayesic libplink libcpp-argparse libgzstream ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
-add_executable( bayesic-pairs bayesic_pairs.cpp )
-target_link_libraries( bayesic-pairs libplink libcpp-argparse libbayesic libgzstream ${PLINKIO_LIBRARIES} )
+add_executable( besiq-pairs besiq_pairs.cpp )
+target_link_libraries( besiq-pairs libplink libcpp-argparse libbayesic libgzstream ${PLINKIO_LIBRARIES} )
 
-add_executable( bayesic-view bayesic_view.cpp )
-target_link_libraries( bayesic-view libcpp-argparse libbayesic )
+add_executable( besiq-view besiq_view.cpp )
+target_link_libraries( besiq-view libcpp-argparse libbayesic )
 
-add_executable( bayesic-correct bayesic_correct.cpp )
-target_link_libraries( bayesic-correct libdcdf libglm libbayesic libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+add_executable( besiq-correct besiq_correct.cpp )
+target_link_libraries( besiq-correct libdcdf libglm libbayesic libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
-INSTALL( TARGETS bayesic bayesic-stagewise bayesic-bayes bayesic-caseonly
-    bayesic-glm bayesic-scaleinv bayesic-loglinear bayesic-wald bayesic-env
-    bayesic-pairs bayesic-view bayesic-correct DESTINATION bin )
+INSTALL( TARGETS besiq besiq-stagewise besiq-bayes besiq-caseonly
+    besiq-glm besiq-scaleinv besiq-loglinear besiq-wald besiq-env
+    besiq-pairs besiq-view besiq-correct DESTINATION bin )
 

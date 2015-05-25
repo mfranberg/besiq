@@ -11,8 +11,8 @@
 
 using namespace optparse;
 
-const std::string USAGE = "bayesic-correct result_file [result_file2 ...]";
-const std::string VERSION = "Bayesic 0.0.1";
+const std::string USAGE = "besiq-correct result_file [result_file2 ...]";
+const std::string VERSION = "Besiq 0.0.1";
 const std::string DESCRIPTION = "A tool for doing multiple testing correction.";
 const std::string EPILOG = "";
 
@@ -34,7 +34,7 @@ std::vector<uint64_t> parse_tests(const std::string &num_tests, const std::strin
     
     if( (method == "static" && parsed_tests.size( ) != 4) || (method == "adaptive" && parsed_tests.size( ) != 1) )
     {
-        std::cerr << "bayesic-correct: error: Bad number of tests, either 4 or 1." << std::endl;
+        std::cerr << "besiq-correct: error: Bad number of tests, either 4 or 1." << std::endl;
         exit( 1 );
     }
 
@@ -61,12 +61,12 @@ std::vector<float> parse_weight(const std::string &weight_string, float default_
 
     if( fabs( sum - 1.0 ) > 1e-5 )
     {
-        std::cerr << "bayesic-correct: error: Weights do not sum to 1.0." << std::endl;
+        std::cerr << "besiq-correct: error: Weights do not sum to 1.0." << std::endl;
         exit( 1 );
     }
     else if( parsed_weights.size( ) != 4 )
     {
-        std::cerr << "bayesic-correct: error: Need to specify 4 weights." << std::endl;
+        std::cerr << "besiq-correct: error: Need to specify 4 weights." << std::endl;
         exit( 1 );
     }
     else
@@ -100,7 +100,7 @@ main(int argc, char *argv[])
     std::vector<std::string> args = parser.args( );
     if( args.size( ) < 1 )
     {
-        std::cerr << "bayesic-correct: error: Need at least one result file." << std::endl;
+        std::cerr << "besiq-correct: error: Need at least one result file." << std::endl;
         parser.print_help( );
         exit( 1 );
     }
@@ -133,14 +133,14 @@ main(int argc, char *argv[])
     {
         if( !options.is_set( "bfile" ) )
         {
-            std::cerr << "bayesic-correct: error: Need to supply plink file with --bfile." << std::endl;
+            std::cerr << "besiq-correct: error: Need to supply plink file with --bfile." << std::endl;
             exit( 1 );
         }
 
         plink_file_ptr genotype_file = open_plink_file( options[ "bfile" ] );
         if( !options.is_set( "output_prefix" ) )
         {
-            std::cerr << "bayesic-correct: error: With static and adaptive an output prefix must be set with --output-prefix." << std::endl;
+            std::cerr << "besiq-correct: error: With static and adaptive an output prefix must be set with --output-prefix." << std::endl;
             exit( 1 );
         }
 

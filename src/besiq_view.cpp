@@ -7,8 +7,8 @@
 
 using namespace optparse;
 
-const std::string USAGE = "bayesic-view result_file [result_file2 ...]";
-const std::string VERSION = "Bayesic 0.0.1";
+const std::string USAGE = "besiq-view result_file [result_file2 ...]";
+const std::string VERSION = "besiq 0.0.1";
 const std::string DESCRIPTION = "A tool for viewing binary result file.";
 const std::string EPILOG = "";
 
@@ -58,7 +58,7 @@ main(int argc, char *argv[])
     std::vector<std::string> args = parser.args( );
     if( args.size( ) < 1 )
     {
-        std::cerr << "bayesic-view: error: Need at least one result file." << std::endl;
+        std::cerr << "besiq-view: error: Need at least one result file." << std::endl;
         parser.print_help( );
         exit( 1 );
     }
@@ -69,7 +69,7 @@ main(int argc, char *argv[])
         bresultfile *result = new bresultfile( args[ i ] );
         if( !result->open( ) )
         {
-            std::cerr << "bayesic-view: error: Could not open result file: '" << args[ i ] << "' skipping." << std::endl;
+            std::cerr << "besiq-view: error: Could not open result file: '" << args[ i ] << "' skipping." << std::endl;
             continue;
         }
         
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
     {
         if( result_files[ i ]->get_header( ).size( ) != header_size )
         {
-            std::cerr << "bayesic-view: error: Different number of columns in result files." << std::endl;
+            std::cerr << "besiq-view: error: Different number of columns in result files." << std::endl;
             return 1;
         }
     }
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
     }
     if( !output_file->open( ) )
     {
-        std::cerr << "bayesic-view: error: Could not open output file/stream" << std::endl;
+        std::cerr << "besiq-view: error: Could not open output file/stream" << std::endl;
         return 1;
     }
 

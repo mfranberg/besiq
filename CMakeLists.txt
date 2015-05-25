@@ -1,11 +1,11 @@
-project( bayesic )
+project( besiq )
 cmake_minimum_required( VERSION 2.8.9 )
 
 set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/.cmake/modules/" )
 
-set( BAYESIC_VERSION_MAJOR 0 )
-set( BAYESIC_VERSION_MINOR 1 )
-set( BAYESIC_VERSION_PATCH 0 )
+set( BESIQ_VERSION_MAJOR 0 )
+set( BESIQ_VERSION_MINOR 1 )
+set( BESIQ_VERSION_PATCH 0 )
 
 if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel" )
     # Silently ignore Armadillo template warning

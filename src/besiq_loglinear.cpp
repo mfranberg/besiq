@@ -12,7 +12,7 @@
 using namespace arma;
 using namespace optparse;
 
-const std::string USAGE = "bayesic-loglinear [OPTIONS] pairs genotype_plink_prefix";
+const std::string USAGE = "besiq-loglinear [OPTIONS] pairs genotype_plink_prefix";
 const std::string DESCRIPTION = "A log-linear based test for genetic interactions.";
 
 int

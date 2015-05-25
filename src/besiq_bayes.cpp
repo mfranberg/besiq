@@ -13,7 +13,7 @@
 using namespace arma;
 using namespace optparse;
 
-const std::string USAGE = "bayesic-bayes [OPTIONS] pairs genotype_plink_prefix";
+const std::string USAGE = "besiq-bayes [OPTIONS] pairs genotype_plink_prefix";
 const std::string DESCRIPTION = "Bayesian inference of genetic interactions.";
 
 int

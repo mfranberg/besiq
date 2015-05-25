@@ -33,7 +33,7 @@ struct command g_commands[] =
 
 void print_help()
 {
-    printf( "Usage: bayesic COMMAND [ARGS]...\n\n" );
+    printf( "Usage: besiq COMMAND [ARGS]...\n\n" );
     printf( "  A collection of tools for inferring genetic interactions\n" );
     printf( "  that include generation of pairs to test, different\n" );
     printf( "  tests for GxG and GxE interaction, multiple testing\n" );
@@ -143,22 +143,22 @@ int main(int argc, char *argv[])
 
     if( !find_command( argv[ 1 ] ) )
     {
-        fprintf( stderr, "bayesic: error: No such command %s.\n", argv[ 1 ] );
+        fprintf( stderr, "besiq: error: No such command %s.\n", argv[ 1 ] );
         exit( 1 );
     }
 
     std::string cmd_path( argv[ 0 ] );
     std::string cmd_dir = dirname( cmd_path );
-    std::string new_cmd_path = cmd_dir + "bayesic-" + std::string( argv[ 1 ] );
+    std::string new_cmd_path = cmd_dir + "besiq-" + std::string( argv[ 1 ] );
     if( cmd_dir == "" )
     {
-        new_cmd_path = find_executable_in_path( "bayesic-" + std::string( argv[ 1 ] ) );
+        new_cmd_path = find_executable_in_path( "besiq-" + std::string( argv[ 1 ] ) );
     }
 
     argv[ 1 ] = strdup( new_cmd_path.c_str( ) );
     if( execve( new_cmd_path.c_str( ), &argv[ 1 ], environ ) == -1 )
     {
-        fprintf( stderr, "bayesic: error: Could not find executable %s.\n", new_cmd_path.c_str( ) );
+        fprintf( stderr, "besiq: error: Could not find executable %s.\n", new_cmd_path.c_str( ) );
         exit( 1 );
     }
 }
