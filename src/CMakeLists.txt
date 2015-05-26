@@ -42,7 +42,10 @@ target_link_libraries( besiq-view libcpp-argparse libbesiq )
 add_executable( besiq-correct besiq_correct.cpp )
 target_link_libraries( besiq-correct libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
+add_executable( besiq-imputed besiq_imputed.cpp )
+target_link_libraries( besiq-imputed libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+
 INSTALL( TARGETS besiq besiq-stagewise besiq-bayes besiq-caseonly
     besiq-glm besiq-scaleinv besiq-loglinear besiq-wald besiq-env
-    besiq-pairs besiq-view besiq-correct DESTINATION bin )
+    besiq-pairs besiq-view besiq-correct besiq-imputed DESTINATION bin )
 

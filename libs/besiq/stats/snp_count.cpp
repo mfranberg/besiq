@@ -100,19 +100,22 @@ compute_maf(const snp_row &row)
 float
 compute_real_maf(const snp_row &row)
 {
-    arma::vec counts = zeros<vec>( 3 );
+    unsigned int n = 0;
+    float dose = 0.0;
+
     for(int i = 0; i < row.size( ); i++)
     {
         if( row[ i ] != 3 )
         {
-            counts[ row[ i ] ] += 1.0;
+            dose += row[ i ];
+            n += 1;
         }
     }
 
-    unsigned int total_count = sum( counts );
-    if( total_count != 0 )
+    if( n != 0 )
     {
-        return ( counts[ 1 ] + 2.0 * counts[ 2 ] ) / ( 2.0 * total_count );
+        float maf = dose / ( 2 * n );
+        return std::min( maf, 1 - maf );
     }
     else
     {
