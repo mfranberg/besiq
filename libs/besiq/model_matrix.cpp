@@ -192,6 +192,62 @@ factor_matrix::update_matrix(const snp_row &row1, const snp_row &row2, arma::uve
     
 }
 
+noia_matrix::noia_matrix(const arma::mat &cov, size_t n)
+    : general_matrix( cov, n, 5, 9 )
+{
+}
+
+void
+noia_matrix::update_matrix(const snp_row &row1, const snp_row &row2, arma::uvec &missing)
+{
+    for(int i = 0; i < row1.size( ); i++)
+    {
+        if( row1[ i ] != 3 && row2[ i ] != 3 && missing[ i ] == 0 )
+        {
+            double a1 = row1[ i ] - 1;
+            double a2 = row2[ i ] - 1;
+            double d1 = row1[ i ] == 1 ? 1.0 : 0.0;
+            double d2 = row2[ i ] == 1 ? 1.0 : 0.0;
+            double aa = a1 * a2;
+            double ad = a1 * d2;
+            double da = d1 * a2;
+            double dd = d1 * d2;
+
+            m_alt( i, 0 ) = a1;
+            m_alt( i, 1 ) = a2;
+            m_alt( i, 2 ) = d1;
+            m_alt( i, 3 ) = d2;
+            m_alt( i, 4 ) = a1 * a2;
+            m_alt( i, 5 ) = a1 * d2;
+            m_alt( i, 6 ) = d1 * a2;
+            m_alt( i, 7 ) = d1 * d2;
+
+            m_null( i, 0 ) = a1;
+            m_null( i, 1 ) = a2;
+            m_null( i, 2 ) = d1;
+            m_null( i, 3 ) = d2;
+        }
+        else
+        {
+            m_alt( i, 0 ) = 0.0;
+            m_alt( i, 1 ) = 0.0;
+            m_alt( i, 2 ) = 0.0;
+            m_alt( i, 3 ) = 0.0;
+            m_alt( i, 4 ) = 0.0;
+            m_alt( i, 5 ) = 0.0;
+            m_alt( i, 6 ) = 0.0;
+            m_alt( i, 7 ) = 0.0;
+            
+            m_null( i, 0 ) = 0.0;
+            m_null( i, 1 ) = 0.0;
+            m_null( i, 2 ) = 0.0;
+            m_null( i, 3 ) = 0.0;
+            missing[ i ] = 1;
+        }
+    }
+    
+}
+
 
 model_matrix *
 make_model_matrix(const std::string &type, const arma::mat &cov, size_t n)
@@ -207,6 +263,10 @@ make_model_matrix(const std::string &type, const arma::mat &cov, size_t n)
     if( type == "factor" )
     {
         return new factor_matrix( cov, n );
+    }
+    if( type == "noia" )
+    {
+        return new noia_matrix( cov, n );
     }
     else
     {

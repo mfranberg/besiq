@@ -24,12 +24,12 @@ main(int argc, char *argv[])
  
     char const* const model_choices[] = { "binomial", "normal" };
     char const* const link_choices[] = { "logit", "logc", "odds", "identity", "log" };
-    char const* const factor_choices[] = { "factor", "additive", "tukey" };
+    char const* const factor_choices[] = { "factor", "additive", "tukey", "noia" };
 
     OptionGroup group = OptionGroup( parser, "Options for glm", "These options will change the behavior of the glm model." );
     group.add_option( "-m", "--model" ).choices( &model_choices[ 0 ], &model_choices[ 2 ] ).metavar( "model" ).help( "The model to use for the phenotype, 'binomial' or 'normal', default = 'binomial'." ).set_default( "binomial" );
     group.add_option( "-l", "--link-function" ).choices( &link_choices[ 0 ], &link_choices[ 5 ] ).metavar( "link" ).help( "The link function, or scale, that is used for the penetrance: 'logit' log(p/(1-p)), 'logc' log(1 - p), 'odds' p/(1-p), 'identity' p, 'log' log(p)." );
-    group.add_option( "-f", "--factor" ).choices( &factor_choices[ 0 ], &factor_choices[ 3 ] ).help( "Determines how to code the SNPs, in 'factor' no order of the alleles is assumed, in 'additive' the SNPs are coded as the number of minor alleles, in 'tukey' the coding is the same as factor except that a single parameter for the interaction is used." ).set_default( "factor" );
+    group.add_option( "-f", "--factor" ).choices( &factor_choices[ 0 ], &factor_choices[ 4 ] ).help( "Determines how to code the SNPs, in 'factor' no order of the alleles is assumed, in 'additive' the SNPs are coded as the number of minor alleles, in 'tukey' the coding is the same as factor except that a single parameter for the interaction is used, 'noia' the model is divided into additive and dominance interactions." ).set_default( "factor" );
     parser.add_option_group( group );
 
     Values options = parser.parse_args( argc, argv );

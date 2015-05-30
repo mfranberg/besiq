@@ -64,6 +64,13 @@ public:
     void update_matrix(const snp_row &row1, const snp_row &row2, arma::uvec &missing);
 };
 
+class noia_matrix : public general_matrix
+{
+public:
+    noia_matrix(const arma::mat &cov, size_t n);
+    void update_matrix(const snp_row &row1, const snp_row &row2, arma::uvec &missing);
+};
+
 model_matrix *make_model_matrix(const std::string &type, const arma::mat &cov, size_t n);
 
 #endif /* __MODEL_MATRIX_H__ */
