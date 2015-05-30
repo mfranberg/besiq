@@ -24,6 +24,9 @@ target_link_libraries( besiq-glm common_options libdcdf libbesiq libglm libplink
 add_executable( besiq-scaleinv besiq_scaleinv.cpp )
 target_link_libraries( besiq-scaleinv common_options libdcdf libbesiq libglm libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
+add_executable( besiq-separate besiq_separate.cpp )
+target_link_libraries( besiq-separate common_options libdcdf libbesiq libglm libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+
 add_executable( besiq-loglinear besiq_loglinear.cpp )
 target_link_libraries( besiq-loglinear common_options libdcdf libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 

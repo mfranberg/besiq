@@ -248,6 +248,58 @@ noia_matrix::update_matrix(const snp_row &row1, const snp_row &row2, arma::uvec 
     
 }
 
+separate_matrix::separate_matrix(const arma::mat &cov, size_t n, separate_mode_t mode)
+    : general_matrix( cov, n, 3, 4 )
+{
+    if( mode == DOM_DOM )
+    {
+        m_snp1_threshold = m_snp2_threshold = 1;
+    }
+    else if( mode == REC_DOM )
+    {
+        m_snp1_threshold = 2;
+        m_snp2_threshold = 1;
+    }
+    else if( mode == DOM_REC )
+    {
+        m_snp1_threshold = 1;
+        m_snp2_threshold = 2;
+    }
+    else if( mode == REC_REC )
+    {
+        m_snp1_threshold = m_snp2_threshold = 2;
+    }
+}
+
+void
+separate_matrix::update_matrix(const snp_row &row1, const snp_row &row2, arma::uvec &missing)
+{
+    for(int i = 0; i < row1.size( ); i++)
+    {
+        if( row1[ i ] != 3 && row2[ i ] != 3 && missing[ i ] == 0 )
+        {
+            double snp1 = ( row1[ i ] >= m_snp1_threshold ) ? 1.0 : 0.0;
+            double snp2 = ( row2[ i ] >= m_snp2_threshold ) ? 1.0 : 0.0;
+
+            m_alt( i, 0 ) = snp1;
+            m_alt( i, 1 ) = snp2;
+            m_alt( i, 2 ) = snp1 * snp2;
+
+            m_null( i, 0 ) = snp1;
+            m_null( i, 1 ) = snp2;
+        }
+        else
+        {
+            m_alt( i, 0 ) = 0.0;
+            m_alt( i, 1 ) = 0.0;
+            m_alt( i, 2 ) = 0.0;
+            
+            m_null( i, 0 ) = 0.0;
+            m_null( i, 1 ) = 0.0;
+            missing[ i ] = 1;
+        }
+    }
+}
 
 model_matrix *
 make_model_matrix(const std::string &type, const arma::mat &cov, size_t n)
