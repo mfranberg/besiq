@@ -64,6 +64,31 @@ public:
     void update_matrix(const snp_row &row1, const snp_row &row2, arma::uvec &missing);
 };
 
+class noia_matrix : public general_matrix
+{
+public:
+    noia_matrix(const arma::mat &cov, size_t n);
+    void update_matrix(const snp_row &row1, const snp_row &row2, arma::uvec &missing);
+};
+
+typedef enum 
+{
+    DOM_DOM = 0,
+    REC_DOM = 1,
+    DOM_REC = 2,
+    REC_REC = 3
+} separate_mode_t;
+
+class separate_matrix : public general_matrix
+{
+public:
+    separate_matrix(const arma::mat &cov, size_t n, separate_mode_t mode);
+    void update_matrix(const snp_row &row1, const snp_row &row2, arma::uvec &missing);
+private:
+    int m_snp1_threshold;
+    int m_snp2_threshold;
+};
+
 model_matrix *make_model_matrix(const std::string &type, const arma::mat &cov, size_t n);
 
 #endif /* __MODEL_MATRIX_H__ */
