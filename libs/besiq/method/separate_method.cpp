@@ -36,7 +36,7 @@ separate_method::init()
 
 void separate_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
-    unsigned long long num_samples = get_data( )->missing.n_elem - sum( get_data( )->missing );
+    size_t num_samples = get_data( )->missing.n_elem - sum( get_data( )->missing );
     
     for(int i = 0; i < m_model_matrix.size( ); i++)
     {
@@ -47,7 +47,7 @@ void separate_method::run(const snp_row &row1, const snp_row &row2, float *outpu
 
         glm_info null_info;
         glm_fit( m_model_matrix[ i ]->get_null( ), get_data( )->phenotype, missing, *m_model, null_info );
-        num_samples = std::min( missing.n_elem - sum( missing ), num_samples );
+        num_samples = std::min( (size_t) (missing.n_elem - sum( missing )), num_samples );
 
         if( !null_info.success || !alt_info.success )
         {
