@@ -54,6 +54,31 @@ norm_cdf(double x, double mu, double sd)
 }
 
 double
+f_cdf(double x, double d1, double d2)
+{
+    int which = 1;
+    double p;
+    double q;
+    double x_f = x;
+    double d1_f = d1;
+    double d2_f = d2;
+
+    int status;
+    double bound;
+
+    cdff( &which, &p, &q, &x_f, &d1_f, &d2_f, &status, &bound );
+
+    if( status == 0 )
+    {
+        return p;
+    }
+    else
+    {
+        throw bad_domain_value( x );
+    }
+}
+
+double
 gamma_cdf_inv(double p, double a, double b)
 {
     int which = 2;

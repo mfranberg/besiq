@@ -33,6 +33,9 @@ target_link_libraries( besiq-loglinear common_options libdcdf libbesiq libplink 
 add_executable( besiq-wald besiq_wald.cpp )
 target_link_libraries( besiq-wald common_options libdcdf libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
+add_executable( besiq-var besiq_var.cpp )
+target_link_libraries( besiq-var common_options libdcdf libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+
 add_executable( besiq-env besiq_env.cpp )
 target_link_libraries( besiq-env libdcdf libglm libbesiq libplink libcpp-argparse libgzstream ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 

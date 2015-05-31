@@ -64,7 +64,7 @@ parse_common_options(optparse::Values &options, const std::vector<std::string> &
     if( options.is_set( "pheno" ) )
     {
         std::ifstream phenotype_file( options[ "pheno" ].c_str( ) );
-        data->phenotype = parse_phenotypes( phenotype_file, data->missing, order );
+        data->phenotype = parse_phenotypes( phenotype_file, data->missing, order, options[ "mpheno" ] );
     }
     else
     {

@@ -67,6 +67,18 @@ double chi_square_cdf(double x, unsigned int df);
 double norm_cdf(double x, double mu, double sd);
 
 /**
+ * Computes the probability Pr[ X < x ] where X has a F-
+ * distribution.
+ *
+ * @param x Observed normal value.
+ * @param d1 The number of groups.
+ * @param d2 The degrees of freedom.
+ *
+ * @return The probability Pr[ X < x ].
+ */
+double f_cdf(double x, double d1, double d2);
+
+/**
  * Computes f^-1(p) where f^-1 is the inverse of the cumulative
  * distribution function for a gamma distributed variable.
  *
