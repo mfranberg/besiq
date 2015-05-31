@@ -22,8 +22,9 @@ public:
      *
      * @param data Additional data required by all methods, such as
      *             covariates.
+     * @param unequal_var If true, estimates a separate variance for each cell.
      */
-    wald_lm_method(method_data_ptr data);
+    wald_lm_method(method_data_ptr data, bool unequal_var = false);
     
     /**
      * @see method_type::init.
@@ -39,6 +40,11 @@ private:
      * Weight for each sample.
      */
     arma::vec m_weight;
+
+    /**
+     * Determines whether variances should be estimated separately.
+     */
+    bool m_unequal_var;
 };
 
 #endif /* End of __WALD_LM_METHOD_H__ */

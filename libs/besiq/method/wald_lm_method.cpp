@@ -2,8 +2,9 @@
 #include <besiq/method/wald_lm_method.hpp>
 #include <besiq/stats/snp_count.hpp>
 
-wald_lm_method::wald_lm_method(method_data_ptr data)
-: method_type::method_type( data )
+wald_lm_method::wald_lm_method(method_data_ptr data, bool unequal_var)
+: method_type::method_type( data ),
+  m_unequal_var( unequal_var )
 {
     m_weight = arma::ones<arma::vec>( data->phenotype.n_elem );
 }
@@ -50,18 +51,26 @@ wald_lm_method::run(const snp_row &row1, const snp_row &row2, float *output)
     }
 
     /* Calculate residual and estimate sigma^2 */
-    double residual_sum = 0.0;
+    arma::mat resid = arma::zeros<arma::mat>( 3, 3 );
     arma::mat mu = arma::zeros<arma::mat>( 3, 3 );
     for(int i = 0; i < 3; i++)
     {
         for(int j = 0; j < 3; j++)
         {
-            double deviance = ( suf2( i, j ) - suf( i, j ) * suf( i, j ) / n( i, j ) );
-            residual_sum += deviance;
+            resid( i, j ) = ( suf2( i, j ) - suf( i, j ) * suf( i, j ) / n( i, j ) );
             mu( i, j ) = suf( i, j ) / n( i, j );
         }
     }
-    double sigma2 = residual_sum / ( num_samples - 9 );
+
+    arma::mat sigma2 = arma::zeros<arma::mat>( 3, 3 );
+    if( !m_unequal_var )
+    {
+        sigma2 = sigma2 + arma::accu( resid ) / ( num_samples - 9 );
+    }
+    else
+    {
+        sigma2 = resid / ( n - 9 );
+    }
 
     /* Fisher information and betas */ 
     arma::vec beta = arma::zeros<arma::vec>( 4 );
@@ -83,7 +92,7 @@ wald_lm_method::run(const snp_row &row1, const snp_row &row2, float *output)
             int same_col = c_j == o_j;
             int in_cell = i == j;
 
-            I( i, j ) = sigma2 * ( 1 / n( 0, 0 ) + same_col / n( 0, c_j ) + same_row / n( c_i, 0 ) + in_cell / n( c_i, c_j ) );
+            I( i, j ) = ( sigma2( 0, 0 ) / n( 0, 0 ) + same_col * sigma2( 0, c_j ) / n( 0, c_j ) + same_row * sigma2( c_i, 0 ) / n( c_i, 0 ) + in_cell * sigma2( c_i, c_j ) / n( c_i, c_j ) );
         }
     }
 
