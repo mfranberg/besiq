@@ -84,20 +84,19 @@ caseonly_method::compute_r2(const snp_row &row1, const snp_row &row2, float *out
         }
     }
     
-    float umean = dot( u, snp1 ) / N;
-    float vmean = dot( v, snp2 ) / N;
-    
-    double num = 0.0;
-    double denom = dot( snp1, pow( u - umean, 2 ) ) * dot( snp2, pow( v - vmean, 2 ) );
+    double T = 0.0;
+    double m = 0.0;
+    double var = (dot( u % u, snp1 ) - pow( dot( u, snp1 ), 2 ) / N) * (dot( v % v, snp2 ) - pow( dot( v, snp2 ), 2 ) / N );
     for(int i = 0; i < 3; i++)
     {
         for(int j = 0; j < 3; j++)
         {
-            num += ( u[ i ] - umean ) * ( v[ j ] - vmean ) * snp_snp[ 3 * i + j ];
+            T += u[ i ] * v[ j ] * snp_snp[ 3 * i + j ];
+            m += u[ i ] * v[ j ] * snp1[ i ] * snp2[ j ] / N;
         }
     }
 
-    double R2 = (N-1) * (num * num / denom);
+    double R2 = pow( T - m, 2 ) / ( var / N );
  
     output[ 0 ] = R2;
     output[ 1 ] = 1.0 - chi_square_cdf( R2, 1 );
