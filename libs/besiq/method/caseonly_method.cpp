@@ -167,20 +167,36 @@ caseonly_method::compute_contrast(const snp_row &row1, const snp_row &row2, floa
     double p_b_case = ( 2 * (counts( 2 , 1 ) + counts( 5 , 1 ) + counts( 8 , 1 ) ) + counts( 1 , 1 ) + counts( 4 , 1 ) + counts( 7 , 1 ) ) / ( 2 * N_cases );
     double p_b_control = ( 2 * (counts( 2 , 0 ) + counts( 5 , 0 ) + counts( 8 , 0 ) ) + counts( 1 , 0 ) + counts( 4 , 0 ) + counts( 7 , 0 ) ) / ( 2 * N_controls );
 
-    double p_ab_case = ( 0.5 * counts( 4, 1 ) + counts( 5, 1 ) + counts( 7, 1 ) + 2 * counts( 8, 1 ) ) / ( 2 * N_cases );
-    double p_ab_control = ( 0.5 * counts( 4, 0 ) + counts( 5, 0 ) + counts( 7, 0 ) + 2 * counts( 8, 0 ) ) / ( 2 * N_controls );
-
-    double delta_case = ( p_ab_case - p_a_case * p_b_case );
-    double delta_control = ( p_ab_control - p_a_control * p_b_control );
+    /* Unbiased estimate of delta case and control by 0.5 times the covariance */
+    double delta_case = (1.0 / (2*(N_cases - 1)) ) * ( 
+                        counts( 0, 1 ) * ( ( 0 - 2*p_a_case ) * ( 0 - 2*p_b_case ) ) +
+                        counts( 1, 1 ) * ( ( 0 - 2*p_a_case ) * ( 1 - 2*p_b_case ) ) +
+                        counts( 2, 1 ) * ( ( 0 - 2*p_a_case ) * ( 2 - 2*p_b_case ) ) +
+                        counts( 3, 1 ) * ( ( 1 - 2*p_a_case ) * ( 0 - 2*p_b_case ) ) +
+                        counts( 4, 1 ) * ( ( 1 - 2*p_a_case ) * ( 1 - 2*p_b_case ) ) +
+                        counts( 5, 1 ) * ( ( 1 - 2*p_a_case ) * ( 2 - 2*p_b_case ) ) +
+                        counts( 6, 1 ) * ( ( 2 - 2*p_a_case ) * ( 0 - 2*p_b_case ) ) +
+                        counts( 7, 1 ) * ( ( 2 - 2*p_a_case ) * ( 1 - 2*p_b_case ) ) +
+                        counts( 8, 1 ) * ( ( 2 - 2*p_a_case ) * ( 2 - 2*p_b_case ) ) );
+    double delta_control = (1.0 / (2*(N_controls - 1)) ) * ( 
+                        counts( 0, 0 ) * ( ( 0 - 2*p_a_control ) * ( 0 - 2*p_b_control ) ) +
+                        counts( 1, 0 ) * ( ( 0 - 2*p_a_control ) * ( 1 - 2*p_b_control ) ) +
+                        counts( 2, 0 ) * ( ( 0 - 2*p_a_control ) * ( 2 - 2*p_b_control ) ) +
+                        counts( 3, 0 ) * ( ( 1 - 2*p_a_control ) * ( 0 - 2*p_b_control ) ) +
+                        counts( 4, 0 ) * ( ( 1 - 2*p_a_control ) * ( 1 - 2*p_b_control ) ) +
+                        counts( 5, 0 ) * ( ( 1 - 2*p_a_control ) * ( 2 - 2*p_b_control ) ) +
+                        counts( 6, 0 ) * ( ( 2 - 2*p_a_control ) * ( 0 - 2*p_b_control ) ) +
+                        counts( 7, 0 ) * ( ( 2 - 2*p_a_control ) * ( 1 - 2*p_b_control ) ) +
+                        counts( 8, 0 ) * ( ( 2 - 2*p_a_control ) * ( 2 - 2*p_b_control ) ) );
 
     double sigma2_case = ( p_a_case * (1 - p_a_case) * p_b_case * (1 - p_b_case ) ) / N_cases; 
     double sigma2_control = ( p_a_control * (1 - p_a_control) * p_b_control * (1 - p_b_control ) ) / N_controls;
-    double sigma_diff = sqrt( sigma2_case + sigma2_control );
+    double sigma2_diff = sigma2_case + sigma2_control;
 
-    double z = ( delta_case - delta_control ) / (0.5*sigma_diff);
+    double chi2 = pow( delta_case - delta_control, 2 ) / ( sigma2_diff );
     
-    double cdf = 1 - norm_cdf( z, 0.0, 1.0 );
+    double p = 1 - chi_square_cdf( chi2, 1 );
 
-    output[ 0 ] = z;
-    output[ 1 ] = 2*std::min( cdf, 1 - cdf );
+    output[ 0 ] = delta_case - delta_control;
+    output[ 1 ] = p;
 }
