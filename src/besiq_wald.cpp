@@ -23,6 +23,7 @@ main(int argc, char *argv[])
     
     char const* const model_choices[] = { "binomial", "normal" };
     parser.add_option( "-m", "--model" ).choices( &model_choices[ 0 ], &model_choices[ 2 ] ).metavar( "model" ).help( "The model to use for the phenotype, 'binomial' or 'normal', default = 'binomial'." ).set_default( "binomial" );
+    parser.add_option( "-u", "--unequal-var" ).action( "store_true" ).help( "One variance is estimated for each genotype in the linear model." ).set_default( false );
     
     Values options = parser.parse_args( argc, argv );
     if( parser.args( ).size( ) != 2 )
@@ -39,7 +40,7 @@ main(int argc, char *argv[])
     }
     else if( options[ "model" ] == "normal" )
     {
-        m = new wald_lm_method( parsed_data->data );
+        m = new wald_lm_method( parsed_data->data, (bool) options.get( "unequal_var" ) );
     }
     
     run_method( *m, parsed_data->genotypes, *parsed_data->pairs, *parsed_data->result_file );
