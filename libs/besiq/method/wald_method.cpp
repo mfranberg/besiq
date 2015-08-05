@@ -15,6 +15,7 @@ wald_method::init()
 
     header.push_back( "LR" );
     header.push_back( "P" );
+    header.push_back( "df" );
 
     return header;
 }
@@ -22,60 +23,103 @@ wald_method::init()
 void
 wald_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
-    arma::mat n = joint_count( row1, row2, get_data( )->phenotype, m_weight );
-    if( arma::min( arma::min( n ) ) < METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
+    arma::mat n0 = arma::zeros<arma::mat>( 3, 3 );
+    arma::mat n1 = arma::zeros<arma::mat>( 3, 3 );
+    for(int i = 0; i < row1.size( ); i++)
     {
-        return;
-    }
-
-    set_num_ok_samples( (size_t) arma::accu( n ) );
-
-    arma::vec log_or0( 4 );
-    arma::vec log_or1( 4 );
-    arma::mat I0( 4, 4 );
-    arma::mat I1( 4, 4 );
-    int elem = 0;
-    for(int i = 1; i <= 2; i++)
-    {
-        for(int j = 1; j <= 2; j++)
+        if( row1[ i ] == 3 || row2[ i ] == 3 || get_data( )->missing[ i ] == 1 )
         {
-            log_or0[ elem ] = log( n( i*3 + j, 0 ) * n( 0*3 + 0, 0 ) / n( 0*3 + j, 0 ) / n( i*3 + 0, 0 ) );
-            log_or1[ elem ] = log( n( i*3 + j, 1 ) * n( 0*3 + 0, 1 ) / n( 0*3 + j, 1 ) / n( i*3 + 0, 1 ) );
-            I0( elem, elem ) = 1.0 / n( i*3 + j, 0 ) + 1.0 / n( 0*3 + 0, 0 ) + 1.0 / n( 0*3 + j, 0 ) + 1.0 / n( i*3 + 0, 0 );
-            I1( elem, elem ) = 1.0 / n( i*3 + j, 1 ) + 1.0 / n( 0*3 + 0, 1 ) + 1.0 / n( 0*3 + j, 1 ) + 1.0 / n( i*3 + 0, 1 );
+            continue;
+        }
 
-            elem++;
+        unsigned int pheno = get_data( )->phenotype[ i ];
+        if( pheno == 0 )
+        {
+            n0( row1[ i ], row2[ i ] ) += 1;
+        }
+        else if( pheno == 1 )
+        {
+            n1( row1[ i ], row2[ i ] ) += 1;
         }
     }
 
-    I0(0, 1) = 1.0 / n( 0*3 + 0, 0 ) + 1.0 / n( 1*3 + 0, 0 );
-    I1(0, 1) = 1.0 / n( 0*3 + 0, 1 ) + 1.0 / n( 1*3 + 0, 1 );
+    arma::mat eta( 3, 3 );
+    double num_samples = 0.0;
+    for(int i = 0; i < 3; i++)
+    {
+        for(int j = 0; j < 3; j++)
+        {
+            if( n0( i, j ) < METHOD_SMALLEST_CELL_SIZE_BINOMIAL || n1( i, j ) < METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
+            {
+                continue;
+            }
 
-    I0(0, 2) = 1.0 / n( 0*3 + 0, 0 ) + 1.0 / n( 0*3 + 1, 0 );
-    I1(0, 2) = 1.0 / n( 0*3 + 0, 1 ) + 1.0 / n( 0*3 + 1, 1 ); 
+            eta( i, j ) = log( n1( i, j ) / n0( i, j ) );
+            num_samples += n1( i, j ) + n0( i, j );
+        }
+    }
 
-    I0(0, 3) = 1.0 / n( 0*3 + 0, 0 );
-    I1(0, 3) = 1.0 / n( 0*3 + 0, 1 ); 
-    
-    I0(1, 2) = I0(0, 3); 
-    I1(1, 2) = I1(0, 3); 
+    /* Find valid parameters and estimate beta */
+    int num_valid = 0;
+    arma::uvec valid( 4 );
+    arma::vec beta( 4 );
+    int i_map[] = { 1, 1, 2, 2 };
+    int j_map[] = { 1, 2, 1, 2 };
+    for(int i = 0; i < 4; i++)
+    {
+        int c_i = i_map[ i ];
+        int c_j = j_map[ i ];
+        if( n0( 0, 0 ) >= METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+            n0( 0, c_j ) >= METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+            n0( c_i, 0 ) >= METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+            n0( c_i, c_j) >= METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+            n1( 0, 0 ) >= METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+            n1( 0, c_j ) >= METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+            n1( c_i, 0 ) >= METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+            n1( c_i, c_j) >= METHOD_SMALLEST_CELL_SIZE_NORMAL )
+        {
+            valid[ num_valid ] = i;
+            beta[ num_valid ] = eta( 0, 0 ) - eta( 0, c_j ) - eta( c_i, 0 ) + eta( c_i, c_j );
+            num_valid++;
+        }
+    }
+    valid.resize( num_valid );
+    beta.resize( num_valid );
 
-    I0(1, 3) = 1.0 / n( 0*3 + 0, 0 ) + 1.0 / n( 0*3 + 2, 0 );
-    I1(1, 3) = 1.0 / n( 0*3 + 0, 1 ) + 1.0 / n( 0*3 + 2, 1 ); 
+    /* Construct covariance matrix */
+    arma::mat C( num_valid, num_valid );
+    for(int iv = 0; iv < num_valid; iv++)
+    {
+        int i = valid[ iv ];
+        int c_i = i_map[ i ];
+        int c_j = j_map[ i ];
 
-    I0(2, 3) = 1.0 / n( 0*3 + 0, 0 ) + 1.0 / n( 2*3 + 0, 0 );
-    I1(2, 3) = 1.0 / n( 0*3 + 0, 1 ) + 1.0 / n( 2*3 + 0, 1 );
+        for(int jv = 0; jv < num_valid; jv++)
+        {
+            int j = valid[ jv ];
+            int o_i = i_map[ j ];
+            int o_j = j_map[ j ];
 
-    arma::vec log_diff = log_or0 - log_or1;
-    arma::mat I = symmatu( I0 ) + symmatu( I1 );
-    
-    arma::mat Iinv( 4, 4 );
-    if( !inv( Iinv, I ) )
+            int same_row = c_i == o_i;
+            int same_col = c_j == o_j;
+            int in_cell = i == j;
+
+            C( iv, jv ) = 1.0 / n0( 0, 0 ) + same_col / n0( 0, c_j ) + same_row / n0( c_i, 0 ) + in_cell / n0( c_i, c_j );
+            C( iv, jv ) += 1.0 / n1( 0, 0 ) + same_col / n1( 0, c_j ) + same_row / n1( c_i, 0 ) + in_cell / n1( c_i, c_j );
+        }
+    }
+
+    arma::mat Cinv( num_valid, num_valid );
+    if( !inv( Cinv, C ) )
     {
         return;
     }
     
-    double chi = dot( log_diff, Iinv * log_diff );
+    set_num_ok_samples( (size_t)num_samples );
+    
+    /* Test if b != 0 with Wald test */
+    double chi = dot( beta, Cinv * beta );
     output[ 0 ] = chi;
-    output[ 1 ] = 1.0 - chi_square_cdf( chi, 4 );
+    output[ 1 ] = 1.0 - chi_square_cdf( chi, num_valid );
+    output[ 2 ] = valid.n_elem;
 }
