@@ -70,6 +70,11 @@ vec
 init_beta(const mat &X, const vec&y, const uvec &missing, const glm_model &model)
 {
     vec eta = model.get_link( ).eta( (y + 0.5) / 3.0 );
+    if( !model.is_binary( ) )
+    {
+        eta = model.get_link( ).eta( y );
+    }
+
     return weighted_least_squares( X, eta, ones<vec>( missing.n_elem ) - missing );
 }
 

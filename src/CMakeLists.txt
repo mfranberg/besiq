@@ -53,5 +53,6 @@ target_link_libraries( besiq-imputed libdcdf libglm libbesiq libplink libcpp-arg
 
 INSTALL( TARGETS besiq besiq-stagewise besiq-bayes besiq-caseonly
     besiq-glm besiq-scaleinv besiq-loglinear besiq-wald besiq-env
-    besiq-pairs besiq-view besiq-correct besiq-imputed DESTINATION bin )
+    besiq-pairs besiq-view besiq-correct besiq-imputed besiq-var
+    besiq-separate DESTINATION bin )
 

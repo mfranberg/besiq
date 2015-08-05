@@ -27,6 +27,7 @@ struct command g_commands[] =
     { "loglinear", "Run the log-linear method without main effects." },
     { "caseonly", "Run the case only test." },
     { "imputed", "Perform scaleinv test on imputed data from impute2." },
+    { "separate", "Code allele in REC/DOM prior to interaction analysis." },
     { "correct", "Multiple testing correction." },
     { "env", "Run a gene-environment test." },
     { NULL, NULL }

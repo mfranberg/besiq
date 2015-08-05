@@ -6,6 +6,7 @@
 
 #include <besiq/method/wald_method.hpp>
 #include <besiq/method/wald_lm_method.hpp>
+#include <besiq/method/wald_separate_method.hpp>
 #include <besiq/method/method.hpp>
 
 #include "common_options.hpp"
@@ -23,7 +24,9 @@ main(int argc, char *argv[])
     
     char const* const model_choices[] = { "binomial", "normal" };
     parser.add_option( "-m", "--model" ).choices( &model_choices[ 0 ], &model_choices[ 2 ] ).metavar( "model" ).help( "The model to use for the phenotype, 'binomial' or 'normal', default = 'binomial'." ).set_default( "binomial" );
+    parser.add_option( "-a", "--param" ).metavar( "param" ).help( "The model to use for the phenotype, 'binomial' or 'normal', default = 'binomial'." );
     parser.add_option( "-u", "--unequal-var" ).action( "store_true" ).help( "One variance is estimated for each genotype in the linear model." ).set_default( false );
+    parser.add_option( "-s", "--separate" ).action( "store_true" ).help( "Separate p-values for each beta is computed." ).set_default( false );
     
     Values options = parser.parse_args( argc, argv );
     if( parser.args( ).size( ) != 2 )
@@ -34,7 +37,11 @@ main(int argc, char *argv[])
     shared_ptr<common_options> parsed_data = parse_common_options( options, parser.args( ) );
 
     method_type *m = NULL;
-    if( options[ "model" ] == "binomial" )
+    if( (bool) options.get( "separate" ) )
+    {
+        m = new wald_separate_method( parsed_data->data, options[ "model" ] == "normal" );
+    }
+    else if( options[ "model" ] == "binomial" )
     {
         m = new wald_method( parsed_data->data );
     }

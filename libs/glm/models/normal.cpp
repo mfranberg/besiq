@@ -42,3 +42,9 @@ normal::likelihood(const arma::vec &mu, const arma::vec &y, const arma::uvec &mi
     float sigma2 = dispersion;
     return arma::as_scalar( ( -0.5*log( 2 * datum::pi ) -0.5*log( sigma2 ) - (1.0/(2*sigma2))*arma::trans( ( ( y - mu ) % ( y - mu ) ) ) ) * ( 1 - missing ) );
 }
+
+bool
+normal::is_binary() const
+{
+    return false;
+}

@@ -58,3 +58,9 @@ binomial::likelihood(const arma::vec &mu, const arma::vec &y, const arma::uvec &
 
     return loglikelihood;
 }
+
+bool
+binomial::is_binary() const
+{
+    return true;
+}

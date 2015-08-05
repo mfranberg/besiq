@@ -26,9 +26,13 @@ std::vector<std::string>
 separate_method::init()
 {
     std::vector<std::string> header;
+    header.push_back( "b_dd" );
     header.push_back( "P_dd" );
+    header.push_back( "b_rd" );
     header.push_back( "P_rd" );
+    header.push_back( "b_dr" );
     header.push_back( "P_dr" );
+    header.push_back( "b_rr" );
     header.push_back( "P_rr" );
     
     return header;
@@ -43,7 +47,7 @@ void separate_method::run(const snp_row &row1, const snp_row &row2, float *outpu
         arma::uvec missing = get_data( )->missing;
         m_model_matrix[ i ]->update_matrix( row1, row2, missing );
         glm_info alt_info;
-        glm_fit( m_model_matrix[ i ]->get_alt( ), get_data( )->phenotype, missing, *m_model, alt_info );
+        arma::vec b = glm_fit( m_model_matrix[ i ]->get_alt( ), get_data( )->phenotype, missing, *m_model, alt_info );
 
         glm_info null_info;
         glm_fit( m_model_matrix[ i ]->get_null( ), get_data( )->phenotype, missing, *m_model, null_info );
@@ -58,7 +62,8 @@ void separate_method::run(const snp_row &row1, const snp_row &row2, float *outpu
         {
             double LR = -2 * ( null_info.logl - alt_info.logl );
             double p = 1.0 - chi_square_cdf( LR, m_model_matrix[ i ]->num_df( ) );
-            output[ i ] = p;
+            output[ 2*i ] = b[ 2 ];
+            output[ 2*i + 1 ] = p;
         }
         catch(bad_domain_value &e)
         {

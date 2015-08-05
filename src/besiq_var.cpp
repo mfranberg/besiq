@@ -52,8 +52,9 @@ compute_brown_forsythe(const snp_row &row, const arma::vec &pheno, const arma::u
     double k = 3;
     arma::mat medians = compute_medians( row, pheno, missing );
 
-    if( arma::min( medians.col( 1 ) ) <= 10 )
+    if( arma::min( medians.col( 1 ) ) <= 20 )
     {
+        *N = arma::accu( medians.col( 1 ) );
         return false;
     }
     
@@ -129,21 +130,21 @@ main(int argc, char *argv[])
     }
 
 
-    std::vector<std::string> loci = genotypes->get_snp_names( );
-    std::cout << "snp\tW\tP\tN\n";
+    std::vector<pio_locus_t> loci = genotype_file->get_loci( );
+    std::cout << "chr\tpos\tsnp\tW\tP\tN\n";
     for( int i = 0; i < loci.size( ); i++)
     {
-        const snp_row &row = *genotypes->get_row( loci[ i ] );
+        const snp_row &row = *genotypes->get_row( loci[ i ].name );
         double W;
         double p;
         size_t N;
         if( compute_brown_forsythe( row, phenotypes, missing, &W, &p, &N ) )
         {
-            std::cout << loci[ i ] << "\t" << W << "\t" << p << "\t" << N << "\n";
+            std::cout << (int) loci[ i ].chromosome << "\t" << loci[ i ].bp_position << "\t"  << loci[ i ].name << "\t" << W << "\t" << p << "\t" << N << "\n";
         }
         else
         {
-            std::cout << loci[ i ] << "\t" << "NA" << "\t" << "NA" << "\t" << N << "\n";
+            std::cout << (int) loci[ i ].chromosome << "\t" << loci[ i ].bp_position << "\t" << loci[ i ].name << "\t" << "NA" << "\t" << "NA" << "\t" << N << "\n";
         }
     }
 

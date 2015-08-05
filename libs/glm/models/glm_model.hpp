@@ -108,6 +108,13 @@ public:
      * @return The log likelihood.
      */
     virtual double likelihood(const arma::vec &mu, const arma::vec &y, const arma::uvec &missing, float dispersion = 1.0) const = 0;
+
+    /**
+     * Returns true if the phenotype is binary.
+     *
+     * @return true if the phenotype is binary.
+     */
+    virtual bool is_binary() const = 0;
     
 private:
     /**
