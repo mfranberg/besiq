@@ -30,10 +30,6 @@ void
 wald_separate_method::compute_lm(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::mat n = joint_count_cont( row1, row2, get_data( )->phenotype, m_weight );
-    if( arma::min( n.col( 1 ) ) < METHOD_SMALLEST_CELL_SIZE_NORMAL )
-    {
-        return;
-    }
 
     size_t num_samples = arma::accu( n.col( 1 ) );
     set_num_ok_samples( num_samples );
@@ -48,29 +44,50 @@ wald_separate_method::compute_lm(const snp_row &row1, const snp_row &row2, float
     }
     double sigma2 = residual_sum / ( num_samples - 9 );
 
-    double b_dd = n( 0, 0 ) / n( 0, 1 ) - n( 1, 0 ) / n( 1, 1 ) - n( 3, 0 ) / n( 3, 1 ) + n( 4, 0 ) / n( 4, 1 );
-    double b_rd = n( 0, 0 ) / n( 0, 1 ) - n( 2, 0 ) / n( 2, 1 ) - n( 3, 0 ) / n( 3, 1 ) + n( 5, 0 ) / n( 5, 1 );
-    double b_dr = n( 0, 0 ) / n( 0, 1 ) - n( 1, 0 ) / n( 1, 1 ) - n( 6, 0 ) / n( 6, 1 ) + n( 7, 0 ) / n( 7, 1 );
-    double b_rr = n( 0, 0 ) / n( 0, 1 ) - n( 2, 0 ) / n( 2, 1 ) - n( 6, 0 ) / n( 6, 1 ) + n( 8, 0 ) / n( 8, 1 );
-
-    double var_dd = sigma2 * ( 1.0 / n( 0, 1 ) + 1.0 / n( 1, 1 ) + 1.0 / n( 3, 1 ) + 1.0 / n( 4, 1 ) );
-    double var_rd = sigma2 * ( 1.0 / n( 0, 1 ) + 1.0 / n( 2, 1 ) + 1.0 / n( 3, 1 ) + 1.0 / n( 5, 1 ) );
-    double var_dr = sigma2 * ( 1.0 / n( 0, 1 ) + 1.0 / n( 1, 1 ) + 1.0 / n( 6, 1 ) + 1.0 / n( 7, 1 ) );
-    double var_rr = sigma2 * ( 1.0 / n( 0, 1 ) + 1.0 / n( 2, 1 ) + 1.0 / n( 6, 1 ) + 1.0 / n( 8, 1 ) );
-   
-    double w_dd = b_dd * b_dd / var_dd;
-    double w_rd = b_rd * b_rd / var_rd;
-    double w_dr = b_dr * b_dr / var_dr;
-    double w_rr = b_rr * b_rr / var_rr;
-
-    output[ 0 ] = b_dd;
-    output[ 1 ] = 1.0 - chi_square_cdf( w_dd, 1 );
-    output[ 2 ] = b_rd;
-    output[ 3 ] = 1.0 - chi_square_cdf( w_rd, 1 );
-    output[ 4 ] = b_dr;
-    output[ 5 ] = 1.0 - chi_square_cdf( w_dr, 1 );
-    output[ 6 ] = b_rr;
-    output[ 7 ] = 1.0 - chi_square_cdf( w_rr, 1 );
+    if( n( 0, 1 ) > METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+        n( 1, 1 ) > METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+        n( 3, 1 ) > METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+        n( 4, 1 ) > METHOD_SMALLEST_CELL_SIZE_NORMAL )
+    {
+        double b_dd = n( 0, 0 ) / n( 0, 1 ) - n( 1, 0 ) / n( 1, 1 ) - n( 3, 0 ) / n( 3, 1 ) + n( 4, 0 ) / n( 4, 1 );
+        double var_dd = sigma2 * ( 1.0 / n( 0, 1 ) + 1.0 / n( 1, 1 ) + 1.0 / n( 3, 1 ) + 1.0 / n( 4, 1 ) );
+        double w_dd = b_dd * b_dd / var_dd;
+        output[ 0 ] = b_dd;
+        output[ 1 ] = 1.0 - chi_square_cdf( w_dd, 1 );
+    }
+    if( n( 0, 1 ) > METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+        n( 2, 1 ) > METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+        n( 3, 1 ) > METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+        n( 5, 1 ) > METHOD_SMALLEST_CELL_SIZE_NORMAL )
+    {
+        double b_rd = n( 0, 0 ) / n( 0, 1 ) - n( 2, 0 ) / n( 2, 1 ) - n( 3, 0 ) / n( 3, 1 ) + n( 5, 0 ) / n( 5, 1 );
+        double var_rd = sigma2 * ( 1.0 / n( 0, 1 ) + 1.0 / n( 2, 1 ) + 1.0 / n( 3, 1 ) + 1.0 / n( 5, 1 ) );
+        double w_rd = b_rd * b_rd / var_rd;
+        output[ 2 ] = b_rd;
+        output[ 3 ] = 1.0 - chi_square_cdf( w_rd, 1 );
+    }
+    if( n( 0, 1 ) > METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+        n( 1, 1 ) > METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+        n( 6, 1 ) > METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+        n( 7, 1 ) > METHOD_SMALLEST_CELL_SIZE_NORMAL )
+    {
+        double b_dr = n( 0, 0 ) / n( 0, 1 ) - n( 1, 0 ) / n( 1, 1 ) - n( 6, 0 ) / n( 6, 1 ) + n( 7, 0 ) / n( 7, 1 );
+        double var_dr = sigma2 * ( 1.0 / n( 0, 1 ) + 1.0 / n( 1, 1 ) + 1.0 / n( 6, 1 ) + 1.0 / n( 7, 1 ) );
+        double w_dr = b_dr * b_dr / var_dr;
+        output[ 4 ] = b_dr;
+        output[ 5 ] = 1.0 - chi_square_cdf( w_dr, 1 );
+    }
+    if( n( 0, 1 ) > METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+        n( 2, 1 ) > METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+        n( 6, 1 ) > METHOD_SMALLEST_CELL_SIZE_NORMAL &&
+        n( 8, 1 ) > METHOD_SMALLEST_CELL_SIZE_NORMAL )
+    {
+        double b_rr = n( 0, 0 ) / n( 0, 1 ) - n( 2, 0 ) / n( 2, 1 ) - n( 6, 0 ) / n( 6, 1 ) + n( 8, 0 ) / n( 8, 1 );
+        double var_rr = sigma2 * ( 1.0 / n( 0, 1 ) + 1.0 / n( 2, 1 ) + 1.0 / n( 6, 1 ) + 1.0 / n( 8, 1 ) );
+        double w_rr = b_rr * b_rr / var_rr;
+        output[ 6 ] = b_rr;
+        output[ 7 ] = 1.0 - chi_square_cdf( w_rr, 1 );
+    }
 }
 
 void
@@ -84,29 +101,66 @@ wald_separate_method::compute_binomial(const snp_row &row1, const snp_row &row2,
 
     set_num_ok_samples( (size_t) arma::accu( n ) );
 
-    double b_dd = log( n( 0, 1 ) / n( 0, 0 ) ) - log( n( 1, 1 ) / n( 1, 0 ) ) - log( n( 3, 1 ) / n( 3, 0 ) ) + log( n( 4, 1 ) / n( 4, 0 ) );
-    double b_rd = log( n( 0, 1 ) / n( 0, 0 ) ) - log( n( 2, 1 ) / n( 2, 0 ) ) - log( n( 3, 1 ) / n( 3, 0 ) ) + log( n( 5, 1 ) / n( 5, 0 ) );
-    double b_dr = log( n( 0, 1 ) / n( 0, 0 ) ) - log( n( 1, 1 ) / n( 1, 0 ) ) - log( n( 6, 1 ) / n( 6, 0 ) ) + log( n( 7, 1 ) / n( 7, 0 ) );
-    double b_rr = log( n( 0, 1 ) / n( 0, 0 ) ) - log( n( 2, 1 ) / n( 2, 0 ) ) - log( n( 6, 1 ) / n( 6, 0 ) ) + log( n( 8, 1 ) / n( 8, 0 ) );
-
-    double var_dd = 1.0 / n( 0, 0 ) + 1.0 / n( 0, 1 ) + 1.0 / n( 1, 0 ) + 1.0 / n( 1, 1 ) + 1.0 / n( 3, 0 ) + 1.0 / n( 3, 1 ) + 1.0 / n( 4, 0 ) + 1.0 / n( 4, 1 );
-    double var_rd = 1.0 / n( 0, 0 ) + 1.0 / n( 0, 1 ) + 1.0 / n( 2, 0 ) + 1.0 / n( 2, 1 ) + 1.0 / n( 3, 0 ) + 1.0 / n( 3, 1 ) + 1.0 / n( 5, 0 ) + 1.0 / n( 5, 1 );
-    double var_dr = 1.0 / n( 0, 0 ) + 1.0 / n( 0, 1 ) + 1.0 / n( 1, 0 ) + 1.0 / n( 1, 1 ) + 1.0 / n( 6, 0 ) + 1.0 / n( 6, 1 ) + 1.0 / n( 7, 0 ) + 1.0 / n( 7, 1 );
-    double var_rr = 1.0 / n( 0, 0 ) + 1.0 / n( 0, 1 ) + 1.0 / n( 2, 0 ) + 1.0 / n( 2, 1 ) + 1.0 / n( 6, 0 ) + 1.0 / n( 6, 1 ) + 1.0 / n( 8, 0 ) + 1.0 / n( 8, 1 );
-   
-    double w_dd = b_dd * b_dd / var_dd;
-    double w_rd = b_rd * b_rd / var_rd;
-    double w_dr = b_dr * b_dr / var_dr;
-    double w_rr = b_rr * b_rr / var_rr;
-
-    output[ 0 ] = b_dd;
-    output[ 1 ] = 1.0 - chi_square_cdf( w_dd, 1 );
-    output[ 2 ] = b_rd;
-    output[ 3 ] = 1.0 - chi_square_cdf( w_rd, 1 );
-    output[ 4 ] = b_dr;
-    output[ 5 ] = 1.0 - chi_square_cdf( w_dr, 1 );
-    output[ 6 ] = b_rr;
-    output[ 7 ] = 1.0 - chi_square_cdf( w_rr, 1 );
+    if( n( 0, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 1, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 3, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 4, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 0, 0 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 1, 0 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 3, 0 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 4, 0 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
+    {
+        double b_dd = log( n( 0, 1 ) / n( 0, 0 ) ) - log( n( 1, 1 ) / n( 1, 0 ) ) - log( n( 3, 1 ) / n( 3, 0 ) ) + log( n( 4, 1 ) / n( 4, 0 ) );
+        double var_dd = 1.0 / n( 0, 0 ) + 1.0 / n( 0, 1 ) + 1.0 / n( 1, 0 ) + 1.0 / n( 1, 1 ) + 1.0 / n( 3, 0 ) + 1.0 / n( 3, 1 ) + 1.0 / n( 4, 0 ) + 1.0 / n( 4, 1 );
+        double w_dd = b_dd * b_dd / var_dd;
+        output[ 0 ] = b_dd;
+        output[ 1 ] = 1.0 - chi_square_cdf( w_dd, 1 );
+    }
+    if( n( 0, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 2, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 3, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 5, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 0, 0 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 2, 0 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 3, 0 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 5, 0 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
+    {
+        double b_rd = log( n( 0, 1 ) / n( 0, 0 ) ) - log( n( 2, 1 ) / n( 2, 0 ) ) - log( n( 3, 1 ) / n( 3, 0 ) ) + log( n( 5, 1 ) / n( 5, 0 ) );
+        double var_rd = 1.0 / n( 0, 0 ) + 1.0 / n( 0, 1 ) + 1.0 / n( 2, 0 ) + 1.0 / n( 2, 1 ) + 1.0 / n( 3, 0 ) + 1.0 / n( 3, 1 ) + 1.0 / n( 5, 0 ) + 1.0 / n( 5, 1 );
+        double w_rd = b_rd * b_rd / var_rd;
+        output[ 2 ] = b_rd;
+        output[ 3 ] = 1.0 - chi_square_cdf( w_rd, 1 );
+    }
+    if( n( 0, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 1, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 6, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 7, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 0, 0 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 1, 0 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 6, 0 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 7, 0 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
+    {
+        double b_dr = log( n( 0, 1 ) / n( 0, 0 ) ) - log( n( 1, 1 ) / n( 1, 0 ) ) - log( n( 6, 1 ) / n( 6, 0 ) ) + log( n( 7, 1 ) / n( 7, 0 ) );
+        double var_dr = 1.0 / n( 0, 0 ) + 1.0 / n( 0, 1 ) + 1.0 / n( 1, 0 ) + 1.0 / n( 1, 1 ) + 1.0 / n( 6, 0 ) + 1.0 / n( 6, 1 ) + 1.0 / n( 7, 0 ) + 1.0 / n( 7, 1 );
+        double w_dr = b_dr * b_dr / var_dr;
+        output[ 4 ] = b_dr;
+        output[ 5 ] = 1.0 - chi_square_cdf( w_dr, 1 );
+    }
+    if( n( 0, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 2, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 6, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 8, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 0, 0 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 2, 0 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 6, 0 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&
+        n( 8, 0 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
+    {
+        double b_rr = log( n( 0, 1 ) / n( 0, 0 ) ) - log( n( 2, 1 ) / n( 2, 0 ) ) - log( n( 6, 1 ) / n( 6, 0 ) ) + log( n( 8, 1 ) / n( 8, 0 ) );
+        double var_rr = 1.0 / n( 0, 0 ) + 1.0 / n( 0, 1 ) + 1.0 / n( 2, 0 ) + 1.0 / n( 2, 1 ) + 1.0 / n( 6, 0 ) + 1.0 / n( 6, 1 ) + 1.0 / n( 8, 0 ) + 1.0 / n( 8, 1 );
+        double w_rr = b_rr * b_rr / var_rr;
+        output[ 6 ] = b_rr;
+        output[ 7 ] = 1.0 - chi_square_cdf( w_rr, 1 );
+    }
 }
 
 void
