@@ -32,9 +32,12 @@ public:
     /**
      * Constructor.
      *
-     *
+     * @param file Opened file.
+     * @param samples List of samples in opened file.
+     * @param loci List of loci in opened file.
+     * @param mafflip If true, all snps will be flipped so that minor allele is 2.
      */
-    plink_file(const pio_file_t &file, const std::vector<pio_sample_t> &samples, const std::vector<pio_locus_t> &loci);
+    plink_file(const pio_file_t &file, const std::vector<pio_sample_t> &samples, const std::vector<pio_locus_t> &loci, bool mafflip = false);
 
     /**
      * Returns a vector that contains information about the
@@ -107,7 +110,12 @@ private:
      * Buffer for reading rows.
      */
     snp_t *m_row_buffer;
-    
+
+    /**
+     * Indiciates whether alleles should be coded according to
+     * the minor allele.
+     */
+    bool m_mafflip;
 };
 
 class genotype_matrix
@@ -176,10 +184,11 @@ typedef shared_ptr<plink_file> plink_file_ptr;
  * Opens the given plink file and returns it.
  *
  * @param plink_prefix The path to the plink file.
+ * @param mafflip If true the alleles are coded according to the minor allele.
  *
  * @return A pointer to the plink file.
  */
-plink_file_ptr open_plink_file(const std::string &plink_prefix);
+plink_file_ptr open_plink_file(const std::string &plink_prefix, bool mafflip = false);
 
 /**
  * Retrieves the current row from the opened plink file.

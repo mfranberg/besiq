@@ -1,9 +1,10 @@
 #include <plink/plink_file.hpp>
 
-plink_file::plink_file(const pio_file_t &file, const std::vector<pio_sample_t> &samples, const std::vector<pio_locus_t> &loci)
+plink_file::plink_file(const pio_file_t &file, const std::vector<pio_sample_t> &samples, const std::vector<pio_locus_t> &loci, bool mafflip)
     : m_file( file ),
       m_samples( samples ),
-      m_loci( loci )
+      m_loci( loci ),
+      m_mafflip( mafflip )
 {
     m_row_buffer = (snp_t *) malloc( sizeof( snp_t ) * samples.size( ) );
 }
@@ -44,15 +45,40 @@ plink_file::get_locus_names() const
     return loci_names;
 }
 
+float compute_maf(snp_t *row, size_t length)
+{
+    int mac = 0;
+    int total = 0;
+    for(int i = 0; i < length; i++)
+    {
+        if( row[ i ] != 3 )
+        {
+            mac += row[ i ];
+            total++;
+        }
+    }
+
+    return ((float) mac) / ( 2 * total );
+}
+
 bool
 plink_file::next_row(snp_row &row)
 {
     if( pio_next_row( &m_file, m_row_buffer ) == PIO_OK )
     {
         row.resize( pio_row_size( &m_file ) );
+        float maf = compute_maf( m_row_buffer, row.size( ) );
+        bool flip = m_mafflip && maf > 0.5;
         for(int i = 0; i < row.size( ); i++)
         {
-            row.assign( i, m_row_buffer[ i ] );
+            if( flip && m_row_buffer[ i ] != 3 )
+            {
+                row.assign( i, 2 - m_row_buffer[ i ] );
+            }
+            else
+            {
+                row.assign( i, m_row_buffer[ i ] );
+            }
         }
         return true;
     }
@@ -69,7 +95,7 @@ plink_file::~plink_file()
 }
 
 plink_file_ptr
-open_plink_file(const std::string &plink_prefix)
+open_plink_file(const std::string &plink_prefix, bool mafflip)
 {
     pio_file_t file;
     if( pio_open( &file, plink_prefix.c_str( ) ) != PIO_OK )
@@ -89,7 +115,7 @@ open_plink_file(const std::string &plink_prefix)
         loci.push_back( *pio_get_locus( &file, i ) );
     }
 
-    return plink_file_ptr( new plink_file( file, samples, loci ) );
+    return plink_file_ptr( new plink_file( file, samples, loci, mafflip ) );
 }
 
 bool

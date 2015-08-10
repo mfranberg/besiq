@@ -59,6 +59,7 @@ wald_lm_method::run(const snp_row &row1, const snp_row &row2, float *output)
             num_samples += n( i, j );
         }
     }
+    set_num_ok_samples( (size_t)num_samples );
 
     arma::mat sigma2 = arma::zeros<arma::mat>( 3, 3 );
     if( !m_unequal_var )
@@ -134,8 +135,6 @@ wald_lm_method::run(const snp_row &row1, const snp_row &row2, float *output)
     {
         return;
     }
-    
-    set_num_ok_samples( (size_t)num_samples );
     
     /* Test if b != 0 with Wald test */
     double chi = dot( beta, Cinv * beta );

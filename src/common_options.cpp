@@ -37,7 +37,7 @@ parse_common_options(optparse::Values &options, const std::vector<std::string> &
         exit( 1 );
     }
     /* Read all genotypes */
-    plink_file_ptr genotype_file = open_plink_file( args[ 1 ] );
+    plink_file_ptr genotype_file = open_plink_file( args[ 1 ], true );
     genotype_matrix_ptr genotypes = create_genotype_matrix( genotype_file );
     
     /* Create pair iterator */
