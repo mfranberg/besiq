@@ -134,7 +134,7 @@ genotype_matrix::get_row(const std::string &name) const
         return NULL;
     }
 }
-const snp_row &
+snp_row &
 genotype_matrix::get_row(size_t index) const
 {
     return (*m_matrix)[ index ];

@@ -137,7 +137,7 @@ parse_covariate_matrix(std::istream &stream, arma::uvec &missing, const std::vec
             else
             {
                 missing[ iid_index[ iid ] ] = 1;
-                row[ i - 2 ] = 0.0;
+                row[ i - 2 ] = arma::datum::nan;
             }
         }
 
