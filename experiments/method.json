@@ -1,24 +1,43 @@
 {
     "methods" : [
         {
-            "name" : "Stage-wise",
+            "name" : "Static",
             "method" : "closed",
-            "num-tests" : [ 1000000000000, 1000000, 1000000, 1 ]
+            "num-tests" : [ 1000000000000, 100000000, 100000000, 4950 ]
         },
         {
-            "name" : "ScaleInvariance",
-            "method" : "scaleinv",
-            "num-tests" : 1000000000000
-        },
-        {
-            "name" : "Log-linear",
-            "method" : "loglinear",
-            "num-tests" : 1000000000000
-        },
-        {
-            "name" : "Marchini",
+            "name" : "Marginal + Logistic",
             "method" : "marchini",
             "num-tests" : 1000000
+        },
+        {
+            "name" : "Sixpac",
+            "method" : "sixpac",
+            "num-tests" : 1000000000000
+        },
+        {
+            "name" : "CSS + Logistic",
+            "method" : "css",
+            "num-tests" : 1000000000000,
+            "css-threshold" : 3.0,
+            "css-threshold-cdf" : 0.3916252
+        },
+        {
+            "name" : "LD-contrast",
+            "method" : "ldcontrast",
+            "num-tests" : 1000000000000
+        },
+        {
+            "name" : "R2 + Logistic",
+            "method" : "lewinger",
+            "num-tests" : 1000000000000,
+            "step1-alpha" : 0.0001
+        },
+        {
+            "name" : "Logistic",
+            "method" : "wald",
+            "model" : "binomial",
+            "num-tests" : 1000000000000
         }
     ]
 }

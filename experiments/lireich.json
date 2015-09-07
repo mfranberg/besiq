@@ -3,8 +3,8 @@
         {
             "type" : "lireich",
             "measure" : "power",
-            "base-risk" : [0.5],
-            "heritability" : [0.01, 0.02, 0.03],
+            "base-risk" : [0.1],
+            "heritability" : [0.005, 0.01, 0.015],
             "maf" : [ 0.3, 0.3 ],
             "sample-size" : [ 2000, 2000, 3000, 3000, 4000, 4000 ],
             "num-pairs" : 200
