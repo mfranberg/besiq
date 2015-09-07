@@ -146,7 +146,7 @@ public:
      *
      * @return the genotypes for the given index.
      */
-    const snp_row &get_row(size_t index) const;
+    snp_row &get_row(size_t index) const;
 
     /**
      * Returns a list of snp names.
