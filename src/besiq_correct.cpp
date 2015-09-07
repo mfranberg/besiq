@@ -83,9 +83,9 @@ main(int argc, char *argv[])
                                          .description( DESCRIPTION )
                                          .epilog( EPILOG ); 
 
-    char const * const methods[] = { "bonferroni", "static", "adaptive" };
+    char const * const methods[] = { "bonferroni", "static", "adaptive", "top" };
     char const * const models[] = { "binomial", "normal" };
-    parser.add_option( "-m", "--method" ).set_default( "none" ).choices( &methods[ 0 ], &methods[ 3 ] ).help( "The multiple testing correction to use 'bonferroni', 'static' or 'adaptive (default = bonferroni)." );
+    parser.add_option( "-m", "--method" ).set_default( "none" ).choices( &methods[ 0 ], &methods[ 4 ] ).help( "The multiple testing correction to use 'bonferroni', 'static', 'adaptive' or 'top' (default = bonferroni)." );
     parser.add_option( "-b", "--bfile" ).help( "Plink prefix, needed for static and adaptive." );
     parser.add_option( "-e", "--model" ).set_default( "binomial" ).choices( &models[ 0 ], &models[ 2 ] ).help( "Type of model, binomial or normal (default = binomial)." );
     parser.add_option( "-p", "--pheno" ).help( "Phenotype file, only needed for static and adaptive." );
@@ -93,6 +93,7 @@ main(int argc, char *argv[])
     parser.add_option( "-a", "--alpha" ).set_default( 0.05 ).help( "The significance threshold." );
     parser.add_option( "-f", "--field" ).set_default( 1 ).help( "For 'bonferroni', the column that contains the p-value, the first column after the snp names is 0 (default = 1)." );
     parser.add_option( "-n", "--num-tests" ).set_default( "0" ).help( "The number of tests to perform, if multiple, separate by ',' and 0 indicates let the program decide, typically the number of pairs." );
+    parser.add_option( "-t", "--num-top" ).set_default( 100 ).help( "The number of top pairs to keep." );
     parser.add_option( "-w", "--weight" ).help( "Used in 'static' and 'adaptive', 4 weights that sum to 1 separated by ','." );
     parser.add_option( "-o", "--output-prefix" ).help( "The output prefix, must be set for non-bonferroni methods!" );
     
@@ -128,6 +129,16 @@ main(int argc, char *argv[])
         }
 
         run_bonferroni( meta_result_file, correct.alpha, correct.num_tests[ 0 ], field, output_path );
+    }
+    else if( method == "top" )
+    {
+        std::string output_path = "-";
+        if( options.is_set( "output_prefix" ) )
+        {
+            output_path = output_prefix;
+        }
+        
+        run_top( meta_result_file, correct.alpha, (int) options.get( "num_top" ), field, output_path );
     }
     else
     {

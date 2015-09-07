@@ -8,6 +8,59 @@
 
 #include <besiq/correct.hpp>
 
+struct heap_result
+{
+    std::pair<std::string, std::string> variant_pair;
+    float pvalue;
+
+    bool operator<(const heap_result &other)
+    {
+        return other.pvalue > pvalue;
+    }
+};
+
+void
+run_top(metaresultfile *result, float alpha, uint64_t num_top, size_t column, const std::string &output_path)
+{
+    std::ostream &output = std::cout;
+    std::vector<std::string> header = result->get_header( );
+    output << "snp1 snp2\tP\n";
+
+    std::vector<heap_result> heap;
+    std::make_heap( heap.begin( ), heap.end( ) );
+
+    std::pair<std::string, std::string> pair;
+    float *values = new float[ header.size( ) ];
+    float cur_min = FLT_MAX;
+    while( result->read( &pair, values ) )
+    {
+        heap_result res;
+        res.pvalue = values[ column ];
+        if( res.pvalue == result_get_missing( ) || res.pvalue > cur_min )
+        {
+            continue;
+        }
+
+        res.variant_pair = pair;
+        heap.push_back( res );
+        std::push_heap( heap.begin( ), heap.end( ) );
+        if( heap.size( ) > num_top )
+        {
+            std::pop_heap( heap.begin( ), heap.end( ) );
+            float new_min = heap.back( ).pvalue;
+            heap.pop_back( );
+
+            cur_min = std::min( cur_min, new_min );
+        }
+    }
+    std::sort_heap( heap.begin( ), heap.end( ) );
+    for(int i = 0; i < heap.size( ); i++)
+    {
+        output << heap[ i ].variant_pair.first << " " << heap[ i ].variant_pair.second;
+        output << "\t" << heap[ i ].pvalue << "\n";
+    }
+}
+
 void
 run_bonferroni(metaresultfile *result, float alpha, uint64_t num_tests, size_t column, const std::string &output_path)
 {

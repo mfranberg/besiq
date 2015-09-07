@@ -37,6 +37,7 @@ struct correction_options
 };
 
 void run_bonferroni(metaresultfile *result, float alpha, uint64_t num_tests, size_t column, const std::string &output_path);
+void run_top(metaresultfile *result, float alpha, uint64_t num_top, size_t column, const std::string &output_path);
 void run_static(metaresultfile *result, genotype_matrix_ptr genotypes, method_data_ptr data, const correction_options &options, const std::string &output_path);
 void run_adaptive(metaresultfile *result, genotype_matrix_ptr genotypes, method_data_ptr data, const correction_options &options, const std::string &output_path);
 
