@@ -21,33 +21,47 @@ const std::string EPILOG = "";
 
 struct lars_path
 {
-    lars_path(int p, std::string &v, float b, float t)
+    lars_path(int p, std::string &v, double b, double t, double e)
         : pass( p ),
           variable( v ),
           beta( b ),
-          tsum( t )
+          tsum( t ),
+          exp_var( e )
     {
     }
 
     int pass;
     std::string variable;
-    float beta;
-    float tsum;
+    double beta;
+    double tsum;
+    double exp_var;
 };
 
 void
 fill_missing_genotypes(genotype_matrix_ptr genotypes)
 {
+    #pragma omp parallel for
     for(int i = 0; i < genotypes->size( ); i++)
     {
         snp_row &row = genotypes->get_row( i );
-        double maf = compute_real_maf( row );
-        int mu = round( 2*maf*(1-maf) + 2*maf*maf );
+        int total = 0;
+        double mu = 0;
+        for(int j = 0; j < row.size( ); j++)
+        {
+            if( row[ j ] != 3 )
+            {
+                mu += row[ j ];
+                total++;
+            }
+        }
+        mu = mu / total;
+
+        int mu_int = round( mu );
         for(int j = 0; j < row.size( ); j++)
         {
             if( row[ j ] == 3 )
             {
-                row.assign( j, mu );
+                row.assign( j, mu_int );
             }
         }
     }
@@ -60,7 +74,7 @@ fill_missing_phenotypes(arma::vec &phenotypes)
     int total = 0;
     for(int i = 0; i < phenotypes.n_elem; i++)
     {
-        if( phenotypes[ i ] != arma::datum::nan )
+        if( phenotypes[ i ] == phenotypes[ i ] )
         {
             mu += phenotypes[ i ];
             total++;
@@ -70,7 +84,7 @@ fill_missing_phenotypes(arma::vec &phenotypes)
 
     for(int i = 0; i < phenotypes.n_elem; i++)
     {
-        if( phenotypes[ i ] == arma::datum::nan )
+        if( phenotypes[ i ] != phenotypes[ i ] )
         {
             phenotypes[ i ] = mu;
         }
@@ -84,11 +98,12 @@ fill_missing_cov(arma::mat &cov)
     {
         double mu = 0.0;
         int total = 0;
-        for(int j = 0; j < cov.n_rows; i++)
+        for(int j = 0; j < cov.n_rows; j++)
         {
-            if( cov( i, j ) != arma::datum::nan )
+            // Check NaN, may fail in some compilers
+            if( cov( j, i ) == cov( j, i ) )
             {
-                mu += cov( i, j );
+                mu += cov( j, i );
                 total++;
             }
         }
@@ -96,9 +111,10 @@ fill_missing_cov(arma::mat &cov)
 
         for(int j = 0; j < cov.n_rows; j++)
         {
-            if( cov( i, j ) == arma::datum::nan )
+            // Check NaN, may fail in some compilers
+            if( cov( j, i ) != cov( j, i ) )
             {
-                cov( i, j ) = mu;
+                cov( j, i ) = mu;
             }
         }
     }
@@ -119,25 +135,25 @@ calculate_cor(genotype_matrix_ptr genotypes, const arma::mat &cov, const arma::v
 {
     int var = 0;
     arma::vec adjusted_pheno = phenotype - mu;
+    #pragma omp parallel for
     for(int i = 0; i < genotypes->size( ); i++)
     {
         const snp_row &row = genotypes->get_row( i );
         double cor = 0.0;
-        double m = mean[ var ];
-        double s = sd[ var ];
+        double m = mean[ i ];
+        double s = sd[ i ];
         for(int j = 0; j < row.size( ); j++)
         {
             cor += ( ( row[ j ] - m ) / s ) * adjusted_pheno[ j ];
         }
-        c[ var ] = cor;
-        var++;
+        c[ i ] = cor;
     }
 
+    var = genotypes->size( );
     for(int j = 0; j < cov.n_cols; j++)
     {
-        double cor = dot( ( cov.col( j ) - mean[ var ] ) / sd[ var ],  adjusted_pheno );
-        c[ var ] = cor;
-        var++;
+        double cor = dot( ( cov.col( j ) - mean[ var + j ] ) / sd[ var + j ],  adjusted_pheno );
+        c[ var + j ] = cor;
     }
 }
 
@@ -145,30 +161,31 @@ std::vector<std::string>
 create_names(const std::vector<std::string> &locus_names, const std::vector<std::string> &cov_names)
 {
     std::vector<std::string> names( locus_names );
-    names.insert( names.end( ), cov_names.begin( ), cov_names.end( )) ;
+    names.insert( names.end( ), cov_names.begin( ) + 2, cov_names.end( )) ;
 
     return names;
 }
 arma::vec eig_prod(genotype_matrix_ptr genotypes, const arma::mat &cov, const arma::vec &u, const arma::vec &mean, const arma::vec &sd)
 {
-    arma::vec a = arma::zeros<arma::vec>( genotypes->size( ) );
+    arma::vec a = arma::zeros<arma::vec>( genotypes->size( ) + cov.n_cols );
 
     size_t var = 0;
-    for(int i = 0; i < genotypes->size( ) + cov.n_cols; i++)
+    #pragma omp parallel for
+    for(int i = 0; i < genotypes->size( ); i++)
     {
         const snp_row &row = genotypes->get_row( i );
-        double m = mean[ var ];
-        double s = sd[ var ];
+        double m = mean[ i ];
+        double s = sd[ i ];
         for(int j = 0; j < row.size( ); j++)
         {
             a[ i ] += ( ( row[ j ] - m ) / s ) * u[ j ];
         }
-        var++;
     }
+
+    var = genotypes->size( );
     for(int i = 0; i < cov.n_cols; i++)
     {
-        a[ i ] = dot( ( cov.col( i ) - mean[ var ] ) / sd[ var ], u );
-        var++;
+        a[ var + i ] = dot( ( cov.col( i ) - mean[ var + i ] ) / sd[ var + i ], u );
     }
 
     return a;
@@ -207,6 +224,7 @@ void compute_mean_sd(genotype_matrix_ptr genotypes, const arma::mat &cov, arma::
     {
         snp_row &row = genotypes->get_row( i );
         double m = 0;
+        int table[] = {0,0,0};
         for(int j = 0; j < row.size( ); j++)
         {
             m += row[ j ];
@@ -220,7 +238,7 @@ void compute_mean_sd(genotype_matrix_ptr genotypes, const arma::mat &cov, arma::
         }
 
         mean[ var ] = m;
-        sd[ var ] = sqrt( s / n );
+        sd[ var ] = sqrt( s );
 
         var++;
     }
@@ -231,14 +249,21 @@ void compute_mean_sd(genotype_matrix_ptr genotypes, const arma::mat &cov, arma::
         double s = arma::accu( pow( cov.col( i ) - m, 2 ) );
 
         mean[ var ] = m;
-        sd[ var ] = sqrt( s / n );
+        sd[ var ] = sqrt( s );
 
         var++;
     }
 }
 
+arma::uvec get_complement(const arma::uvec &active, size_t m)
+{
+    arma::uvec all = arma::zeros<arma::uvec>( m );
+    all.elem( active ).fill( 1 );
+    return find( all == 0 );
+}
+
 std::vector<lars_path>
-lars(genotype_matrix_ptr genotypes, arma::mat &cov, arma::vec &phenotype, const std::vector<std::string> &cov_names, int max_vars = 15)
+lars(genotype_matrix_ptr genotypes, arma::mat &cov, arma::vec &phenotype, const std::vector<std::string> &cov_names, size_t max_vars = 15, bool lasso = true)
 {
     fill_missing_genotypes( genotypes );
     fill_missing_cov( cov );
@@ -250,7 +275,6 @@ lars(genotype_matrix_ptr genotypes, arma::mat &cov, arma::vec &phenotype, const 
     arma::vec mu = arma::zeros<arma::vec>( n );
     arma::vec beta = arma::zeros<arma::vec>( m );
     std::vector<lars_path> path;
-    std::set<int> active;
     arma::vec c = arma::zeros<arma::vec>( m );
     std::vector<std::string> names = create_names( genotypes->get_snp_names( ), cov_names );
 
@@ -258,74 +282,112 @@ lars(genotype_matrix_ptr genotypes, arma::mat &cov, arma::vec &phenotype, const 
     arma::vec sd = arma::zeros<arma::vec>( m );
     compute_mean_sd( genotypes, cov, mean, sd, n );
 
-    arma::uvec drop;
+    double pheno_mean = sum( phenotype ) / n;
+    double pheno_var = sum( pow( phenotype - pheno_mean, 2 ) ) / (n - 1);
 
-    for(int i = 0; i < max_vars; i++)
+    arma::uvec drop;
+    arma::uvec dropinv;
+    arma::uvec active;
+    arma::uvec inactive = arma::linspace<arma::uvec>( 0, m - 1, m );
+    double eps = 1e-10;
+
+    int i = 0;
+    while(active.n_elem < std::min( max_vars, m ) )
     {
+        std::cout << "Iteration: " << i << std::endl;
+
         calculate_cor( genotypes, cov, phenotype, mu, mean, sd, c );
         arma::vec cabs = abs( c );
-        double C = max( cabs );
+        double C = max( cabs.elem( inactive ) );
         
-        if( C == 0 || C < 1e-10 )
+        if( C < eps )
         {
             break;
         }
         
-        uvec active = find( abs( cabs - C ) < 1e-10 + 1e-10 * C );
-        uvec inactive = find( abs( cabs - C ) > 1e-10 + 1e-10 * C );
-        if( active.n_elem == m )
-        { 
-            break;
+        if( drop.n_elem == 0 )
+        {
+            arma::uvec new_vars = find( cabs.elem( inactive ) >= C - eps );
+            active.resize( active.n_elem + new_vars.n_elem );
+            active.tail( new_vars.n_elem ) = inactive.elem( new_vars );
+            inactive = get_complement( active, m );
         }
 
         /* Create the active matrix */
-        arma::mat X = get_active( genotypes, cov, active, n, mean, sd );
+        arma::mat X_active = get_active( genotypes, cov, active, n, mean, sd );
 
+        /* Equation 2.4 */
         arma::vec s = sign( c.elem( active ) );
-        arma::mat X_active = X * diagmat( s );
 
+        /* Equation 2.5 */
         arma::mat G = X_active.t( ) * X_active;
         arma::mat Ginv = inv( G );
+        double A = 1.0 / sqrt( arma::accu( s.t( ) * Ginv * s ) );
 
-        double A = sqrt( arma::accu( Ginv ) );
-
-        arma::vec w = A * Ginv * arma::ones<arma::vec>( active.n_elem );
+        /* Equation 2.6 */
+        arma::vec w = A * Ginv * s;
         arma::vec u = X_active * w;
         
-        arma::vec a = eig_prod( genotypes, cov, u, mean, sd );
+        double gamma = C / A;
+        if( active.n_elem < m )
+        { 
+            /* Equation 2.11 */
+            arma::vec a = eig_prod( genotypes, cov, u, mean, sd );
 
-        arma::vec cc = c.elem( inactive );
-        arma::vec ac = a.elem( inactive );
+            /* Equation 2.13 */
+            arma::vec cc = c.elem( inactive );
+            arma::vec ac = a.elem( inactive );
+            
+            arma::vec a1 = C - cc;
+            arma::vec b1 = A - ac;
+            arma::vec gn = nice_division( a1, b1 );
 
-        arma::vec a1 = C - cc;
-        arma::vec b1 = A - ac;
-        arma::vec gn = nice_division( a1, b1 );
+            arma::vec a2 = C + cc;
+            arma::vec b2 = A + ac;
+            arma::vec gp = nice_division( a2, b2 );
 
-        arma::vec a2 = C + cc;
-        arma::vec b2 = A + ac;
-        arma::vec gp = nice_division( a2, b2 );
-
-        double gamma = std::min( gn.min( ), gp.min( ) );
+            gamma = std::min( gn.min( ), gp.min( ) );
+        }
         
-        /*if( lasso )
+        if( lasso )
         {
-            double gammaj = -beta.elem( active ) / w;
-            double gammatilde = std::min( min( gammaj.elem( find( gammaj > 1e-11 ) ) ), gamma );
+            drop.clear( );
+            /* Equation 3.4 */
+            arma::vec gammaj = -beta.elem( active ) / w;
 
-            if( gammatilde < gamma )
+            /* Equation 3.5 */
+            arma::uvec valid_elems = arma::find( gammaj > eps );
+            if( valid_elems.n_elem > 0 )
             {
-                gamma = gammatilde;
-                drop = find( gammaj = gammatilde );
-            }
-        }*/
+                double gammatilde = std::min( arma::min( gammaj.elem( valid_elems ) ), gamma );
 
-        beta.elem( active ) = beta.elem( active ) + s % w * gamma;
+                if( gammatilde < gamma )
+                {
+                    gamma = gammatilde;
+                    drop = find( gammaj == gammatilde );
+                    dropinv = find( gammaj != gammatilde );
+                }
+            }
+        }
+
+        beta.elem( active ) = beta.elem( active ) + w * gamma;
         mu = mu + gamma * u;
+        double model_var = sum( pow( phenotype - mu, 2 ) ) / (n - 1 - active.n_elem);
+
+        if( lasso && drop.n_elem > 0 )
+        {
+            beta.elem( active.elem( drop ) ).fill( 0.0 );
+            active = active.elem( dropinv );
+            inactive = get_complement( active, m );
+        }
+
         float tsum = sum( abs( beta ) );
         for(int j = 0; j < active.n_elem; j++)
         {
-            path.push_back( lars_path( i, names[ active[ j ] ], beta[ active[ j ] ], tsum ) );
+            path.push_back( lars_path( i + 1, names[ active[ j ] ], beta[ active[ j ] ], tsum, 1.0 - model_var / pheno_var ) );
         }
+
+        i++;
     }
 
     return path;
@@ -381,11 +443,11 @@ main(int argc, char *argv[])
     }
 
     std::vector<lars_path> path = lars( genotypes, cov, phenotype, cov_names, (int) options.get( "max_variables" ) );
-    std::cout << "step\tvariable\tbeta\ttsum\n";
+    std::cout << "step\tvariable\tbeta\ttsum\texplained_var\n";
     for(int i = 0; i < path.size( ); i++)
     {
         lars_path step = path[ i ];
-        std::cout << step.pass << "\t" << step.variable << "\t" << step.beta << "\t" << step.tsum << "\n";
+        std::cout << step.pass << "\t" << step.variable << "\t" << step.beta << "\t" << step.tsum <<  "\t" << step.exp_var << "\n";
     }
 
     return 0;
