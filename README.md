@@ -118,7 +118,12 @@ The following analysis types are available:
 * **loglinear** - Fast, powerful, but assumes that there is at most a single main effect. Preferebly used on data where the significant variants have been filtered out beforehand.
 * **caseonly** - A test based on LD, interaction generates LD in case/control cohorts. Here the LD is estimated using the covariance between variants. The specific test used depends on the -m flag (see command for more info).
 * **separate** - Codes the variants into either dominant or rescessive encoding, creates the 4 possible models, and tests each one using a generalized linear model.
-    
+
+The following commands work on single variants only:
+
+* **var** - Perform a variance hetrogenity test, interactions cause variance hetrogenity in single variants.
+* **lars** - Use the least angle regression method to find important covariates and genetic variants (run multithreaded).
+
 The following commands are experimental:
     
 * **bayes** - Compute the model posterior using the same models as in the loglinear method, using a conjugate dirichlet prior.
