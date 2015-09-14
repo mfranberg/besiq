@@ -103,15 +103,37 @@ To build with dependencies with root access:
 
 ## Running
 
+Besiq is run by simply typing *besiq*. This will display a list of available subcommands:
+
+* **pairs** - Used to generate a list of pairs that will be analyzed. The reason why such a list generated beforehand is to allow simple distributed calculation.
+* **view** - Show the binary result files.
+* **correct** - Perform multiple testing correction.
+
+The following analysis types are available:
+
+* **glm** - Uses a generalized linear model with either a binary or continuous phenotype, and possible covariates. This method is relatively slow because of the underlying iterative algorithm. This implementation uses the likelihood ratio test between the null and alternative to compute a p-value.
+* **wald** - Uses a generalized linear model with either a binary or continuous phenotype, without covariates. This method is fast because of the closed form solutions. Inference is performed by a Wald-test which is asymptotically equivalent to the likelihood ratio test.
+* **stagewise** - Increases power by considering the pairs in stages, fast, without covariates. Inference is performed by either a closed testing scheme or an approximate adaptive method.
+* **scaleinv** - Tests multiple link functions on the data using a generalized linear model and reports a p-value for each.
+* **loglinear** - Fast, powerful, but assumes that there is at most a single main effect. Preferebly used on data where the significant variants have been filtered out beforehand.
+* **caseonly** - A test based on LD, interaction generates LD in case/control cohorts. Here the LD is estimated using the covariance between variants. The specific test used depends on the -m flag (see command for more info).
+* **separate** - Codes the variants into either dominant or rescessive encoding, creates the 4 possible models, and tests each one using a generalized linear model.
+    
+The following commands are experimental:
+    
+* **bayes** - Compute the model posterior using the same models as in the loglinear method, using a conjugate dirichlet prior.
+* **imputed** - Perform interaction fine-mapping analysis using impute2 imputed data from two (small) regions.
+* **env** - Perform stage-wise gene-environment analysis.
+    
 ### Genotype files
 
 This software works with binary plink files .fam, .bim and .bam, and are specified using the path without the extension.
 
 ### Phenotype and covariate files
 
-Missing values are specified with NA. All binary phenotypes and covariates should be coded with 0/1. The file format is
+These files differs slighly from the plink phenotype and covariates file. Missing values are specified with NA. All binary phenotypes and covariates should be coded with 0/1 (in contrast to 1/2). The file format is
 
-    FID IID pheno
+    FID IID pheno [pheno2 ... phenon]
     
 or
 
