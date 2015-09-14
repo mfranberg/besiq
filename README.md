@@ -144,7 +144,102 @@ or
 
     FID IID cov1 cov2 cov3 ...
 
-# Stage-wise closed testing
+### Running on a cluster
+
+Besiq can easily be run on a cluster using the --split and --num-splits options. However, there is also a premade Snakemake rule for running the Wald and Stage-wise methods. Snakemake is a tool for creating Makefiles in Python that can be run distributed.
+
+To use Snakemake with besiq, three files are needed: an experiment file, a cluster configuration, and a Snakefile. A simple example is available in the snakemake/example/ directory. Here we find a simple experiment.json file that describes a casecontrol experiment where all variant pairs are tested:
+
+    {
+        "dataset" : "data/example",
+        "subset" :
+        {
+            "allvsall" :
+            {
+                "split" : 10,
+                "maf" : 0.05,
+                "combined" : 0.0
+            }
+        },
+        "pheno" :
+        {
+            "casecontrol" :
+            {
+                "path" : "data/example.pheno",
+                "model" : "binomial"
+            }
+        },
+        "run" :
+        {
+            "pheno" : [ "casecontrol" ],
+            "subsets" : [ "allvsall" ],
+            "methods" : [ "wald" ]
+        },
+        "output_root" : "./results/"
+    }
+
+The Snakefile is very simple:
+
+    configfile: "experiments.json"
+    include: "../besiq.rule"
+    
+    localrules: all, besiq
+    
+Now the whole experiment can be run locally by:
+
+    > snakemake besiq
+
+To run with multiple threads:
+
+    > snakemake -j 8 besiq
+
+To run it on a SLURM cluster additional information is needed in the form of a cluster configuration file, an example is:
+
+    {
+        "__default__" :
+        {
+            "account" : "myaccount",
+            "partition" : "core",
+            "n" : 1,
+            "runtime" : "10:00:00"
+        },
+        "besiq" :
+        {
+            "runtime" : "00:05:00",
+            "jobname" : "all_subsets"
+        },
+        "stagewise_all" :
+        {
+            "runtime" : "02:00:00",
+            "jobname" : "stagewise_all"
+        },
+        "stagewise" :
+        {
+            "runtime" : "10:00:00",
+            "jobname" : "stagewise"
+        },
+        "wald_all" :
+        {
+            "runtime" : "08:00:00",
+            "jobname" : "wald_all"
+        },
+        "wald" :
+        {
+            "runtime" : "08:00:00",
+            "jobname" : "wald"
+        },
+        "create_pair" :
+        {
+            "runtime" : "04:00:00",
+            "jobname" : "create_pair"
+        }
+    }
+
+The job is then submitted on a SLURM cluster using (other clusters are also possible by changing the *--cluster* option):
+
+    > snakemake --keep-going -j 999 --cluster-config cluster.json --cluster "sbatch -A {cluster.account} -p {cluster.partition} -n {cluster.n}  -t {cluster.runtime} -J {cluster.jobname}" besiq
+
+### Stage-wise closed testing
 
 Generate a list of all possible pairs with a combined maf of greater than 0.04, a marginal maf greater than 0.2 and with a distance of at least 1 Mbp between variants in the same pair.
 
