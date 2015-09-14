@@ -83,6 +83,12 @@ wald_method::run(const snp_row &row1, const snp_row &row2, float *output)
             num_valid++;
         }
     }
+    set_num_ok_samples( (size_t)num_samples );
+    if( num_valid <= 0 )
+    {
+        return;
+    }
+    
     valid.resize( num_valid );
     beta.resize( num_valid );
 
@@ -114,8 +120,6 @@ wald_method::run(const snp_row &row1, const snp_row &row2, float *output)
     {
         return;
     }
-    
-    set_num_ok_samples( (size_t)num_samples );
     
     /* Test if b != 0 with Wald test */
     double chi = dot( beta, Cinv * beta );
