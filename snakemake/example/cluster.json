@@ -1,0 +1,39 @@
+{
+    "__default__" :
+    {
+        "account" : "myaccount",
+        "partition" : "core",
+        "n" : 1,
+        "runtime" : "10:00:00"       
+    },
+    "besiq" :
+    {
+        "runtime" : "00:05:00",
+        "jobname" : "all_subsets"
+    },
+    "stagewise_all" :
+    {
+        "runtime" : "02:00:00",
+        "jobname" : "stagewise_all"
+    },
+    "stagewise" :
+    {
+        "runtime" : "10:00:00",
+        "jobname" : "stagewise"
+    },
+    "wald_all" :
+    {
+        "runtime" : "08:00:00",
+        "jobname" : "wald_all"
+    },
+    "wald" :
+    {
+        "runtime" : "08:00:00",
+        "jobname" : "wald"
+    },
+    "create_pair" :
+    {
+        "runtime" : "04:00:00",
+        "jobname" : "create_pair"
+    }
+}

@@ -1,0 +1,27 @@
+{
+    "dataset" : "data/example",
+    "subset" :
+    {
+        "allvsall" : 
+        {
+            "split" : 10,
+            "maf" : 0.05,
+            "combined" : 0.0
+        }
+    },
+    "pheno" :
+    {
+        "casecontrol" : 
+        {
+            "path" : "data/example.pheno",
+            "model" : "binomial"
+        }
+    },
+    "run" :
+    {
+        "pheno" : [ "casecontrol" ],
+        "subsets" : [ "allvsall" ],
+        "methods" : [ "wald" ]
+    },
+    "output_root" : "./results/"
+}

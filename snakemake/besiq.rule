@@ -1,0 +1,127 @@
+rule besiq:
+    input:
+        expand( config[ "output_root" ] + "/{subset}/{pheno}/{method}/significant.out",
+            subset = config[ "run" ][ "subsets" ],
+            pheno = config[ "run" ][ "pheno" ],
+            method = config[ "run" ][ "methods" ] )
+
+rule stagewise_all:
+    input:
+        bim = config[ "dataset" ] + ".bim",
+        bed = config[ "dataset" ] + ".bed",
+        fam = config[ "dataset" ] + ".fam",
+        pheno = lambda w: config[ "pheno" ][ w.pheno ][ "path" ],
+        results = lambda w: expand( config[ "output_root" ] + "/{subset}/{pheno}/stagewise/partial{split}.res",
+            split = list( range( 1, config[ "subset" ][ w.subset ][ "split" ] + 1 ) ),
+            subset = w.subset,
+            pheno = w.pheno )
+    params:
+        plink = config[ "dataset" ],
+        model = lambda w: config[ "pheno" ][ w.pheno ][ "model" ],
+        weight = lambda w: ",".join( map( str, config[ "subset" ][ w.subset ].get( "weight", [0.25, 0.25, 0.25, 0.25] ) ) )
+    output:
+        final = config[ "output_root" ] + "/{subset}/{pheno}/stagewise/significant.out"
+    run:
+        shell( "besiq correct --model {params.model} --bfile {params.plink} -p {input.pheno} --method adaptive --output-prefix {output.final} --weight {params.weight} {input.results} > {output.final}" )
+
+rule stagewise:
+    input:
+        bim = config[ "dataset" ] + ".bim",
+        bed = config[ "dataset" ] + ".bed",
+        fam = config[ "dataset" ] + ".fam",
+        pairfile = config[ "output_root" ] + "/{subset}/{subset}.pair",
+        pheno = lambda w: config[ "pheno" ][ w.pheno ][ "path" ]
+    output:
+        result = config[ "output_root" ] + "/{subset}/{pheno}/stagewise/partial{split}.res"
+    params:
+        plink = config[ "dataset" ],
+        model = lambda w: config[ "pheno" ][ w.pheno ][ "model" ],
+        num_splits = lambda w: str( config[ "subset" ][ w.subset ][ "split" ] ),
+        split = lambda w: w.split
+    run:
+        shell( "besiq stagewise --model {params.model} -p {input.pheno} -o {output.result} --num-splits {params.num_splits} --split {params.split} {input.pairfile} {params.plink}" )
+
+rule wald_all:
+    input:
+        bim = config[ "dataset" ] + ".bim",
+        bed = config[ "dataset" ] + ".bed",
+        fam = config[ "dataset" ] + ".fam",
+        pheno = lambda w: config[ "pheno" ][ w.pheno ][ "path" ],
+        results = lambda w: expand( config[ "output_root" ] + "/{subset}/{pheno}/wald/partial{split}.res",
+            split = list( range( 1, config[ "subset" ][ w.subset ][ "split" ] + 1 ) ),
+            subset = w.subset,
+            pheno = w.pheno )
+    params:
+        plink = config[ "dataset" ],
+        model = lambda w: config[ "pheno" ][ w.pheno ][ "model" ],
+        separate = lambda w: config[ "pheno" ][ w.pheno ].get( "separate", "" )
+    output:
+        final = config[ "output_root" ] + "/{subset}/{pheno}/wald/significant.out"
+    run:
+        if params.separate:
+            param_list = list( map( lambda x: int( x ), params.separate.split( "," ) ) )
+            alpha = 0.05 / len( param_list )
+            for param in param_list:
+                column = 2 * param + 1
+                shell( "besiq correct --method bonferroni --field {column} --alpha {alpha} --bfile {params.plink} -p {input.pheno} --output-prefix {output.final}.pre.param{param} {input.results} > {output.final}.param{param}" )
+            shell( "cat {output.final}.param* | awk 'NR == 1 || $1 != \"snp1\"' > {output.final}" )
+        else:
+            shell( "besiq correct --method bonferroni --bfile {params.plink} -p {input.pheno} --output-prefix {output.final} {input.results} > {output.final}" )
+
+rule wald:
+    input:
+        bim = config[ "dataset" ] + ".bim",
+        bed = config[ "dataset" ] + ".bed",
+        fam = config[ "dataset" ] + ".fam",
+        pairfile = config[ "output_root" ] + "/{subset}/{subset}.pair",
+        pheno = lambda w: config[ "pheno" ][ w.pheno ][ "path" ]
+    output:
+        result = config[ "output_root" ] + "/{subset}/{pheno}/wald/partial{split}.res"
+    params:
+        plink = config[ "dataset" ],
+        model = lambda w: config[ "pheno" ][ w.pheno ][ "model" ],
+        separate = lambda w: config[ "pheno" ][ w.pheno ].get( "separate", "" ),
+        num_splits = lambda w: str( config[ "subset" ][ w.subset ][ "split" ] ),
+        split = lambda w: w.split
+    run:
+        separate = ""
+        if params.separate:
+            separate = "--separate"
+
+        shell( "besiq wald --model {params.model} -p {input.pheno} -o {output.result} {separate} --num-splits {params.num_splits} --split {params.split} {input.pairfile} {params.plink}" )
+
+rule create_pair:
+    input:
+        bim = config[ "dataset" ] + ".bim",
+        bed = config[ "dataset" ] + ".bed",
+        fam = config[ "dataset" ] + ".fam"
+    params:
+        plink = config[ "dataset" ],
+        maf = lambda w: str( config[ "subset" ][ w.subset ].get( "maf", 0.0 ) ),
+        combined = lambda w: str( config[ "subset" ][ w.subset ].get( "combined", 0.0 ) ),
+        min_distance = lambda w: str( config[ "subset" ][ w.subset ].get( "min_distance", 0 ) ),
+        between = lambda w: config[ "subset" ][ w.subset ].get( "between", "" ),
+        restrict = lambda w: config[ "subset" ][ w.subset ].get( "restrict", "" ),
+        setpath = lambda w: config[ "subset" ][ w.subset ].get( "set", "" ),
+        within = lambda w: config[ "subset" ][ w.subset ].get( "within", "" )
+    output:
+        pairfile = config[ "output_root" ] + "/{subset}/{subset}.pair"
+    run:
+        betweenflag = ""
+        if params.between != "":
+            betweenflag = "-b " + params.between
+
+        restrictflag = ""
+        if params.restrict != "":
+            restrictflag = "-r " + params.restrict
+
+        setflag = ""
+        if params.setpath != "":
+            setflag = "--set-no-ignore " + params.setpath
+
+        withinflag = ""
+        if params.within != "":
+            withinflag = "-w " + params.within
+        
+        shell( "echo besiq pairs -m {params.maf} -c {params.combined} -d {params.min_distance} {betweenflag} {restrictflag} {setflag} {withinflag} -o {output.pairfile} {params.plink}" )
+        shell( "besiq pairs -m {params.maf} -c {params.combined} -d {params.min_distance} {betweenflag} {restrictflag} {setflag} {withinflag} -o {output.pairfile} {params.plink}" )

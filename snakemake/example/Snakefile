@@ -1,0 +1,7 @@
+# Run on SLURM with: snakemake --keep-going -j 999 --cluster-config cluster.json --cluster "sbatch -A {cluster.account} -p {cluster.partition} -n {cluster.n}  -t {cluster.runtime} -J {cluster.jobname}" besiq
+# Run local: snakemake --keep-going besiq
+
+configfile: "experiments.json"
+include: "../besiq.rule"
+
+localrules: all, besiq
