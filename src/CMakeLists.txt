@@ -51,8 +51,15 @@ target_link_libraries( besiq-correct libdcdf libglm libbesiq libplink libcpp-arg
 add_executable( besiq-imputed besiq_imputed.cpp )
 target_link_libraries( besiq-imputed libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
+find_package( OpenMP )
+
+add_executable( besiq-lars besiq_lars.cpp )
+set_target_properties( besiq-lars PROPERTIES COMPILE_FLAGS "${OpenMP_CXX_FLAGS}" )
+set_target_properties( besiq-lars PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS}")
+target_link_libraries( besiq-lars libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+
 INSTALL( TARGETS besiq besiq-stagewise besiq-bayes besiq-caseonly
     besiq-glm besiq-scaleinv besiq-loglinear besiq-wald besiq-env
     besiq-pairs besiq-view besiq-correct besiq-imputed besiq-var
-    besiq-separate DESTINATION bin )
+    besiq-separate besiq-lars DESTINATION bin )
 

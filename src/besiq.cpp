@@ -17,19 +17,21 @@ struct command
 
 struct command g_commands[] =
 {
-    { "pairs", "Generate pairs for a gene-gene analysis." },
+    { "pairs", "Generate a set of pairs for a gene-gene analysis." },
     { "view", "Display a binary result file" },
-    { "glm", "Run a GLM model possibly with covariates." },
-    { "scaleinv", "Scale-invariant tests of interaction." },
-    { "stagewise", "Run a stage-wise method." },
-    { "wald", "Perform a 'fast' wald test with main effects." },
-    { "bayes", "Run a stage-wise method." },
-    { "loglinear", "Run the log-linear method without main effects." },
-    { "caseonly", "Run the case only test." },
-    { "imputed", "Perform scaleinv test on imputed data from impute2." },
-    { "separate", "Code allele in REC/DOM prior to interaction analysis." },
     { "correct", "Multiple testing correction." },
+    { "glm", "Run a GLM model possibly with covariates." },
+    { "wald", "Perform a 'fast' wald test with main effects." },
+    { "stagewise", "Run the stage-wise method." },
+    { "scaleinv", "Run multiple link functions." },
+    { "loglinear", "Run the log-linear method without main effects." },
+    { "caseonly", "Run tests based on LD in case/control data." },
+    { "separate", "Code variants as recessive and/or dominant prior to interaction analysis." },
+    { "bayes", "Run a stage-wise method." },
+    { "imputed", "Perform scaleinv test on imputed data from impute2." },
     { "env", "Run a gene-environment test." },
+    { "var", "Run a single variant variance-hetreogenity analysis." },
+    { "lars", "Run the least angle regression in LASSO mode." },
     { NULL, NULL }
 };
 

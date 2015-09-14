@@ -103,6 +103,7 @@ parse_covariate_matrix(std::istream &stream, arma::uvec &missing, const std::vec
     
     std::map<std::string, size_t> iid_index = create_iid_map( order );
     mat X = arma::zeros<arma::mat>( order.size( ), header_fields.size( ) - 2 );
+    X.fill( arma::datum::nan );
 
     std::string line;
     int row_num = 0;
@@ -154,7 +155,7 @@ parse_covariate_matrix(std::istream &stream, arma::uvec &missing, const std::vec
         for(it = iid_index.begin( ); it != iid_index.end( ); ++it)
         {
             missing[ it->second ] = 1;
-            X.row( it->second ) = zeros<rowvec>( header_fields.size( ) - 2 );
+            X.row( it->second ).fill( arma::datum::nan );
         }
     }
 
