@@ -1,25 +1,24 @@
 # Besiq
 
-Besiq is an application for analysing pairwise genetic interactions in genome-wide association studies. It provides several methods to choose from and is efficiently implemented in C++.
+Besiq is an application for testing pairwise genetic interactions in genome-wide association studies. It provides several methods to choose from and is efficiently implemented in C++.
 
 The following methods are currently implemented for gene-gene tests:
 
-* Stage-wise closed testing (efficient and powerful on a genome-wide scale)
-* Bernoulli GLM regression with LR test (supports covariates).
-* Logistic regression with Wald test (fast, closed form).
-* Loglinear model with analytic test (does not support covariates or model main effects, but is very fast).
-* Linear model for quantitative traits.
-* Stage-wise closed testing for quantitative traits (experimental).
+* Generalized linear models likelihood ratio test (1 or 4 interaction paramters, slow but supports covariates, normal and binomial traits supported).
+* Generalized linear models Wald test (fast, but no covariates, normal and binomial traits supported).
+* Stage-wise closed testing (fast, increased power, but no covariates).
+* Log-linear model formulation (assumes only single main effect, fast).
+* LD-based tests for case/control data.
+* Simple method for evaluating link functions.
 * Bayesian model posterior (experimental).
+* Fine-mapping with imputed data (experimental, Impute2, hard called)
+* Variance-hetrogenity tests for single variants.
 
 The following things will be added at some point:
 
-* Support for imputed data (mach, IMPUTE2).
-* Support for continuous phenotypes, like intermediate traits.
 * SNP-environment interaction tests.
 * Automatic power calculation based on MAF distribution.
-* Helper-scripts for running large jobs on a cluster.
-* More tests for genetic interactions.
+* Extended output information for specific variant pairs.
 
 ## For the impatient
 
