@@ -170,3 +170,13 @@ Then these methods are simply run by the following. These commands will use the 
 # Evaluation
 
 If you want to evaluate your own method, or the methods implemented in besiq under various simulation settings, then check out the Python packages [epibench](https://github.com/mfranberg/epibench) for benchmarking, and [epigen](https://github.com/mfranberg/epigen) for generating data.
+
+The experiments from the paper can be run simply by:
+
+    epibench run --method-file method.json --experiment-file lireich.json --out lireich/
+    epibench compile lireich/
+
+and 
+
+    epibench run --method-file method.json --experiment-file specific.json --out specific/
+    epibench compile specific/
