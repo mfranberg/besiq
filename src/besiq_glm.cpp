@@ -39,6 +39,7 @@ main(int argc, char *argv[])
         exit( 1 );
     }
     shared_ptr<common_options> parsed_data = parse_common_options( options, parser.args( ) );
+    parsed_data->data->phenotype.elem( arma::find_nonfinite( parsed_data->data->phenotype ) ).zeros( );
 
     model_matrix *model_matrix = make_model_matrix( options[ "factor" ], parsed_data->data->covariate_matrix, parsed_data->data->phenotype.n_elem );
 

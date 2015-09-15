@@ -22,6 +22,9 @@ general_matrix::general_matrix(const arma::mat &cov, size_t n, size_t num_null, 
         m_alt.col( i + num_alt ) = cov.col( i );
     }
 
+    m_null.elem( arma::find_nonfinite( m_null ) ).zeros( );
+    m_alt.elem( arma::find_nonfinite( m_null ) ).zeros( );
+
     m_num_null = num_null;
     m_num_alt = num_alt;
 }

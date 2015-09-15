@@ -65,6 +65,6 @@ power_link::mu_eta(const arma::vec &mu) const
     }
     else
     {
-        return m_lambda * sign( mu ) % pow( abs( mu ), m_lambda - 1 );
+        return m_lambda * pow( abs( mu ), m_lambda - 1 );
     }
 }
