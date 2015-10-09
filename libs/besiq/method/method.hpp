@@ -65,6 +65,11 @@ struct method_data
      * The probability that any one snp is associated.
      */
     float single_prior;
+
+    /**
+     * Threshold for filtering variant pairs.
+     */
+    double threshold;
 };
 
 /**
@@ -120,7 +125,6 @@ public:
      */
     virtual std::vector<std::string> init() = 0;
 
-
     /**
      * 
      * @param row1 The first genotype.
@@ -128,8 +132,10 @@ public:
      * @param output The results for this method, the size will be the same
      *               as the length of the header, -9 is interpreted as missing.
      *               You can assume that all values are initialized to -9.
+     *
+     * @return The value of the test statistic, should return -9 if not computed or missing.
      */
-    virtual void run(const snp_row &row1, const snp_row &row2, float *output) = 0;
+    virtual double run(const snp_row &row1, const snp_row &row2, float *output) = 0;
 
 private:
     /**

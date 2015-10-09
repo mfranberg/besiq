@@ -41,7 +41,7 @@ scaleinv_method::init()
     return header;
 }
 
-void scaleinv_method::run(const snp_row &row1, const snp_row &row2, float *output)
+double scaleinv_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::uvec missing = get_data( )->missing;
     m_model_matrix.update_matrix( row1, row2, missing );
@@ -65,9 +65,13 @@ void scaleinv_method::run(const snp_row &row1, const snp_row &row2, float *outpu
             double LR = -2 * ( null_info.logl - alt_info.logl );
             double p = 1.0 - chi_square_cdf( LR, m_model_matrix.num_df( ) );
             output[ i ] = p;
+
+            return p;
         }
         catch(bad_domain_value &e)
         {
         }
     }
+
+    return -9;
 }

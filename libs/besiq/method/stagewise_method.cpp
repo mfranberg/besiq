@@ -38,7 +38,7 @@ stagewise_method::init()
     return header;
 }
 
-void
+double
 stagewise_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     std::vector<log_double> likelihood( m_models.size( ), 0.0 );
@@ -62,7 +62,7 @@ stagewise_method::run(const snp_row &row1, const snp_row &row2, float *output)
     
     if( min_samples < sample_threshold )
     {
-        return;
+        return -9;
     }
     
     for(int i = 0; i < m_models.size( ); i++)
@@ -82,4 +82,6 @@ stagewise_method::run(const snp_row &row1, const snp_row &row2, float *output)
         {
         }
     }
+
+    return output[ 0 ];
 }

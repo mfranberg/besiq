@@ -84,14 +84,14 @@ peer_method::compute_ld_p(const arma::mat &counts, float *ld_case_z, float *ld_c
     *ld_contrast_z = ( delta_case - delta_control ) / sigma_diff;
 }
 
-void
+double
 peer_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::mat counts = joint_count( row1, row2, get_data( )->phenotype, m_weight );
     
     if( arma::min( arma::min( counts ) ) < METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
     {
-        return;
+        return -9;
     }
     set_num_ok_samples( (size_t) arma::accu( counts ) );
 
@@ -110,4 +110,6 @@ peer_method::run(const snp_row &row1, const snp_row &row2, float *output)
             output[ output_index++ ] = 1 - norm_cdf( ld_contrast_z, 0.0, 1.0 );
         }
     }
+
+    return min_na( min_na( output[ 1 ], output[ 3 ] ), min_na( output[ 5 ], output[ 7 ] ) );
 }

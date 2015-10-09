@@ -43,7 +43,7 @@ boxcox_method::init()
     return header;
 }
 
-void boxcox_method::run(const snp_row &row1, const snp_row &row2, float *output)
+double boxcox_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::uvec missing = get_data( )->missing;
     m_model_matrix.update_matrix( row1, row2, missing );
@@ -71,7 +71,7 @@ void boxcox_method::run(const snp_row &row1, const snp_row &row2, float *output)
     
     if( best_index == -1 )
     {
-        return;
+        return -9;
     }
 
     /* Fit alternative model and test against best null */
@@ -93,9 +93,13 @@ void boxcox_method::run(const snp_row &row1, const snp_row &row2, float *output)
 
             output[ 1 ] = LR;
             output[ 2 ] = p;
+
+            return p;
         }
         catch(bad_domain_value &e)
         {
         }
     }
+
+    return -9;
 }

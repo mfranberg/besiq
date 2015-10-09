@@ -33,7 +33,7 @@ public:
     /**
      * @see method_type::run.
      */
-    virtual void run(const snp_row &row1, const snp_row &row2, float *output);
+    virtual double run(const snp_row &row1, const snp_row &row2, float *output);
 private:
     /**
      * Weight for each sample.

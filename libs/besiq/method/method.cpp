@@ -12,6 +12,7 @@ void run_method(method_type &method, genotype_matrix_ptr genotypes, pairfile &pa
     result.set_header( method_header );
 
     float *output = new float[ method_header.size( ) ];
+    double threshold = method.get_data( )->threshold;
     
     std::pair<std::string, std::string> pair;
     while( pairs.read( pair ) )
@@ -26,7 +27,12 @@ void run_method(method_type &method, genotype_matrix_ptr genotypes, pairfile &pa
 
         std::fill( output, output + method_header.size( ), result_get_missing( ) );
 
-        method.run( *row1, *row2, output );
+        double statistic = method.run( *row1, *row2, output );
+        if( threshold != -9 && (statistic == -9 || statistic > threshold) )
+        {
+            continue;
+        }
+
         output[ method_header.size( ) - 1 ] = method.num_ok_samples( *row1, *row2 );
 
         result.write( pair, output );

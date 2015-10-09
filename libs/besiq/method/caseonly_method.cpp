@@ -38,26 +38,29 @@ caseonly_method::init()
     return header;
 }
 
-void
+double
 caseonly_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
+    double p;
     if( m_method == "r2" )
     {
-        compute_r2( row1, row2, output );
+        p = compute_r2( row1, row2, output );
         m_wald.run( row1, row2, &output[ 2 ] );
     }
     else if( m_method == "css" )
     {
-        compute_css( row1, row2, output );
+        p = compute_css( row1, row2, output );
         m_wald.run( row1, row2, &output[ 2 ] );
     }
     else if( m_method == "contrast" )
     {
-        compute_contrast( row1, row2, output );
+        p = compute_contrast( row1, row2, output );
     }
+
+    return p;
 }
 
-void
+double
 caseonly_method::compute_r2(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::mat counts = joint_count( row1, row2, get_data( )->phenotype, m_weight );
@@ -70,7 +73,7 @@ caseonly_method::compute_r2(const snp_row &row1, const snp_row &row2, float *out
     set_num_ok_samples( (size_t) N );
     if( arma::min( arma::min( counts ) ) < METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
     {
-        return;
+        return -9;
     }
 
     for(int i = 0; i < 3; i++)
@@ -97,12 +100,15 @@ caseonly_method::compute_r2(const snp_row &row1, const snp_row &row2, float *out
     }
 
     double R2 = pow( T - m, 2 ) / ( var / N );
+    double p = 1.0 - chi_square_cdf( R2, 1 );
  
     output[ 0 ] = R2;
-    output[ 1 ] = 1.0 - chi_square_cdf( R2, 1 );
+    output[ 1 ] = p;
+
+    return p;
 }
 
-void
+double
 caseonly_method::compute_css(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::mat counts = joint_count( row1, row2, get_data( )->phenotype, m_weight );
@@ -111,7 +117,7 @@ caseonly_method::compute_css(const snp_row &row1, const snp_row &row2, float *ou
     arma::vec snp2 = arma::zeros<arma::vec>( 3 );
     if( arma::min( arma::min( counts ) ) < METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
     {
-        return;
+        return -9;
     }
 
     double N = arma::accu( counts );
@@ -142,18 +148,22 @@ caseonly_method::compute_css(const snp_row &row1, const snp_row &row2, float *ou
     e[ 3 ] = f1[ 2 ] * f2[ 2 ];
 
     double chi2 = sum( pow( o - N * e, 2 ) / ( N * e ) );
+    double p = 1.0 - chi_square_cdf( chi2, 3 );
+
     output[ 0 ] = chi2;
-    output[ 1 ] = 1.0 - chi_square_cdf( chi2, 3 );
+    output[ 1 ] = p;
+
+    return p;
 }
 
-void
+double
 caseonly_method::compute_contrast(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::mat counts = joint_count( row1, row2, get_data( )->phenotype, m_weight );
 
     if( arma::min( arma::min( counts ) ) < METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
     {
-        return;
+        return -9;
     }
     
     double N = arma::accu( counts );
@@ -198,4 +208,6 @@ caseonly_method::compute_contrast(const snp_row &row1, const snp_row &row2, floa
 
     output[ 0 ] = delta_case - delta_control;
     output[ 1 ] = p;
+
+    return p;
 }

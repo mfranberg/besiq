@@ -20,7 +20,7 @@ wald_method::init()
     return header;
 }
 
-void
+double
 wald_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::mat n0 = arma::zeros<arma::mat>( 3, 3 );
@@ -86,7 +86,7 @@ wald_method::run(const snp_row &row1, const snp_row &row2, float *output)
     set_num_ok_samples( (size_t)num_samples );
     if( num_valid <= 0 )
     {
-        return;
+        return -9;
     }
     
     valid.resize( num_valid );
@@ -118,7 +118,7 @@ wald_method::run(const snp_row &row1, const snp_row &row2, float *output)
     arma::mat Cinv( num_valid, num_valid );
     if( !inv( Cinv, C ) )
     {
-        return;
+        return -9;
     }
     
     /* Test if b != 0 with Wald test */
@@ -126,4 +126,6 @@ wald_method::run(const snp_row &row1, const snp_row &row2, float *output)
     output[ 0 ] = chi;
     output[ 1 ] = 1.0 - chi_square_cdf( chi, num_valid );
     output[ 2 ] = valid.n_elem;
+
+    return output[ 1 ];
 }

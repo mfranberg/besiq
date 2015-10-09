@@ -23,7 +23,7 @@ loglinear_method::init()
     return header;
 }
 
-void
+double
 loglinear_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::mat count = joint_count( row1, row2, get_data( )->phenotype, m_weight );
@@ -31,7 +31,7 @@ loglinear_method::run(const snp_row &row1, const snp_row &row2, float *output)
     set_num_ok_samples( num_samples );
     if( arma::min( arma::min( count ) ) < METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
     {
-        return;
+        return -9;
     }
 
     std::vector<log_double> likelihood( m_models.size( ), 0.0 );
@@ -49,8 +49,11 @@ loglinear_method::run(const snp_row &row1, const snp_row &row2, float *output)
     {
         double p_value = 1.0 - chi_square_cdf( LR, m_models[ 0 ]->df( ) - m_models[ best_model ]->df( ) );
         output[ 0 ] = p_value;
+        return p_value;
     }
     catch(bad_domain_value &e)
     {
     }
+
+    return -9;
 }

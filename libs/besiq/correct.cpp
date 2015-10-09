@@ -13,7 +13,7 @@ struct heap_result
     std::pair<std::string, std::string> variant_pair;
     float pvalue;
 
-    bool operator<(const heap_result &other)
+    bool operator<(const heap_result &other) const
     {
         return other.pvalue > pvalue;
     }

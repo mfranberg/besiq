@@ -60,7 +60,7 @@ bayes_fast_method::init()
     return header;
 }
 
-void bayes_fast_method::run(const snp_row &row1, const snp_row &row2, float *output)
+double bayes_fast_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     log_double denominator = 0.0;
     std::vector<log_double> prior_likelihood( m_models.size( ), 0.0 );
@@ -71,5 +71,7 @@ void bayes_fast_method::run(const snp_row &row1, const snp_row &row2, float *out
     }
     log_double posterior = prior_likelihood[ 0 ] / denominator;
 
-    std::cout << posterior.value( );
+    output[ 0 ] = posterior.value( );
+    
+    return posterior.value( );
 }

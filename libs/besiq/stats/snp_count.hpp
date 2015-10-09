@@ -102,4 +102,18 @@ arma::vec compute_maf(const snp_row &row);
  */
 float compute_real_maf(const snp_row &row);
 
+/**
+ * Find the minimum but respect that the values
+ * can be na, in that case return the non-na value.
+ *
+ * @param a Any value.
+ * @param b Any value.
+ * @param na The value that should be interpreted as 'na'.
+ * 
+ * @return The minimum value of a and b, if a is missing then
+ *         b is returned, if b is missing then a is returned,
+ *         if both are missing na is returned.
+ */
+double min_na(double a, double b, double na = -9);
+
 #endif /* End of __SNP_COUNT_H__ */

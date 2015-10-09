@@ -20,6 +20,7 @@ create_common_options(const std::string &usage, const std::string &description, 
     parser.add_option( "-e", "--mpheno" ).help( "Name of the phenotype that you want to read (if there are more than one in the phenotype file)." );
     parser.add_option( "-o", "--out" ).help( "The output file that will contain the results (binary)." );
     parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
+    parser.add_option( "-t", "--threshold" ).help( "Only output pairs with a p-value less than this." ).set_default( -9 );
     parser.add_option( "--split" ).help( "Runs the analysis on a part of the pair file, and this is part X of 1-<num_splits> parts (default = 1)." ).set_default( 1 );
     parser.add_option( "--num-splits" ).help( "Sets the number of parts to split the pair file in (default = 1)." ).set_default( 1 );
     parser.add_option( "--print-params" ).action( "store_true" ).set_default( 0 ).help( "Print parameter estimates in result file." );
@@ -58,6 +59,7 @@ parse_common_options(optparse::Values &options, const std::vector<std::string> &
     
     /* Read additional data  */
     method_data_ptr data( new method_data( ) );
+    data->threshold = (double) options.get( "threshold" );
     data->print_params = (bool) options.get( "print_params" );
     data->missing = zeros<uvec>( genotype_file->get_samples( ).size( ) );
     std::vector<std::string> order = genotype_file->get_sample_iids( );

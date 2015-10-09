@@ -19,7 +19,7 @@ glm_method::init()
     return header;
 }
 
-void glm_method::run(const snp_row &row1, const snp_row &row2, float *output)
+double glm_method::run(const snp_row &row1, const snp_row &row2, float *output)
 { 
     arma::uvec missing = get_data( )->missing;
 
@@ -41,10 +41,13 @@ void glm_method::run(const snp_row &row1, const snp_row &row2, float *output)
         {
             output[ 0 ] = LR;
             output[ 1 ] = 1.0 - chi_square_cdf( LR, m_model_matrix.num_df( ) );
+            return output[ 1 ];
         }
         catch(bad_domain_value &e)
         {
 
         }
     }
+
+    return -9;
 }

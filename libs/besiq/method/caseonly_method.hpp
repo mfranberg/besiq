@@ -35,12 +35,12 @@ public:
     /**
      * @see method_type::run.
      */
-    virtual void run(const snp_row &row1, const snp_row &row2, float *output);
+    virtual double run(const snp_row &row1, const snp_row &row2, float *output);
 
 private: 
-    virtual void compute_r2(const snp_row &row1, const snp_row &row2, float *output);
-    virtual void compute_css(const snp_row &row1, const snp_row &row2, float *output);
-    virtual void compute_contrast(const snp_row &row1, const snp_row &row2, float *output);
+    virtual double compute_r2(const snp_row &row1, const snp_row &row2, float *output);
+    virtual double compute_css(const snp_row &row1, const snp_row &row2, float *output);
+    virtual double compute_contrast(const snp_row &row1, const snp_row &row2, float *output);
     /**
      * A weight > 0 associated with each sample, that allows for
      * covariate adjustment.

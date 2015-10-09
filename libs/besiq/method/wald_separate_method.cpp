@@ -163,7 +163,7 @@ wald_separate_method::compute_binomial(const snp_row &row1, const snp_row &row2,
     }
 }
 
-void
+double
 wald_separate_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     if( m_is_lm )
@@ -174,4 +174,7 @@ wald_separate_method::run(const snp_row &row1, const snp_row &row2, float *outpu
     {
         compute_binomial( row1, row2, output );
     }
+
+    return min_na( min_na( output[ 1 ], output[ 3 ] ),
+                   min_na( output[ 5 ], output[ 7 ] ) );
 }

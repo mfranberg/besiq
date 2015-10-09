@@ -122,3 +122,20 @@ compute_real_maf(const snp_row &row)
         return 0.0;
     }
 }
+
+double
+min_na(double a, double b, double na)
+{
+    if( a == na )
+    {
+        return b;
+    }
+    else if( b == na )
+    {
+        return a;
+    }
+    else
+    {
+        return std::min( a, b );
+    }
+}

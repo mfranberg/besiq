@@ -2,6 +2,8 @@
 #include <glm/models/binomial.hpp>
 #include <glm/models/normal.hpp>
 
+#include <besiq/stats/snp_count.hpp>
+
 #include <besiq/method/separate_method.hpp>
 
 separate_method::separate_method(method_data_ptr data, glm_model *model)
@@ -38,7 +40,7 @@ separate_method::init()
     return header;
 }
 
-void separate_method::run(const snp_row &row1, const snp_row &row2, float *output)
+double separate_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
     size_t num_samples = get_data( )->missing.n_elem - sum( get_data( )->missing );
     
@@ -69,6 +71,8 @@ void separate_method::run(const snp_row &row1, const snp_row &row2, float *outpu
         {
         }
     }
-    
+
     set_num_ok_samples( num_samples );
+
+    return min_na( min_na( output[ 1 ], output[ 3 ] ), min_na( output[ 5 ], output[ 7 ] ) );
 }
