@@ -29,6 +29,20 @@ public:
      * @see method_type::init.
      */
     virtual std::vector<std::string> init();
+
+    /**
+     * Returns the last computed covariance matrix.
+     *
+     * @return the last computed covariance matrix.
+     */
+    arma::mat get_last_C();
+
+    /**
+     * Returns the last computed beta.
+     *
+     * @return the last computed beta.
+     */
+    arma::vec get_last_beta();
     
     /**
      * @see method_type::run.
@@ -39,6 +53,16 @@ private:
      * Weight for each sample.
      */
     arma::vec m_weight;
+
+    /**
+     * Current covariance matrix for the betas.
+     */
+    arma::mat m_C;
+
+    /**
+     * Current betas.
+     */
+    arma::vec m_beta;
 };
 
 #endif /* End of __WALD_METHOD_H__ */
