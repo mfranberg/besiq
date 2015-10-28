@@ -52,8 +52,6 @@ create_options()
                                          .description( DESCRIPTION )
                                          .epilog( EPILOG );
     
-    char const* const model_choices[] = { "binomial", "normal" };
-    parser.add_option( "-m", "--model" ).choices( &model_choices[ 0 ], &model_choices[ 2 ] ).metavar( "model" ).help( "The model to use for the phenotype, 'binomial' or 'normal', default = 'binomial'." ).set_default( "binomial" );
     parser.add_option( "-o", "--out" ).help( "The output file that will contain the results (binary)." );
     parser.add_option( "-t", "--threshold" ).help( "Only output pairs with a p-value less than this." ).set_default( -9 );
     parser.add_option( "--split" ).help( "Runs the analysis on a part of the pair file, and this is part X of 1-<num_splits> parts (default = 1)." ).set_default( 1 );
@@ -106,17 +104,8 @@ main(int argc, char *argv[])
         method_data_ptr data( new method_data( ) );
         data->missing = zeros<uvec>( plink_files[ i ]->get_samples( ).size( ) );
         data->phenotype = create_phenotype_vector( plink_files[ i ]->get_samples( ), data->missing );
-        wald_method *m = NULL;
-        if( options[ "model" ] == "binomial" )
-        {
-            m = new wald_method( data );
-        }
-        else if( options[ "model" ] == "normal" )
-        {
-            //m = new wald_lm_method( data, false );
-        }
 
-        methods.push_back( m );
+        methods.push_back( new wald_method( data ) );
     }
 
     /**
