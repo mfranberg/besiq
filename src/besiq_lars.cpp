@@ -21,10 +21,11 @@ const std::string EPILOG = "";
 
 struct lars_path
 {
-    lars_path(int p, std::string &v, double b, double t, double e)
+    lars_path(int p, std::string &v, double b, double pval, double t, double e)
         : pass( p ),
           variable( v ),
           beta( b ),
+          pvalue( pval ),
           tsum( t ),
           exp_var( e )
     {
@@ -33,6 +34,7 @@ struct lars_path
     int pass;
     std::string variable;
     double beta;
+    double pvalue;
     double tsum;
     double exp_var;
 };
@@ -161,7 +163,10 @@ std::vector<std::string>
 create_names(const std::vector<std::string> &locus_names, const std::vector<std::string> &cov_names)
 {
     std::vector<std::string> names( locus_names );
-    names.insert( names.end( ), cov_names.begin( ) + 2, cov_names.end( )) ;
+    if( cov_names.size( ) > 0 )
+    {
+        names.insert( names.end( ), cov_names.begin( ) + 2, cov_names.end( ) );
+    }
 
     return names;
 }
@@ -263,7 +268,7 @@ arma::uvec get_complement(const arma::uvec &active, size_t m)
 }
 
 std::vector<lars_path>
-lars(genotype_matrix_ptr genotypes, arma::mat &cov, arma::vec &phenotype, const std::vector<std::string> &cov_names, size_t max_vars = 15, bool lasso = true)
+lars(genotype_matrix_ptr genotypes, arma::mat &cov, arma::vec &phenotype, const std::vector<std::string> &cov_names, size_t max_vars = 15, bool lasso = true, bool only_p = false)
 {
     fill_missing_genotypes( genotypes );
     fill_missing_cov( cov );
@@ -284,6 +289,7 @@ lars(genotype_matrix_ptr genotypes, arma::mat &cov, arma::vec &phenotype, const 
 
     double pheno_mean = sum( phenotype ) / n;
     double pheno_var = sum( pow( phenotype - pheno_mean, 2 ) ) / (n - 1);
+    double prev_cor = sum( phenotype * pheno_mean );
 
     arma::uvec drop;
     arma::uvec dropinv;
@@ -291,11 +297,10 @@ lars(genotype_matrix_ptr genotypes, arma::mat &cov, arma::vec &phenotype, const 
     arma::uvec inactive = arma::linspace<arma::uvec>( 0, m - 1, m );
     double eps = 1e-10;
 
+
     int i = 0;
     while(active.n_elem < std::min( max_vars, m ) )
     {
-        std::cout << "Iteration: " << i << std::endl;
-
         calculate_cor( genotypes, cov, phenotype, mu, mean, sd, c );
         arma::vec cabs = abs( c );
         double C = max( cabs.elem( inactive ) );
@@ -382,10 +387,17 @@ lars(genotype_matrix_ptr genotypes, arma::mat &cov, arma::vec &phenotype, const 
         }
 
         float tsum = sum( abs( beta ) );
-        for(int j = 0; j < active.n_elem; j++)
+        for(int j = 0; j < active.n_elem - 1; j++)
         {
-            path.push_back( lars_path( i + 1, names[ active[ j ] ], beta[ active[ j ] ], tsum, 1.0 - model_var / pheno_var ) );
+            path.push_back( lars_path( i + 1, names[ active[ j ] ], beta[ active[ j ] ], 1.0, tsum, 1.0 - model_var / pheno_var ) );
         }
+        
+        /* Calculate p for new beta and add last component of the path */
+        double cur_cor = dot( mu, phenotype );
+        double T = (cur_cor - prev_cor ) / pheno_var;
+        double p = 1 - exp_cdf( T, 1 );
+        prev_cor = cur_cor;
+        path.push_back( lars_path( i + 1, names[ active[ active.n_elem - 1 ] ], beta[ active[ active.n_elem - 1 ] ], p, tsum, 1.0 - model_var / pheno_var ) );
 
         i++;
     }
@@ -406,6 +418,7 @@ main(int argc, char *argv[])
     parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
     parser.add_option( "-o", "--out" ).help( "The output file that will contain the results (binary)." );
     parser.add_option( "-m", "--max-variables" ).help( "Maximum number of variables in the model" ).set_default( 10 );
+    parser.add_option( "--only-pvalues" ).help( "Only output the beta that enters in each step along with its p-value." ).action( "store_true" );
 
     Values options = parser.parse_args( argc, argv );
     if( parser.args( ).size( ) != 1 )
@@ -442,12 +455,16 @@ main(int argc, char *argv[])
         cov = parse_covariate_matrix( covariate_file, cov_missing, order, &cov_names );
     }
 
+    bool only_pvalues = options.is_set( "only_pvalues" );
     std::vector<lars_path> path = lars( genotypes, cov, phenotype, cov_names, (int) options.get( "max_variables" ) );
-    std::cout << "step\tvariable\tbeta\ttsum\texplained_var\n";
+    std::cout << "step\tvariable\tbeta\tp\tsum\texplained_var\n";
     for(int i = 0; i < path.size( ); i++)
     {
         lars_path step = path[ i ];
-        std::cout << step.pass << "\t" << step.variable << "\t" << step.beta << "\t" << step.tsum <<  "\t" << step.exp_var << "\n";
+        if( !only_pvalues || (only_pvalues && step.pvalue < 1.0) )
+        {
+            std::cout << step.pass << "\t" << step.variable << "\t" << step.beta << "\t" << step.pvalue << "\t" << step.tsum <<  "\t" << step.exp_var << "\n";
+        }
     }
 
     return 0;
