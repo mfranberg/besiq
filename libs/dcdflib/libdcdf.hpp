@@ -90,4 +90,15 @@ double f_cdf(double x, double d1, double d2);
  */
 double gamma_cdf_inv(double p, double a, double b);
 
+/**
+ * Computes the probability Pr[ X < x ] where X has a Exponential
+ * distribution.
+ *
+ * @param x Observed normal value.
+ * @param lambda 1 over the expected value of the distribution.
+ *
+ * @return The probability Pr[ X < x ].
+ */
+double exp_cdf(double x, double lambda);
+
 #endif /* End of __LIBDCDF_H__ */
