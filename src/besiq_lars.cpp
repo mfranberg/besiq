@@ -761,7 +761,12 @@ lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bo
         {
             if( cur_active[ j ] != max_index )
             {
-                path.push_back( lars_path( i + 1, variable_set.get_name( cur_active[ j ] ), beta[ cur_active[ j ] ], 1.0, tsum, 1.0 - model_var / pheno_var ) );
+                path.push_back( lars_path( i + 1,
+                                           variable_set.get_name( cur_active[ j ] ),
+                                           beta[ cur_active[ j ] ],
+                                           1.0,
+                                           tsum,
+                                           1.0 - model_var / pheno_var ) );
             }
         }
         
@@ -769,7 +774,7 @@ lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bo
         double cur_cor = dot( mu, phenotype );
         arma::vec r = phenotype - mu;
         // TODO: Maybe we need sign s here
-        double lambda = 2 * arma::max( X_active.t( ) * r );
+        double lambda = 2 * arma::max( s % ( X_active.t( ) * r ) );
 
         /* Compute h0 */
         double prev_cor = base_cor;
@@ -780,9 +785,14 @@ lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bo
             prev_cor = dot( X_h0 * beta_h0, phenotype );
         }
 
-        double T = (cur_cor - prev_cor ) / pheno_var;
+        double T = (cur_cor - prev_cor ) / model_var;
         double p = 1 - exp_cdf( T, 1 );
-        path.push_back( lars_path( i + 1, variable_set.get_name( max_index ), beta[ max_index ], p, tsum, 1.0 - model_var / pheno_var ) );
+        path.push_back( lars_path( i + 1,
+                        variable_set.get_name( max_index ),
+                        beta[ max_index ],
+                        p,
+                        tsum,
+                        1.0 - model_var / pheno_var ) );
 
         i++;
     }
@@ -818,6 +828,10 @@ main(int argc, char *argv[])
     plink_file_ptr genotype_file = open_plink_file( parser.args( )[ 0 ] );
     genotype_matrix_ptr genotypes = create_genotype_matrix( genotype_file );
     std::vector<std::string> order = genotype_file->get_sample_iids( );
+
+    /* Make error streams separate from stdout */
+    arma::set_stream_err1( std::cerr );
+    arma::set_stream_err2( std::cerr );
 
     /* Parse phenotypes */
     arma::uvec cov_missing = arma::zeros<arma::uvec>( genotype_file->get_samples( ).size( ) );
