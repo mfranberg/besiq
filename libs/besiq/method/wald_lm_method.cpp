@@ -21,6 +21,19 @@ wald_lm_method::init()
     return header;
 }
 
+arma::mat
+wald_lm_method::get_last_C()
+{
+    return m_C;
+}
+
+arma::vec
+wald_lm_method::get_last_beta()
+{
+    return m_beta;
+}
+
+
 double
 wald_lm_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
@@ -83,7 +96,7 @@ wald_lm_method::run(const snp_row &row1, const snp_row &row2, float *output)
     /* Find valid parameters and estimate beta */
     int num_valid = 0;
     arma::uvec valid( 4 );
-    arma::vec beta( 4 );
+    m_beta = arma::zeros<arma::vec>( 4 );
     int i_map[] = { 1, 1, 2, 2 };
     int j_map[] = { 1, 2, 1, 2 };
     for(int i = 0; i < 4; i++)
@@ -96,7 +109,7 @@ wald_lm_method::run(const snp_row &row1, const snp_row &row2, float *output)
             n( c_i, c_j) >= METHOD_SMALLEST_CELL_SIZE_NORMAL )
         {
             valid[ num_valid ] = i;
-            beta[ num_valid ] = mu( 0, 0 ) - mu( 0, c_j ) - mu( c_i, 0 ) + mu( c_i, c_j );
+            m_beta[ num_valid ] = mu( 0, 0 ) - mu( 0, c_j ) - mu( c_i, 0 ) + mu( c_i, c_j );
             num_valid++;
         }
     }
@@ -106,10 +119,10 @@ wald_lm_method::run(const snp_row &row1, const snp_row &row2, float *output)
     }
 
     valid.resize( num_valid );
-    beta.resize( num_valid );
+    m_beta.resize( num_valid );
 
     /* Construct covariance matrix */ 
-    arma::mat C( num_valid, num_valid );
+    m_C = arma::zeros<arma::mat>( num_valid, num_valid );
     for(int iv = 0; iv < num_valid; iv++)
     {
         int i = valid[ iv ];
@@ -126,18 +139,18 @@ wald_lm_method::run(const snp_row &row1, const snp_row &row2, float *output)
             int same_col = c_j == o_j;
             int in_cell = i == j;
 
-            C( iv, jv ) = ( sigma2( 0, 0 ) / n( 0, 0 ) + same_col * sigma2( 0, c_j ) / n( 0, c_j ) + same_row * sigma2( c_i, 0 ) / n( c_i, 0 ) + in_cell * sigma2( c_i, c_j ) / n( c_i, c_j ) );
+            m_C( iv, jv ) = ( sigma2( 0, 0 ) / n( 0, 0 ) + same_col * sigma2( 0, c_j ) / n( 0, c_j ) + same_row * sigma2( c_i, 0 ) / n( c_i, 0 ) + in_cell * sigma2( c_i, c_j ) / n( c_i, c_j ) );
         }
     }
 
     arma::mat Cinv( num_valid, num_valid );
-    if( !inv( Cinv, C ) )
+    if( !inv( Cinv, m_C ) )
     {
         return -9;
     }
     
     /* Test if b != 0 with Wald test */
-    double chi = dot( beta, Cinv * beta );
+    double chi = dot( m_beta, Cinv * m_beta );
     output[ 0 ] = chi;
     output[ 1 ] = 1.0 - chi_square_cdf( chi, num_valid );
     output[ 2 ] = valid.n_elem;
