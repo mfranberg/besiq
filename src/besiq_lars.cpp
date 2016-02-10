@@ -29,52 +29,66 @@ struct lars_path
     /**
      * Constructor.
      *
-     * @param p The step in which the parameter enters the model.
-     * @param v Name of the variable.
-     * @param b Value of the parameter.
-     * @param pval Possible p-value of the parameter.
-     * @param t Current sum of betas.
-     * @param e Current explained variance.
+     * @param pass The step in which the parameter enters the model.
+     * @param variable Name of the variable.
+     * @param beta Value of the parameter.
+     * @param T Covariance test statistic.
+     * @param pvalue Possible p-value of the parameter.
+     * @param lambda The value of lambda at the knot.
+     * @param beta_sum Current sum of betas.
+     * @param explained_variance Current explained variance of the current model.
      */
-    lars_path(int p, std::string v, double b, double pval, double t, double e)
-        : pass( p ),
-          variable( v ),
-          beta( b ),
-          pvalue( pval ),
-          tsum( t ),
-          exp_var( e )
+    lars_path(int pass, std::string variable, double beta, double T, double pvalue, double lambda, double beta_sum, double explained_var)
+        : m_pass( pass ),
+          m_variable( variable ),
+          m_beta( beta ),
+          m_T( T ),
+          m_pvalue( pvalue ),
+          m_lambda( lambda ),
+          m_beta_sum( beta_sum ),
+          m_explained_var( explained_var )
     {
     }
 
     /**
      * The step in which the variable enters the model.
      */
-    int pass;
+    int m_pass;
 
     /**
      * Name of the variable.
      */
-    std::string variable;
+    std::string m_variable;
 
     /**
      * Value of the parameter.
      */
-    double beta;
+    double m_beta;
+    
+    /**
+     * Test statistic
+     */
+    double m_T;
 
     /**
      * Possible p-value of the parameter (=1 when not the first time it enters the model).
      */
-    double pvalue;
+    double m_pvalue;
+
+    /**
+     * Lambda at the knot.
+     */
+    double m_lambda;
 
     /**
      * Sum of absolute values of parameters currently in the model.
      */
-    double tsum;
+    double m_beta_sum;
 
     /**
      * Explained variance of current model.
      */
-    double exp_var;
+    double m_explained_var;
 };
 
 /**
@@ -593,7 +607,7 @@ arma::vec optimize_lars_gd(const arma::mat &X, const arma::mat &y, double lambda
         for(int j = 0; j < X.n_cols; j++)
         {
             double beta_star = arma::dot( X.col( j ), r ) + beta[ j ];
-            double update = std::abs( beta_star ) - lambda / 2.0;
+            double update = std::abs( beta_star ) - lambda;
             update = (update > 0) ? update : 0;
 
             double new_beta = (beta_star > 0) ? update : -update;
@@ -640,7 +654,7 @@ find_max(const arma::vec &v, const arma::uvec &inactive, unsigned int *max_index
 }
 
 std::vector<lars_path>
-lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bool only_p = false)
+lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bool only_p = false, double threshold = 1.0)
 {
     variable_set.impute_missing( );
     arma::vec phenotype = variable_set.get_centered_phenotype( );
@@ -660,9 +674,10 @@ lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bo
     arma::uvec inactive;
     arma::uvec drop;
     double eps = 1e-10;
+    double last_p = threshold;
 
     int i = 0;
-    while( active.size( ) < std::min( max_vars, m ) )
+    while( active.size( ) < std::min( max_vars, m ) && last_p <= threshold )
     {
         variable_set.calculate_cor( phenotype - mu, c );
         arma::vec cabs = abs( c );
@@ -753,6 +768,12 @@ lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bo
             /* Don't report drops */
             continue;
         }
+        
+        /**
+         * Compute value of the knot.
+         */
+        arma::vec r = phenotype - mu;
+        double lambda = arma::max( s % ( X_active.t( ) * r ) );
 
         /* Compute p-values and add path of previous coefficients */
         arma::uvec cur_active = active.get_active( );
@@ -764,7 +785,9 @@ lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bo
                 path.push_back( lars_path( i + 1,
                                            variable_set.get_name( cur_active[ j ] ),
                                            beta[ cur_active[ j ] ],
+                                           0.0,
                                            1.0,
+                                           lambda,
                                            tsum,
                                            1.0 - model_var / pheno_var ) );
             }
@@ -772,9 +795,6 @@ lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bo
         
         /* Calculate p for new beta and add last component of the path */
         double cur_cor = dot( mu, phenotype );
-        arma::vec r = phenotype - mu;
-        // TODO: Maybe we need sign s here
-        double lambda = 2 * arma::max( s % ( X_active.t( ) * r ) );
 
         /* Compute h0 */
         double prev_cor = base_cor;
@@ -786,14 +806,22 @@ lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bo
         }
 
         double T = (cur_cor - prev_cor ) / model_var;
-        double p = 1 - exp_cdf( T, 1 );
+        double p = 1.0;
+        if( T > 0.0 )
+        {
+            p = 1 - exp_cdf( T, 1.0 );
+        }
+
         path.push_back( lars_path( i + 1,
                         variable_set.get_name( max_index ),
                         beta[ max_index ],
+                        T,
                         p,
+                        lambda,
                         tsum,
                         1.0 - model_var / pheno_var ) );
 
+        last_p = p;
         i++;
     }
 
@@ -813,6 +841,7 @@ main(int argc, char *argv[])
     parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
     parser.add_option( "-o", "--out" ).help( "The output file that will contain the results (binary)." );
     parser.add_option( "-m", "--max-variables" ).help( "Maximum number of variables in the model" ).set_default( 10 );
+    parser.add_option( "-t", "--threshold" ).help( "Stop after a variable has a p-value less than this threshold." ).set_default( 1.0 );
     parser.add_option( "--only-pvalues" ).help( "Only output the beta that enters in each step along with its p-value." ).action( "store_true" );
 
     Values options = parser.parse_args( argc, argv );
@@ -854,17 +883,32 @@ main(int argc, char *argv[])
         cov = parse_covariate_matrix( covariate_file, cov_missing, order, &cov_names );
     }
 
+    /* Open output stream */
+    std::ofstream output_file;
+    if( options.is_set( "out" ) )
+    {
+        output_file.open( options[ "out" ].c_str( ) );
+    }
+    std::ostream &out = options.is_set( "out" ) ? output_file : std::cout;
+
     bool only_pvalues = options.is_set( "only_pvalues" );
 
     gene_environment variable_set( genotypes, cov, phenotype, cov_names );
-    std::vector<lars_path> path = lars( variable_set, (int) options.get( "max_variables" ) );
-    std::cout << "step\tvariable\tbeta\tp\tsum\texplained_var\n";
+    std::vector<lars_path> path = lars( variable_set, (int) options.get( "max_variables" ), (double) options.get( "threshold" ) );
+    out << "step\tvariable\tbeta\tT\tp\tlambda\tbeta_sum\texplained_var\n";
     for(int i = 0; i < path.size( ); i++)
     {
         lars_path step = path[ i ];
-        if( !only_pvalues || (only_pvalues && step.pvalue < 1.0) )
+        if( !only_pvalues || (only_pvalues && step.m_pvalue < 1.0) )
         {
-            std::cout << step.pass << "\t" << step.variable << "\t" << step.beta << "\t" << step.pvalue << "\t" << step.tsum <<  "\t" << step.exp_var << "\n";
+            out << step.m_pass << "\t" <<
+                step.m_variable << "\t" <<
+                step.m_beta << "\t" <<
+                step.m_T << "\t" <<
+                step.m_pvalue << "\t" <<
+                step.m_lambda <<  "\t" <<
+                step.m_beta_sum <<  "\t" <<
+                step.m_explained_var << "\n";
         }
     }
 
