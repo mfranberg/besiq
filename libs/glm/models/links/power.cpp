@@ -8,26 +8,20 @@ power_link::power_link(float lambda)
     : glm_link::glm_link( "power" )
 {
     m_lambda = lambda;
-    if( std::abs( lambda ) < 1e-5 )
+    if( lambda < 1e-6 )
     {
         m_lambda = 0.0;
+    }
+    else if( lambda > 2.0 )
+    {
+        m_lambda = 2.0;
     }
 }
 
 vec
 power_link::init_beta(const mat &X, const vec &y) const
 {
-    vec eta;
-    if( m_lambda != 0.0 )
-    {
-        eta = sign( y ) % pow( abs( y ), m_lambda );
-    }
-    else
-    {
-        eta = log( y );
-    }
-    
-    return pinv( X ) * eta;
+    return 0;
 }
 
 vec
@@ -35,11 +29,19 @@ power_link::mu(const arma::vec &eta) const
 {
     if( m_lambda == 0.0 )
     {
+        return log( eta );
+    }
+    else if( m_lambda == 2.0 )
+    {
         return exp( eta );
+    }
+    else if( m_lambda < 1.0 )
+    {
+        return ( pow( eta, m_lambda ) - 1 ) / m_lambda;
     }
     else
     {
-        return sign( eta ) % pow( abs( eta ), ( 1 / m_lambda ) );
+        return pow( 1 + eta*(2-m_lambda), 1/(2-m_lambda) );
     }
 }
 
@@ -48,11 +50,19 @@ power_link::eta(const arma::vec &mu) const
 {
     if( m_lambda == 0.0 )
     {
+        return exp( mu );
+    }
+    else if( m_lambda == 2.0 )
+    {
         return log( mu );
+    }
+    else if( m_lambda < 1.0 )
+    {
+        return pow( 1 + mu*m_lambda, 1/m_lambda);
     }
     else
     {
-        return sign( mu ) % pow( abs( mu ), m_lambda );
+        return (pow( mu, 2 - m_lambda ) - 1) / (2 - m_lambda);
     }
 }
 
@@ -61,10 +71,18 @@ power_link::mu_eta(const arma::vec &mu) const
 {
     if( m_lambda == 0.0 )
     {
-        return 1.0 / mu;
+        return exp( mu );
+    }
+    else if( m_lambda == 2.0 )
+    {
+        return 1 / mu;
+    }
+    else if( m_lambda < 1.0 )
+    {
+        return pow( 1 + mu * m_lambda, 1/m_lambda - 1 );
     }
     else
     {
-        return m_lambda * pow( abs( mu ), m_lambda - 1 );
+        return pow( mu, 1 - m_lambda );
     }
 }

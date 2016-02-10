@@ -6,7 +6,7 @@
 
 #include <besiq/method/boxcox_method.hpp>
 
-boxcox_method::boxcox_method(method_data_ptr data, model_matrix &model_matrix, bool is_lm, float lambda_start, float lambda_end, float lambda_step)
+boxcox_method::boxcox_method(method_data_ptr data, model_matrix &model_matrix, bool is_lm, float lambda_start, float lambda_end, float lambda_step, bool use_power_odds)
 : method_type::method_type( data ),
   m_model_matrix( model_matrix )
 {
@@ -15,12 +15,33 @@ boxcox_method::boxcox_method(method_data_ptr data, model_matrix &model_matrix, b
         m_lambda.push_back( lambda );
         if( is_lm )
         {
-            m_model.push_back( new normal( new power_link( lambda ) ) );
+            if( !use_power_odds )
+            {
+                m_model.push_back( new normal( new power_link( lambda ) ) );
+            }
+            else
+            {
+                m_model.push_back( new normal( new power_odds_link( lambda ) ) );
+            }
         }
         else
         {
             m_model.push_back( new binomial( new power_odds_link( lambda ) ) );
         }
+    }
+
+    if( is_lm && use_power_odds )
+    {
+        arma::vec &pheno = get_data( )->phenotype;
+
+        double min_pheno = arma::min( pheno.elem( arma::find_finite( pheno ) ) );
+        double max_pheno = arma::max( pheno.elem( arma::find_finite( pheno ) ) );
+
+        m_fixed_pheno = (pheno - min_pheno) / ( max_pheno - min_pheno );
+    }
+    else
+    {
+        m_fixed_pheno = get_data( )->phenotype;
     }
 }
 
@@ -55,7 +76,7 @@ double boxcox_method::run(const snp_row &row1, const snp_row &row2, float *outpu
     for(int i = 0; i < m_model.size( ); i++)
     {
         glm_info null_info;
-        glm_fit( m_model_matrix.get_null( ), get_data( )->phenotype, missing, *m_model[ i ], null_info );
+        glm_fit( m_model_matrix.get_null( ), m_fixed_pheno, missing, *m_model[ i ], null_info );
 
         if( !null_info.success )
         {
@@ -76,7 +97,7 @@ double boxcox_method::run(const snp_row &row1, const snp_row &row2, float *outpu
 
     /* Fit alternative model and test against best null */
     glm_info alt_info;
-    glm_fit( m_model_matrix.get_alt( ), get_data( )->phenotype, missing, *m_model[ best_index ], alt_info );
+    glm_fit( m_model_matrix.get_alt( ), m_fixed_pheno, missing, *m_model[ best_index ], alt_info );
 
     if( alt_info.success )
     {
