@@ -73,8 +73,11 @@ create_design_matrix(genotype_matrix_ptr genotypes, const arma::mat &cov, const 
             }
         }
 
-        valid_names.push_back( names[ i ] );
-        cur_col++;
+        if( arma::var( X.col( cur_col ) ) > 1e-4 )
+        {
+            valid_names.push_back( names[ i ] );
+            cur_col++;
+        }
     }
 
     for(int i = 0; i < cov.n_cols; i++)

@@ -237,7 +237,6 @@ public:
           m_cov( cov ),
           m_phenotype( phenotype )
     {
-        compute_mean_sd( );
         
         std::vector<std::string> locus_names = genotypes->get_snp_names( );
         m_names.insert( m_names.end( ), locus_names.begin( ), locus_names.end( ) );
@@ -255,6 +254,7 @@ public:
         fill_missing_genotypes( );
         fill_missing_cov( );
         fill_missing_phenotypes( );
+        compute_mean_sd( );
     }
 
     /**
@@ -683,7 +683,7 @@ lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bo
         arma::vec cabs = abs( c );
         unsigned int max_index;
         double C = find_max( cabs, active.get_inactive( ), &max_index );
-        
+
         if( C < eps )
         {
             break;
@@ -708,7 +708,6 @@ lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bo
             continue;
         }
         double A = 1.0 / sqrt( arma::accu( s.t( ) * Ginv * s ) );
-        // TODO: How to we handle the inverse properly
 
         /* Equation 2.6 */
         arma::vec w = A * Ginv * s;
@@ -806,7 +805,7 @@ lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bo
         }
 
         double T = (cur_cor - prev_cor ) / model_var;
-        double p = 1.0;
+        double p = 0.9999;
         if( T > 0.0 )
         {
             p = 1 - exp_cdf( T, 1.0 );
