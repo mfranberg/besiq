@@ -19,77 +19,9 @@ const std::string DESCRIPTION = "Uses the LARS algorithm to find important loci.
 const std::string VERSION = "besiq 0.0.1";
 const std::string EPILOG = "";
 
-/**
- * This class is responsible for holding information about a single change
- * in one of the parameters in the model. P-values is computed when a parameter
- * first enters the model.
- */
-struct lars_path
-{
-    /**
-     * Constructor.
-     *
-     * @param pass The step in which the parameter enters the model.
-     * @param variable Name of the variable.
-     * @param beta Value of the parameter.
-     * @param T Covariance test statistic.
-     * @param pvalue Possible p-value of the parameter.
-     * @param lambda The value of lambda at the knot.
-     * @param beta_sum Current sum of betas.
-     * @param explained_variance Current explained variance of the current model.
-     */
-    lars_path(int pass, std::string variable, double beta, double T, double pvalue, double lambda, double beta_sum, double explained_var)
-        : m_pass( pass ),
-          m_variable( variable ),
-          m_beta( beta ),
-          m_T( T ),
-          m_pvalue( pvalue ),
-          m_lambda( lambda ),
-          m_beta_sum( beta_sum ),
-          m_explained_var( explained_var )
-    {
-    }
-
-    /**
-     * The step in which the variable enters the model.
-     */
-    int m_pass;
-
-    /**
-     * Name of the variable.
-     */
-    std::string m_variable;
-
-    /**
-     * Value of the parameter.
-     */
-    double m_beta;
-    
-    /**
-     * Test statistic
-     */
-    double m_T;
-
-    /**
-     * Possible p-value of the parameter (=1 when not the first time it enters the model).
-     */
-    double m_pvalue;
-
-    /**
-     * Lambda at the knot.
-     */
-    double m_lambda;
-
-    /**
-     * Sum of absolute values of parameters currently in the model.
-     */
-    double m_beta_sum;
-
-    /**
-     * Explained variance of current model.
-     */
-    double m_explained_var;
-};
+class lars_variables;
+class lars_result;
+arma::vec lars(lars_variables &variable_set, lars_result &result, size_t max_vars = 15, bool lasso = true, double threshold = 1.0);
 
 /**
  * This class is responsible for keeping track which variables
@@ -150,7 +82,7 @@ public:
      *
      * @return A vector of indicies of active variables.
      */
-    arma::uvec get_active()
+    arma::uvec get_active() const
     {
         arma::uvec active = arma::zeros<arma::uvec>( m_active.size( ) );
         std::set<unsigned int>::const_iterator it;
@@ -170,7 +102,7 @@ public:
      *
      * @return A vector of indicies of inactive variables.
      */
-    arma::uvec get_inactive()
+    arma::uvec get_inactive() const
     {
         arma::uvec inactive = arma::zeros<arma::uvec>( m_size - m_active.size( ) - m_ignored.size( ) );
         unsigned int index = 0;
@@ -192,8 +124,9 @@ public:
      * Returns the number of active variables.
      *
      * @return the number of active variables.
-     */
-    size_t size()
+ 
+*/
+    size_t size() const
     {
         return m_active.size( );
     }
@@ -215,13 +148,77 @@ private:
     std::set<unsigned int> m_ignored;
 };
 
+class lars_variables
+{
+public:
+    virtual arma::vec get_centered_phenotype( ) = 0;
+    virtual size_t get_num_samples( ) = 0;
+    virtual size_t get_num_variables( ) = 0;
+    virtual std::string get_name(size_t index) = 0;
+    virtual void calculate_cor(const arma::vec &residual, arma::vec &c) = 0;
+    virtual arma::vec eig_prod(const arma::vec &u) = 0;
+    virtual arma::mat get_active(const arma::uvec &active) = 0;
+};
+
+class null_lars : public lars_variables
+{
+    public:
+        null_lars(const arma::mat &X, const arma::vec &y)
+            : m_X( X ),
+              m_y( y )
+        {
+        }
+    
+        arma::vec get_centered_phenotype()
+        {
+            return m_y - arma::mean( m_y );
+        }
+        
+        size_t get_num_samples()
+        {
+            return m_y.n_elem;
+        }
+
+        size_t get_num_variables()
+        {
+            return m_X.n_cols;
+        }
+        
+        std::string get_name(size_t index)
+        {
+            return "";
+        }
+    
+        void calculate_cor(const arma::vec &residual, arma::vec &c)
+        {
+            for(int i = 0; i < m_X.n_cols; i++)
+            {
+                c[ i ] = arma::dot( m_X.col( i ), residual );
+            }
+        }
+
+        arma::vec eig_prod(const arma::vec &u)
+        {
+            return m_X.t( ) * u;
+        }
+        
+        arma::mat get_active(const arma::uvec &active)
+        {
+            return m_X.cols( active );
+        }
+
+    private:
+        arma::mat m_X;
+        arma::vec m_y;
+};
+
 /**
  * This class is responsible for both genetic and environmental data, along
  * with computing certain properties of this data that relates to the LARS
  * algorithm. Primarily, to avoid passing and operating on each data type
  * separately within the algorithm.
  */
-class gene_environment
+class gene_environment : public lars_variables
 {
 public:
     /**
@@ -329,7 +326,7 @@ public:
         var = m_genotypes->size( );
         for(int j = 0; j < m_cov.n_cols; j++)
         {
-            double cor = dot( ( m_cov.col( j ) - m_mean[ var + j ] ) / m_sd[ var + j ],  residual );
+            double cor = dot( ( m_cov.col( j ) - m_mean[ var + j ] ) / m_sd[ var + j ], residual );
             c[ var + j ] = cor;
         }
     }
@@ -572,6 +569,175 @@ private:
     std::vector<std::string> m_names;
 };
 
+struct knot_info
+{
+    std::string variable;
+    unsigned int variable_index;
+    double lambda;
+    arma::uvec active;
+    arma::mat X_active;
+    arma::vec beta_active;
+    arma::mat X_h0;
+};
+
+struct lars_knot
+{
+    knot_info info;
+    bool remove;
+    double T;
+    double pvalue;
+    double explained_var;
+    bool valid_p;
+};
+
+class lars_result
+{
+public:
+    lars_result(const arma::vec &phenotype, bool calculate_p) :
+        m_phenotype( phenotype ),
+        m_calculate_p( calculate_p )
+    {
+        m_pheno_var = arma::accu( pow( phenotype, 2 ) ) / (phenotype.n_elem - 1);
+    }
+
+    void init(double lambda)
+    {
+        lars_knot start;
+        start.info.variable = "NULL";
+        start.info.variable_index = -1;
+        start.info.lambda = lambda;
+        start.remove = false;
+        start.T = 0.0;
+        start.pvalue = 1.0;
+        start.explained_var = 0.0;
+        start.valid_p = false;
+
+        m_knots.push_back( start );
+    }
+
+    void add_knot(bool remove, knot_info &info, double model_var)
+    {
+        lars_knot new_knot;
+        new_knot.info = info;
+        new_knot.remove = remove;
+        new_knot.explained_var = 1.0 - model_var / m_pheno_var;
+
+        if( remove || !m_calculate_p )
+        {
+            new_knot.T = 0;
+            new_knot.pvalue = 1.0;
+
+            m_knots.push_back( new_knot );
+
+            return;
+        }
+ 
+        /* Calculate p for new beta and add last component of the path */
+        double cur_cor = dot( info.X_active * info.beta_active, m_phenotype );
+
+        /* Compute h0 */
+        double prev_cor = 0;
+        if( info.X_active.n_cols > 1 )
+        {
+            null_lars null( info.X_h0, m_phenotype );
+            lars_result null_result( m_phenotype, false );
+            lars( null, null_result, info.beta_active.n_elem, true );
+
+            std::vector<lars_knot> null_knot = null_result.get_knots( );
+            
+            unsigned int knot_index = -1;
+            for(int i = 1; i < null_knot.size( ); i++)
+            {
+                if( info.lambda < null_knot[ i - 1 ].info.lambda && info.lambda > null_knot[ i ].info.lambda )
+                {
+                    knot_index = i;
+                }
+            }
+
+            arma::vec beta_next = null_knot[ knot_index ].info.beta_active;
+            arma::vec beta_prev = arrange_prev( null_knot[ knot_index - 1 ].info.beta_active,
+                                                null_knot[ knot_index - 1 ].info.active,
+                                                null_knot[ knot_index ].info.active );
+
+            double lambda_prev = null_knot[ knot_index - 1 ].info.lambda;
+            double lambda_next = null_knot[ knot_index ].info.lambda;
+
+            arma::vec k = (beta_next - beta_prev)/(lambda_next - lambda_prev);
+            arma::vec beta_h0 = beta_prev + (info.lambda - lambda_prev) * k;
+
+            prev_cor = dot( info.X_h0 * beta_h0, m_phenotype );
+        }
+
+        double T = (cur_cor - prev_cor ) / model_var;
+        double p = 1.0;
+        if( T > 0.0 )
+        {
+            p = 1 - exp_cdf( T, 1.0 );
+            new_knot.valid_p = true;
+        }
+        else
+        {
+            new_knot.valid_p = false;
+        }
+
+        new_knot.T = T;
+        new_knot.pvalue = p;
+            
+        m_knots.push_back( new_knot );
+    }
+
+    std::vector<lars_knot> get_knots()
+    {
+        return m_knots;
+    }
+
+    arma::vec arrange_prev(arma::vec &beta_prev, arma::uvec &active_prev, arma::uvec &active_next)
+    {
+        std::map<unsigned int, unsigned int> next_indices;
+        for(int i = 0; i < active_next.n_elem; i++)
+        {
+            next_indices[ active_next[ i ] ] = i;
+        }
+
+        arma::vec beta_new_prev = arma::zeros<arma::vec>( active_next.n_elem );
+        for(int i = 0; i < active_prev.n_elem; i++)
+        {
+            beta_new_prev[ next_indices[ active_prev[ i ] ] ] = beta_prev[ i ];
+        }
+
+        return beta_new_prev;
+
+    }
+
+    void write_result(std::ostream &out, bool only_pvalues)
+    {
+        out << "step\tvariable\taction\tbeta\tT\tp\tlambda\tbeta_sum\texplained_var\n";
+        for(int i = 1; i < m_knots.size( ); i++)
+        {
+            lars_knot knot = m_knots[ i ];
+            std::string action = knot.remove ? "remove" : "add";
+            arma::vec this_beta = knot.info.beta_active.elem( find( knot.info.active == knot.info.variable_index ) );
+
+                out << i << "\t" <<
+                    knot.info.variable << "\t" <<
+                    action << "\t" <<
+                    this_beta[ 0 ] << "\t" <<
+                    knot.T << "\t" <<
+                    knot.pvalue << "\t" <<
+                    knot.info.lambda <<  "\t" <<
+                    arma::sum( arma::abs( knot.info.beta_active ) ) <<  "\t" <<
+                    knot.explained_var << "\n";
+        }
+    }
+
+private:
+    arma::vec m_phenotype;
+    bool m_calculate_p;
+    double m_pheno_var;
+    std::vector<lars_knot> m_knots;
+};
+
+
 arma::vec
 nice_division(arma::vec &a, arma::vec &b)
 {
@@ -653,10 +819,9 @@ find_max(const arma::vec &v, const arma::uvec &inactive, unsigned int *max_index
     return max_value;
 }
 
-std::vector<lars_path>
-lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bool only_p = false, double threshold = 1.0)
+arma::vec
+lars(lars_variables &variable_set, lars_result &result, size_t max_vars, bool lasso, double threshold)
 {
-    variable_set.impute_missing( );
     arma::vec phenotype = variable_set.get_centered_phenotype( );
     size_t n = variable_set.get_num_samples( );
     size_t m = variable_set.get_num_variables( );
@@ -664,20 +829,18 @@ lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bo
     arma::vec mu = arma::zeros<arma::vec>( n );
     arma::vec beta = arma::zeros<arma::vec>( m );
     arma::vec c = arma::zeros<arma::vec>( m );
-    std::vector<lars_path> path;
-
-    double pheno_mean = sum( phenotype ) / n;
-    double pheno_var = sum( pow( phenotype - pheno_mean, 2 ) ) / (n - 1);
-    double base_cor = sum( phenotype * pheno_mean );
 
     active_set active( m );
     arma::uvec inactive;
     arma::uvec drop;
     double eps = 1e-10;
-    double last_p = threshold;
+
+    /* It is the first lambda that needs to be added not the last... */
+    variable_set.calculate_cor( phenotype - mu, c );
+    result.init( arma::max( abs( c ) ) );
 
     int i = 0;
-    while( active.size( ) < std::min( max_vars, m ) && last_p <= threshold )
+    while( active.size( ) < std::min( max_vars, m ) )
     {
         variable_set.calculate_cor( phenotype - mu, c );
         arma::vec cabs = abs( c );
@@ -758,73 +921,35 @@ lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bo
         mu = mu + gamma * u;
         double model_var = sum( pow( phenotype - mu, 2 ) ) / (n - 1 - active.size( ) );
 
+        knot_info info;
+        info.variable = variable_set.get_name( max_index );
+        info.variable_index = drop.n_elem <= 0 ? max_index : drop[ 0 ];
+        arma::vec r = phenotype - mu;
+        info.lambda = arma::max( s % ( X_active.t( ) * r ) );
+        info.active = active.get_active( );
+        info.X_active = X_active;
+        info.beta_active = beta.elem( active.get_active( ) );
+
+        if( prev_active.n_elem > 0 )
+        {
+            info.X_h0 = variable_set.get_active( prev_active );
+        }
+
         if( lasso && drop.n_elem > 0 )
         {
             beta.elem( active.get_active( ).elem( drop ) ).fill( 0.0 );
-            
             active.drop( drop[ 0 ] );
-
-            /* Don't report drops */
-            continue;
+            result.add_knot( true, info, model_var );
         }
-        
-        /**
-         * Compute value of the knot.
-         */
-        arma::vec r = phenotype - mu;
-        double lambda = arma::max( s % ( X_active.t( ) * r ) );
-
-        /* Compute p-values and add path of previous coefficients */
-        arma::uvec cur_active = active.get_active( );
-        float tsum = sum( abs( beta ) );
-        for(int j = 0; j < cur_active.n_elem - 1; j++)
+        else
         {
-            if( cur_active[ j ] != max_index )
-            {
-                path.push_back( lars_path( i + 1,
-                                           variable_set.get_name( cur_active[ j ] ),
-                                           beta[ cur_active[ j ] ],
-                                           0.0,
-                                           1.0,
-                                           lambda,
-                                           tsum,
-                                           1.0 - model_var / pheno_var ) );
-            }
-        }
-        
-        /* Calculate p for new beta and add last component of the path */
-        double cur_cor = dot( mu, phenotype );
-
-        /* Compute h0 */
-        double prev_cor = base_cor;
-        if( prev_active.n_elem > 0 )
-        {
-            arma::mat X_h0 = variable_set.get_active( prev_active );
-            arma::vec beta_h0 = optimize_lars_gd( X_h0, phenotype, lambda, beta.elem( prev_active ) );
-            prev_cor = dot( X_h0 * beta_h0, phenotype );
+            result.add_knot( false, info, model_var );
         }
 
-        double T = (cur_cor - prev_cor ) / model_var;
-        double p = 0.9999;
-        if( T > 0.0 )
-        {
-            p = 1 - exp_cdf( T, 1.0 );
-        }
-
-        path.push_back( lars_path( i + 1,
-                        variable_set.get_name( max_index ),
-                        beta[ max_index ],
-                        T,
-                        p,
-                        lambda,
-                        tsum,
-                        1.0 - model_var / pheno_var ) );
-
-        last_p = p;
         i++;
     }
 
-    return path;
+    return beta;
 }
 
 int
@@ -893,23 +1018,10 @@ main(int argc, char *argv[])
     bool only_pvalues = options.is_set( "only_pvalues" );
 
     gene_environment variable_set( genotypes, cov, phenotype, cov_names );
-    std::vector<lars_path> path = lars( variable_set, (int) options.get( "max_variables" ), (double) options.get( "threshold" ) );
-    out << "step\tvariable\tbeta\tT\tp\tlambda\tbeta_sum\texplained_var\n";
-    for(int i = 0; i < path.size( ); i++)
-    {
-        lars_path step = path[ i ];
-        if( !only_pvalues || (only_pvalues && step.m_pvalue < 1.0) )
-        {
-            out << step.m_pass << "\t" <<
-                step.m_variable << "\t" <<
-                step.m_beta << "\t" <<
-                step.m_T << "\t" <<
-                step.m_pvalue << "\t" <<
-                step.m_lambda <<  "\t" <<
-                step.m_beta_sum <<  "\t" <<
-                step.m_explained_var << "\n";
-        }
-    }
+    variable_set.impute_missing( );
+    lars_result result( variable_set.get_centered_phenotype( ), true );
+    lars( variable_set, result, (int) options.get( "max_variables" ), (double) options.get( "threshold" ) );
+    result.write_result( out, only_pvalues );
 
     return 0;
 }
