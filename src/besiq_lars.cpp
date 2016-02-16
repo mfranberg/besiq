@@ -711,22 +711,72 @@ public:
 
     void write_result(std::ostream &out, bool only_pvalues)
     {
-        out << "step\tvariable\taction\tbeta\tT\tp\tlambda\tbeta_sum\texplained_var\n";
-        for(int i = 1; i < m_knots.size( ); i++)
+        if( only_pvalues )
         {
-            lars_knot knot = m_knots[ i ];
-            std::string action = knot.remove ? "remove" : "add";
-            arma::vec this_beta = knot.info.beta_active.elem( find( knot.info.active == knot.info.variable_index ) );
+            out << "step\tvariable\taction\tbeta\tT\tp\tlambda\tbeta_sum\texplained_var\n";
+            for(int i = 1; i < m_knots.size( ); i++)
+            {
+                lars_knot &knot = m_knots[ i ];
+                std::string action = knot.remove ? "remove" : "add";
+                arma::vec this_beta = knot.info.beta_active.elem( find( knot.info.active == knot.info.variable_index ) );
 
-                out << i << "\t" <<
-                    knot.info.variable << "\t" <<
-                    action << "\t" <<
-                    this_beta[ 0 ] << "\t" <<
-                    knot.T << "\t" <<
-                    knot.pvalue << "\t" <<
-                    knot.info.lambda <<  "\t" <<
-                    arma::sum( arma::abs( knot.info.beta_active ) ) <<  "\t" <<
-                    knot.explained_var << "\n";
+                    out << i << "\t" <<
+                        knot.info.variable << "\t" <<
+                        action << "\t" <<
+                        this_beta[ 0 ] << "\t" <<
+                        knot.T << "\t" <<
+                        knot.pvalue << "\t" <<
+                        knot.info.lambda <<  "\t" <<
+                        arma::sum( arma::abs( knot.info.beta_active ) ) <<  "\t" <<
+                        knot.explained_var << "\n";
+            }
+        }
+        else
+        {
+            int var = 0;
+            std::map<unsigned int, unsigned int> new_pos;
+            std::vector<std::string> name;
+            for(int i = 1; i < m_knots.size( ); i++)
+            {
+                lars_knot &knot = m_knots[ i ];
+                if( knot.remove )
+                {
+                    continue;
+                }
+
+                if( new_pos.count( knot.info.variable_index ) <= 0 )
+                {
+                    new_pos[ knot.info.variable_index ] = var;
+                    name.push_back( knot.info.variable );
+                    var++;
+                }
+            }
+
+            out << "step\tvariable\tbeta_sum\texplained_var\tlambda";
+            for(int i = 0; i < name.size( ); i++)
+            {
+                out <<  "\t" << name[ i ];
+            }
+            out << "\n";
+
+            for(int i = 1; i < m_knots.size( ); i++)
+            {
+                lars_knot &knot = m_knots[ i ];
+                arma::vec beta = arma::zeros<arma::vec>( new_pos.size( ) );
+
+                for(int j = 0; j < knot.info.active.n_elem; j++)
+                {
+                    beta[ new_pos[ knot.info.active[ j ] ] ] = knot.info.beta_active[ j ];
+                }
+                
+                out << i << "\t" << knot.info.variable << "\t" << arma::sum( arma::abs( knot.info.beta_active ) ) << "\t" << knot.explained_var << "\t" << knot.info.lambda << "\t";
+                for(int j = 0; j < beta.n_elem; j++)
+                {
+                    out << "\t" << beta[ j ];
+                }
+                out << "\n";
+            }
+
         }
     }
 
