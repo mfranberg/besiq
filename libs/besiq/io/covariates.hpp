@@ -44,6 +44,24 @@ arma::vec
 parse_phenotypes(std::istream &stream, arma::uvec &missing, const std::vector<std::string> &order, std::string pheno_name = "", const char *missing_string = "NA");
 
 /**
+ * Parsers environment variables from a csv stream and returns them as a 
+ * a matrix. Missing values will be set to 1 in the given vector.
+ *
+ * @param stream The stream to read phenotypes from.
+ * @param missing The individuals with missing values will be set to 1,
+ *                others will remain untouched.
+ * @param order This vector defines the order of the individuals that will
+ *              be parsed from the environment file.
+ * @param env_name If different than "" it will search for the column with this
+ *                   name and return it.
+ * @param missing_string The string that indicates a missing value.
+ *
+ * @return A matrix containing the parsed environmental variables.
+ */
+arma::mat
+parse_env(std::istream &stream, arma::uvec &missing, const std::vector<std::string> &order, std::vector<std::string> *out_header = NULL, std::string env_name = "", const char *missing_string = "NA");
+
+/**
  * Parses an environmental factor from a csv stream and returns them as a 
  * a matrix. Missing values will be set to 1 in the given vector.
  *
