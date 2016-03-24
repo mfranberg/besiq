@@ -151,13 +151,13 @@ private:
 class lars_variables
 {
 public:
-    virtual arma::vec get_centered_phenotype( ) = 0;
-    virtual size_t get_num_samples( ) = 0;
-    virtual size_t get_num_variables( ) = 0;
-    virtual std::string get_name(size_t index) = 0;
-    virtual void calculate_cor(const arma::vec &residual, arma::vec &c) = 0;
-    virtual arma::vec eig_prod(const arma::vec &u) = 0;
-    virtual arma::mat get_active(const arma::uvec &active) = 0;
+    virtual arma::vec get_centered_phenotype( ) const = 0;
+    virtual size_t get_num_samples( ) const = 0;
+    virtual size_t get_num_variables( ) const = 0;
+    virtual std::string get_name(size_t index) const = 0;
+    virtual void calculate_cor(const arma::vec &residual, arma::vec &c) const = 0;
+    virtual arma::vec eig_prod(const arma::vec &u) const = 0;
+    virtual arma::mat get_active(const arma::uvec &active) const = 0;
 };
 
 class null_lars : public lars_variables
@@ -169,27 +169,27 @@ class null_lars : public lars_variables
         {
         }
     
-        arma::vec get_centered_phenotype()
+        arma::vec get_centered_phenotype() const
         {
             return m_y - arma::mean( m_y );
         }
         
-        size_t get_num_samples()
+        size_t get_num_samples() const
         {
             return m_y.n_elem;
         }
 
-        size_t get_num_variables()
+        size_t get_num_variables() const
         {
             return m_X.n_cols;
         }
         
-        std::string get_name(size_t index)
+        std::string get_name(size_t index) const
         {
             return "";
         }
     
-        void calculate_cor(const arma::vec &residual, arma::vec &c)
+        void calculate_cor(const arma::vec &residual, arma::vec &c) const
         {
             for(int i = 0; i < m_X.n_cols; i++)
             {
@@ -197,12 +197,12 @@ class null_lars : public lars_variables
             }
         }
 
-        arma::vec eig_prod(const arma::vec &u)
+        arma::vec eig_prod(const arma::vec &u) const
         {
             return m_X.t( ) * u;
         }
         
-        arma::mat get_active(const arma::uvec &active)
+        arma::mat get_active(const arma::uvec &active) const
         {
             return m_X.cols( active );
         }
@@ -228,11 +228,13 @@ public:
      * @param cov A matrix of covariates.
      * @param phenotype A vector of phenotypes.
      * @param cov_names Names of the covariates.
+     * @param only_main Exclude gene-environment.
      */
-    gene_environment(genotype_matrix_ptr genotypes, const arma::mat &cov, const arma::vec &phenotype, const std::vector<std::string> &cov_names)
+    gene_environment(genotype_matrix_ptr genotypes, const arma::mat &cov, const arma::vec &phenotype, const std::vector<std::string> &cov_names, bool only_main)
         : m_genotypes( genotypes ),
           m_cov( cov ),
-          m_phenotype( phenotype )
+          m_phenotype( phenotype ),
+          m_only_main( only_main )
     {
         
         std::vector<std::string> locus_names = genotypes->get_snp_names( );
@@ -259,7 +261,7 @@ public:
      *
      * @return Returns a centered phenotype.
      */
-    arma::vec get_centered_phenotype()
+    arma::vec get_centered_phenotype() const
     {
         return m_phenotype - mean( m_phenotype );
     }
@@ -269,7 +271,7 @@ public:
      *
      * @return the number of samples.
      */
-    size_t get_num_samples()
+    size_t get_num_samples() const
     {
         return m_phenotype.n_elem;
     }
@@ -279,9 +281,16 @@ public:
      *
      * @return the number of variables.
      */
-    size_t get_num_variables()
+    size_t get_num_variables() const
     {
-        return m_genotypes->get_snp_names( ).size( ) + m_cov.n_cols;
+        if( !m_only_main )
+        {
+            return m_genotypes->size( ) + m_cov.n_cols + m_genotypes->size( ) * m_cov.n_cols;
+        }
+        else
+        {
+            return m_genotypes->size( ) + m_cov.n_cols;
+        }
     }
    
     /**
@@ -291,9 +300,19 @@ public:
      *
      * @return The name of the variable with the given index.
      */ 
-    std::string get_name(size_t index)
+    std::string get_name(size_t index) const
     {
-        return m_names[ index ];
+        if( index < m_names.size( ) )
+        {
+            return m_names[ index ];
+        }
+        else
+        {
+            unsigned int snp_index = (index - m_names.size( )) % m_genotypes->size( );
+            unsigned int cov_index = (index - m_names.size( )) / m_genotypes->size( );
+
+            return m_names[ m_genotypes->size( ) + cov_index ] + ":" + m_names[ snp_index ];
+        }
     }
 
     /**
@@ -306,7 +325,7 @@ public:
      *          to store the computed correlations in.
      */
     void
-    calculate_cor(const arma::vec &residual, arma::vec &c)
+    calculate_cor(const arma::vec &residual, arma::vec &c) const
     {
         int var = 0;
         #pragma omp parallel for
@@ -329,6 +348,32 @@ public:
             double cor = dot( ( m_cov.col( j ) - m_mean[ var + j ] ) / m_sd[ var + j ], residual );
             c[ var + j ] = cor;
         }
+
+        if( m_only_main )
+        {
+            return;
+        }
+
+        var = m_genotypes->size( ) + m_cov.n_cols;
+        size_t n = get_num_samples( );
+        #pragma omp parallel for
+        for(int i = 0; i < m_cov.n_cols; i++)
+        {
+            for(int j = 0; j < m_genotypes->size( ); j++)
+            {
+                snp_row &row = m_genotypes->get_row( j );
+
+                double cor = 0.0;
+                double m = m_mean[ var + i * m_genotypes->size( ) + j ];
+                double s = m_sd[ var + i * m_genotypes->size( ) + j ];
+                for(int k = 0; k < n; k++)
+                {
+                    cor += (( m_cov( k, i ) * row[ k ] - m ) / s ) * residual[ k ];
+                }
+
+                c[ var + i * m_genotypes->size( ) + j ] = cor;
+            }
+        }
     }
     
     /**
@@ -339,7 +384,7 @@ public:
      *
      * @return The a-vector from the LARS paper.
      */
-    arma::vec eig_prod(const arma::vec &u)
+    arma::vec eig_prod(const arma::vec &u) const
     {
         arma::vec a = arma::zeros<arma::vec>( get_num_variables( ) );
 
@@ -362,6 +407,32 @@ public:
             a[ var + i ] = dot( ( m_cov.col( i ) - m_mean[ var + i ] ) / m_sd[ var + i ], u );
         }
 
+        if( m_only_main )
+        {
+            return a;
+        }
+        
+        size_t n = get_num_samples( );
+        var = m_genotypes->size( ) + m_cov.n_cols;
+        #pragma omp parallel for
+        for(int i = 0; i < m_cov.n_cols; i++)
+        {
+            for(int j = 0; j < m_genotypes->size( ); j++)
+            {
+                snp_row &row = m_genotypes->get_row( j );
+
+                double prod = 0.0;
+                double m = m_mean[ var + i * m_genotypes->size( ) + j ];
+                double s = m_sd[ var + i * m_genotypes->size( ) + j ];
+                for(int k = 0; k < n; k++)
+                {
+                    prod += (( m_cov( k, i ) * row[ k ] - m ) / s ) * u[ k ];
+                }
+
+                a[ var + i * m_genotypes->size( ) + j ] = prod;
+            }
+        }
+
         return a;
     }
 
@@ -373,7 +444,7 @@ public:
      *
      * @return Matrix of standardized active variables.
      */
-    arma::mat get_active(const arma::uvec &active)
+    arma::mat get_active(const arma::uvec &active) const
     {
         size_t n = get_num_samples( );
         arma::mat X( n, active.n_elem );
@@ -390,9 +461,21 @@ public:
                     X( j, var ) = ( row[ j ] - m ) / s;
                 }
             }
-            else
+            else if( active[ i ] < m_genotypes->size( ) + m_cov.n_cols )
             {
                 X.col( var ) = ( m_cov.col( active[ i ] - m_genotypes->size( ) ) - m ) / s;
+            }
+            else
+            {
+                unsigned int cov_index = (active[ i ] - m_names.size( )) / m_genotypes->size( );
+                unsigned int snp_index = (active[ i ] - m_names.size( )) % m_genotypes->size( );
+
+                const snp_row &row = m_genotypes->get_row( snp_index );
+                const arma::vec &cov = m_cov.col( cov_index );
+                for(int j = 0; j < n; j++)
+                {
+                    X( j, var ) = ( row[ j ] * cov[ j ] - m ) / s;
+                }
             }
             var++;
         }
@@ -500,8 +583,10 @@ private:
     {
         m_mean = arma::zeros<arma::vec>( get_num_variables( ) );
         m_sd = arma::zeros<arma::vec>( get_num_variables( ) );
-        size_t var = 0;
         size_t n = get_num_samples( );
+        
+        size_t var = 0;
+        #pragma omp parallel for
         for(int i = 0; i < m_genotypes->size( ); i++)
         {
             snp_row &row = m_genotypes->get_row( i );
@@ -519,21 +604,49 @@ private:
                 s += pow( row[ j ] - m, 2 );
             }
 
-            m_mean[ var ] = m;
-            m_sd[ var ] = sqrt( s );
-
-            var++;
+            m_mean[ i ] = m;
+            m_sd[ i ] = sqrt( s );
         }
 
+        var = m_genotypes->size( );
         for(int i = 0; i < m_cov.n_cols; i++)
         {
             double m = arma::mean( m_cov.col( i ) );
             double s = arma::accu( pow( m_cov.col( i ) - m, 2 ) );
 
-            m_mean[ var ] = m;
-            m_sd[ var ] = sqrt( s );
+            m_mean[ var + i ] = m;
+            m_sd[ var + i ] = sqrt( s );
+        }
 
-            var++;
+        if( m_only_main )
+        {
+            return;
+        }
+
+        var = m_genotypes->size( ) + m_cov.n_cols;
+        #pragma omp parallel for
+        for(int i = 0; i < m_cov.n_cols; i++)
+        {
+            for(int j = 0; j < m_genotypes->size( ); j++)
+            {
+                snp_row &row = m_genotypes->get_row( j );
+
+                double mean = 0.0;
+                for(int k = 0; k < n; k++)
+                {
+                    mean += m_cov( k, i ) * row[ k ];
+                }
+                mean = mean / n;
+
+                double s = 0.0;
+                for(int k = 0; k < n; k++)
+                {
+                    s += pow( m_cov( k, i ) * row[ k ] - mean, 2 );
+                }
+
+                m_mean[ var + m_genotypes->size( ) * i + j ] = mean;
+                m_sd[ var + m_genotypes->size( ) * i + j ] = sqrt( s );
+            }
         }
     }
 
@@ -567,6 +680,11 @@ private:
      * Vector variable names.
      */
     std::vector<std::string> m_names;
+
+    /**
+     * Only consider main effects.
+     */
+    bool m_only_main;
 };
 
 struct knot_info
@@ -938,6 +1056,7 @@ lars(lars_variables &variable_set, lars_result &result, size_t max_vars, bool la
             
             arma::vec a1 = C - cc;
             arma::vec b1 = A - ac;
+
             arma::vec gn = nice_division( a1, b1 );
 
             arma::vec a2 = C + cc;
@@ -1017,6 +1136,7 @@ main(int argc, char *argv[])
     parser.add_option( "-m", "--max-variables" ).help( "Maximum number of variables in the model" ).set_default( 10 );
     parser.add_option( "-t", "--threshold" ).help( "Stop after a variable has a p-value less than this threshold." ).set_default( 1.0 );
     parser.add_option( "--only-pvalues" ).help( "Only output the beta that enters in each step along with its p-value." ).action( "store_true" );
+    parser.add_option( "--only-main" ).help( "Only output the main effects." ).action( "store_true" );
 
     Values options = parser.parse_args( argc, argv );
     if( parser.args( ).size( ) != 1 )
@@ -1066,8 +1186,9 @@ main(int argc, char *argv[])
     std::ostream &out = options.is_set( "out" ) ? output_file : std::cout;
 
     bool only_pvalues = options.is_set( "only_pvalues" );
+    bool only_main = options.is_set( "only_main" );
 
-    gene_environment variable_set( genotypes, cov, phenotype, cov_names );
+    gene_environment variable_set( genotypes, cov, phenotype, cov_names, only_main );
     variable_set.impute_missing( );
     lars_result result( variable_set.get_centered_phenotype( ), true );
     lars( variable_set, result, (int) options.get( "max_variables" ), (double) options.get( "threshold" ) );
