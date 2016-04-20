@@ -4,7 +4,7 @@
 #include <glm/irls.hpp>
 
 arma::vec
-glm_fit(const arma::mat &X, const arma::vec &y, const arma::uvec &missing, const glm_model &model, glm_info &output)
+glm_fit(const arma::mat &X, const arma::vec &y, const arma::uvec &missing, const glm_model &model, glm_info &output, bool fast_inversion)
 {
     if( model.get_name( ) == "normal" && model.get_link( ).get_name( ) == "identity" )
     {
@@ -12,6 +12,6 @@ glm_fit(const arma::mat &X, const arma::vec &y, const arma::uvec &missing, const
     }
     else
     {
-        return irls( X, y, missing, model, output );
+        return irls( X, y, missing, model, output, fast_inversion );
     }
 }

@@ -50,10 +50,11 @@ arma::vec chi_square_cdf(const arma::vec &x, unsigned int df);
  * @param X The design matrix.
  * @param y The right hand side.
  * @param w The weight for each observation.
+ * @param fast_inversion If true use less robust but faster inversion.
  *
  * @return The vector b that minimizes the weighted least squares problem.
  */
-arma::vec weighted_least_squares(const arma::mat &X, const arma::vec &y, const arma::vec &w);
+arma::vec weighted_least_squares(const arma::mat &X, const arma::vec &y, const arma::vec &w, bool fast_inversion = false);
 
 /**
  * Compute the adjusted dependent variates in the Iteratively reweighted
@@ -89,10 +90,11 @@ arma::vec compute_w(const arma::vec &var, const arma::vec& mu_eta);
  * @param y The observations.
  * @param model The GLM model to estimate.
  * @param output Output statistics of the estimated betas.
+ * @param fast_inversion If true use less robust but faster inversion.
  *
  * @return Estimated beta coefficients.
  */
-arma::vec irls(const arma::mat &X, const arma::vec &y, const glm_model &model, glm_info &output);
+arma::vec irls(const arma::mat &X, const arma::vec &y, const glm_model &model, glm_info &output, bool fast_inversion = false);
 
 /**
  * This function performs the iteratively reweighted
@@ -105,9 +107,10 @@ arma::vec irls(const arma::mat &X, const arma::vec &y, const glm_model &model, g
  * @param missing Identifies missing sampels by 1 and non-missing by 0.
  * @param model The GLM model to estimate.
  * @param output Output statistics of the estimated betas.
+ * @param fast_inversion If true use less robust but faster inversion.
  *
  * @return Estimated beta coefficients.
  */
-arma::vec irls(const arma::mat &X, const arma::vec &y, const arma::uvec &missing, const glm_model &model, glm_info &output);
+arma::vec irls(const arma::mat &X, const arma::vec &y, const arma::uvec &missing, const glm_model &model, glm_info &output, bool fast_inversion = false);
 
 #endif /* End of __IRLS_H__ */

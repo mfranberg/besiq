@@ -62,6 +62,7 @@ parse_common_options(optparse::Values &options, const std::vector<std::string> &
     data->threshold = (double) options.get( "threshold" );
     data->print_params = (bool) options.get( "print_params" );
     data->missing = zeros<uvec>( genotype_file->get_samples( ).size( ) );
+    data->fast_inversion = false;
     std::vector<std::string> order = genotype_file->get_sample_iids( );
     if( options.is_set( "pheno" ) )
     {
