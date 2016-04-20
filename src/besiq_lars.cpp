@@ -41,6 +41,7 @@ public:
         m_active = std::set<unsigned int>( );
         m_ignored = std::set<unsigned int>( );
         m_size = size;
+        m_last_added = -1;
     }
 
     /**
@@ -51,6 +52,7 @@ public:
      */
     void add(unsigned int x)
     {
+        m_last_added = x;
         m_active.insert( x );
     }
 
@@ -121,6 +123,16 @@ public:
     }
 
     /**
+     * Returns the last added variable to the active set.
+     *
+     * @return The last added variable to the active set.
+     */
+    unsigned int get_last_added() const
+    {
+        return m_last_added;
+    }
+
+    /**
      * Returns the number of active variables.
      *
      * @return the number of active variables.
@@ -146,6 +158,11 @@ private:
      * Set of ignored variables.
      */
     std::set<unsigned int> m_ignored;
+
+    /**
+     * Last added index.
+     */
+    unsigned int m_last_added;
 };
 
 class lars_variables
@@ -759,7 +776,7 @@ public:
         {
             null_lars null( info.X_h0, m_phenotype );
             lars_result null_result( m_phenotype, false );
-            lars( null, null_result, info.beta_active.n_elem, true );
+            lars( null, null_result, info.X_h0.n_cols, true );
 
             std::vector<lars_knot> null_knot = null_result.get_knots( );
             
@@ -772,13 +789,17 @@ public:
                 }
             }
 
-            arma::vec beta_next = null_knot[ knot_index ].info.beta_active;
-            arma::vec beta_prev = arrange_prev( null_knot[ knot_index - 1 ].info.beta_active,
-                                                null_knot[ knot_index - 1 ].info.active,
-                                                null_knot[ knot_index ].info.active );
+            lars_knot &prev = null_knot[ knot_index - 1 ];
+            lars_knot &next = null_knot[ knot_index ];
 
-            double lambda_prev = null_knot[ knot_index - 1 ].info.lambda;
-            double lambda_next = null_knot[ knot_index ].info.lambda;
+            arma::vec beta_prev = arma::zeros<arma::vec>( info.X_h0.n_cols );
+            align_beta( prev.info.beta_active, prev.info.active, &beta_prev );
+
+            arma::vec beta_next = arma::zeros<arma::vec>( info.X_h0.n_cols );
+            align_beta( next.info.beta_active, next.info.active, &beta_next );
+
+            double lambda_prev = prev.info.lambda;
+            double lambda_next = next.info.lambda;
 
             arma::vec k = (beta_next - beta_prev)/(lambda_next - lambda_prev);
             arma::vec beta_h0 = beta_prev + (info.lambda - lambda_prev) * k;
@@ -809,22 +830,12 @@ public:
         return m_knots;
     }
 
-    arma::vec arrange_prev(arma::vec &beta_prev, arma::uvec &active_prev, arma::uvec &active_next)
+    void align_beta(arma::vec &beta, arma::uvec &active, arma::vec *aligned_beta)
     {
-        std::map<unsigned int, unsigned int> next_indices;
-        for(int i = 0; i < active_next.n_elem; i++)
+        for(int i = 0; i < active.n_elem; i++)
         {
-            next_indices[ active_next[ i ] ] = i;
+            (*aligned_beta)[ active[ i ] ] = beta[ i ];
         }
-
-        arma::vec beta_new_prev = arma::zeros<arma::vec>( active_next.n_elem );
-        for(int i = 0; i < active_prev.n_elem; i++)
-        {
-            beta_new_prev[ next_indices[ active_prev[ i ] ] ] = beta_prev[ i ];
-        }
-
-        return beta_new_prev;
-
     }
 
     void write_result(std::ostream &out, bool only_pvalues)
@@ -835,18 +846,23 @@ public:
             for(int i = 1; i < m_knots.size( ); i++)
             {
                 lars_knot &knot = m_knots[ i ];
-                std::string action = knot.remove ? "remove" : "add";
+                std::string action = "add";
                 arma::vec this_beta = knot.info.beta_active.elem( find( knot.info.active == knot.info.variable_index ) );
+                if( knot.remove )
+                {
+                    action = "remove";
+                    this_beta = arma::zeros<arma::vec>( 1 );
+                }
 
-                    out << i << "\t" <<
-                        knot.info.variable << "\t" <<
-                        action << "\t" <<
-                        this_beta[ 0 ] << "\t" <<
-                        knot.T << "\t" <<
-                        knot.pvalue << "\t" <<
-                        knot.info.lambda <<  "\t" <<
-                        arma::sum( arma::abs( knot.info.beta_active ) ) <<  "\t" <<
-                        knot.explained_var << "\n";
+                out << i << "\t" <<
+                    knot.info.variable << "\t" <<
+                    action << "\t" <<
+                    this_beta[ 0 ] << "\t" <<
+                    knot.T << "\t" <<
+                    knot.pvalue << "\t" <<
+                    knot.info.lambda <<  "\t" <<
+                    arma::sum( arma::abs( knot.info.beta_active ) ) <<  "\t" <<
+                    knot.explained_var << "\n";
             }
         }
         else
@@ -870,7 +886,7 @@ public:
                 }
             }
 
-            out << "step\tvariable\tbeta_sum\texplained_var\tlambda";
+            out << "step\tvariable\tT\tp\tbeta_sum\texplained_var\tlambda";
             for(int i = 0; i < name.size( ); i++)
             {
                 out <<  "\t" << name[ i ];
@@ -887,7 +903,7 @@ public:
                     beta[ new_pos[ knot.info.active[ j ] ] ] = knot.info.beta_active[ j ];
                 }
                 
-                out << i << "\t" << knot.info.variable << "\t" << arma::sum( arma::abs( knot.info.beta_active ) ) << "\t" << knot.explained_var << "\t" << knot.info.lambda << "\t";
+                out << i << "\t" << knot.info.variable << "\t" << knot.T << "\t" << knot.pvalue << "\t" << arma::sum( arma::abs( knot.info.beta_active ) ) << "\t" << knot.explained_var << "\t" << knot.info.lambda << "\t";
                 for(int j = 0; j < beta.n_elem; j++)
                 {
                     out << "\t" << beta[ j ];
@@ -1001,6 +1017,7 @@ lars(lars_variables &variable_set, lars_result &result, size_t max_vars, bool la
     active_set active( m );
     arma::uvec inactive;
     arma::uvec drop;
+    arma::uvec prev_active;
     double eps = 1e-10;
 
     /* It is the first lambda that needs to be added not the last... */
@@ -1020,8 +1037,14 @@ lars(lars_variables &variable_set, lars_result &result, size_t max_vars, bool la
             break;
         }
        
-        arma::uvec prev_active = active.get_active( ); 
-        active.add( max_index );
+        /* If previous step was a drop we should not add
+         * more variables in this step only increase beta. */
+        bool prev_was_drop = drop.n_elem > 0;
+        if( !prev_was_drop )
+        {
+            prev_active = active.get_active( ); 
+            active.add( max_index );
+        }
         inactive = active.get_inactive( );
 
         /* Create the active matrix */
@@ -1081,39 +1104,60 @@ lars(lars_variables &variable_set, lars_result &result, size_t max_vars, bool la
                 if( gammatilde < gamma )
                 {
                     gamma = gammatilde;
-                    drop = find( gammaj == gammatilde );
+                    drop = active.get_active( ).elem( find( gammaj == gammatilde ) );
+                    assert( drop.n_elem == 1 );
                 }
             }
         }
 
         beta.elem( active.get_active( ) ) = beta.elem( active.get_active( ) ) + w * gamma;
         mu = mu + gamma * u;
-        double model_var = sum( pow( phenotype - mu, 2 ) ) / (n - 1 - active.size( ) );
 
+        bool cur_is_drop = drop.n_elem > 0;
         knot_info info;
-        info.variable = variable_set.get_name( max_index );
-        info.variable_index = drop.n_elem <= 0 ? max_index : drop[ 0 ];
-        arma::vec r = phenotype - mu;
-        info.lambda = arma::max( s % ( X_active.t( ) * r ) );
+        if( cur_is_drop )
+        {
+            /* This knot is a deletion, so zero out beta and remove the deleted
+             * variable from the active set, and in the next step we need to
+             * increase beta to get to the knot of the newly added variable. */
+            beta.elem( drop ).fill( 0.0 );
+            active.drop( drop[ 0 ] );
+        }
+        
+        /**
+         * If addition we use the max index, if deletion we use the
+         * drop index, if previous was a drop we use the last added
+         * variable because it is that one we are moving forward with.
+         */
+        if( !cur_is_drop && !prev_was_drop )
+        {
+            info.variable_index = max_index;
+        }
+        else if( cur_is_drop )
+        {
+            info.variable_index = drop[ 0 ];
+        }
+        else
+        {
+            info.variable_index = active.get_last_added( );
+        }
+        info.variable = variable_set.get_name( info.variable_index );
+
         info.active = active.get_active( );
-        info.X_active = X_active;
-        info.beta_active = beta.elem( active.get_active( ) );
+        info.beta_active = beta.elem( info.active );
+        info.X_active = !cur_is_drop ? X_active : variable_set.get_active( info.active );
+
+        double model_var = sum( pow( phenotype - mu, 2 ) ) / (n - 1 - active.size( ) );
+        arma::vec r = phenotype - mu;
+        s = sign( c.elem( active.get_active( ) ) );
+        info.lambda = arma::max( s % ( info.X_active.t( ) * r ) );
 
         if( prev_active.n_elem > 0 )
         {
             info.X_h0 = variable_set.get_active( prev_active );
         }
 
-        if( lasso && drop.n_elem > 0 )
-        {
-            beta.elem( active.get_active( ).elem( drop ) ).fill( 0.0 );
-            active.drop( drop[ 0 ] );
-            result.add_knot( true, info, model_var );
-        }
-        else
-        {
-            result.add_knot( false, info, model_var );
-        }
+        result.add_knot( cur_is_drop, info, model_var );
 
         i++;
     }
