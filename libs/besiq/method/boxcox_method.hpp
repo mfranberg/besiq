@@ -29,8 +29,9 @@ public:
      * @param lambda_start Start value of lambda.
      * @param lambda_end End value of lambda.
      * @param lambda_start Step value of lambda.
+     * @param use_power_odds Use the power odds link family for normal data.
      */
-    boxcox_method(method_data_ptr data, model_matrix &model_matrix, bool is_lm, float lambda_start, float lambda_end, float lambda_step);
+    boxcox_method(method_data_ptr data, model_matrix &model_matrix, bool is_lm, float lambda_start, float lambda_end, float lambda_step, bool use_power_odds = false);
     
     /**
      * Destructor.
@@ -62,6 +63,11 @@ private:
      * List of lambda for each link.
      */
     std::vector<float> m_lambda;
+
+    /**
+     * A possibly transformed phenotype.
+     */
+    arma::vec m_fixed_pheno;
 };
 
 #endif /* End of __BOXCOX_METHOD_H__ */

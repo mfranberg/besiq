@@ -1,4 +1,5 @@
 #include <dcdflib/libdcdf.hpp>
+#include <cmath>
 
 extern "C"
 {
@@ -100,4 +101,19 @@ gamma_cdf_inv(double p, double a, double b)
     {
         throw bad_domain_value( x );
     }
+}
+
+double
+exp_cdf(double x, double lambda)
+{
+    if( x < 0 )
+    {
+        throw bad_domain_value( x );
+    }
+    if( lambda <= 0 )
+    {
+        throw bad_domain_value( lambda );
+    }
+
+    return 1 - std::exp( -lambda * x );
 }

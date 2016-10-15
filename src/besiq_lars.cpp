@@ -19,106 +19,558 @@ const std::string DESCRIPTION = "Uses the LARS algorithm to find important loci.
 const std::string VERSION = "besiq 0.0.1";
 const std::string EPILOG = "";
 
+/**
+ * This class is responsible for holding information about a single change
+ * in one of the parameters in the model. P-values is computed when a parameter
+ * first enters the model.
+ */
 struct lars_path
 {
-    lars_path(int p, std::string &v, double b, double t, double e)
-        : pass( p ),
-          variable( v ),
-          beta( b ),
-          tsum( t ),
-          exp_var( e )
+    /**
+     * Constructor.
+     *
+     * @param pass The step in which the parameter enters the model.
+     * @param variable Name of the variable.
+     * @param beta Value of the parameter.
+     * @param T Covariance test statistic.
+     * @param pvalue Possible p-value of the parameter.
+     * @param lambda The value of lambda at the knot.
+     * @param beta_sum Current sum of betas.
+     * @param explained_variance Current explained variance of the current model.
+     */
+    lars_path(int pass, std::string variable, double beta, double T, double pvalue, double lambda, double beta_sum, double explained_var)
+        : m_pass( pass ),
+          m_variable( variable ),
+          m_beta( beta ),
+          m_T( T ),
+          m_pvalue( pvalue ),
+          m_lambda( lambda ),
+          m_beta_sum( beta_sum ),
+          m_explained_var( explained_var )
     {
     }
 
-    int pass;
-    std::string variable;
-    double beta;
-    double tsum;
-    double exp_var;
+    /**
+     * The step in which the variable enters the model.
+     */
+    int m_pass;
+
+    /**
+     * Name of the variable.
+     */
+    std::string m_variable;
+
+    /**
+     * Value of the parameter.
+     */
+    double m_beta;
+    
+    /**
+     * Test statistic
+     */
+    double m_T;
+
+    /**
+     * Possible p-value of the parameter (=1 when not the first time it enters the model).
+     */
+    double m_pvalue;
+
+    /**
+     * Lambda at the knot.
+     */
+    double m_lambda;
+
+    /**
+     * Sum of absolute values of parameters currently in the model.
+     */
+    double m_beta_sum;
+
+    /**
+     * Explained variance of current model.
+     */
+    double m_explained_var;
 };
 
-void
-fill_missing_genotypes(genotype_matrix_ptr genotypes)
+/**
+ * This class is responsible for keeping track which variables
+ * are currently in the active and inactive sets, excluding those
+ * that are currently in the ignored set.
+ */
+class active_set
 {
-    #pragma omp parallel for
-    for(int i = 0; i < genotypes->size( ); i++)
+public:
+    /**
+     * Constructor.
+     *
+     * @param size Total number of variables ([0...size-1]).
+     */
+    active_set(size_t size)
     {
-        snp_row &row = genotypes->get_row( i );
-        int total = 0;
-        double mu = 0;
-        for(int j = 0; j < row.size( ); j++)
+        m_active = std::set<unsigned int>( );
+        m_ignored = std::set<unsigned int>( );
+        m_size = size;
+    }
+
+    /**
+     * Add a variable to the active set. It is assumed that this
+     * variable is not ignored.
+     *
+     * @param x Index of variable to add.
+     */
+    void add(unsigned int x)
+    {
+        m_active.insert( x );
+    }
+
+    /**
+     * Ignores a parameters, ignored parameters are neither
+     * active or inactive.
+     *
+     * @param x Index of variable to ignore.
+     */
+    void ignore(unsigned int x)
+    {
+        m_active.erase( x );
+        m_ignored.insert( x );
+    }
+
+    /**
+     * Move a variable from active to inactive.
+     *
+     * @param Index of the variable to move.
+     */
+    void drop(unsigned int x)
+    {
+        m_active.erase( x );
+    }
+
+    /**
+     * Returns a vector of indicies of the currently active variables
+     * suitable for the arma package.
+     *
+     * @return A vector of indicies of active variables.
+     */
+    arma::uvec get_active()
+    {
+        arma::uvec active = arma::zeros<arma::uvec>( m_active.size( ) );
+        std::set<unsigned int>::const_iterator it;
+        unsigned int index = 0;
+        for(it = m_active.begin( ); it != m_active.end( ); ++it)
         {
-            if( row[ j ] != 3 )
+            active[ index ] = *it;
+            index++;      
+        }
+
+        return active;
+    }
+
+    /**
+     * Returns a vector of indicies of the currently inactive variables
+     * suitable for the arma package.
+     *
+     * @return A vector of indicies of inactive variables.
+     */
+    arma::uvec get_inactive()
+    {
+        arma::uvec inactive = arma::zeros<arma::uvec>( m_size - m_active.size( ) - m_ignored.size( ) );
+        unsigned int index = 0;
+        for(int i = 0; i < m_size; i++)
+        {
+            if( m_active.count( i ) > 0 || m_ignored.count( i ) > 0 )
             {
-                mu += row[ j ];
-                total++;
+                continue;
+            }
+
+            inactive[ index ] = i;
+            index++;
+        }
+
+        return inactive;
+    }
+
+    /**
+     * Returns the number of active variables.
+     *
+     * @return the number of active variables.
+     */
+    size_t size()
+    {
+        return m_active.size( );
+    }
+
+private:
+    /**
+     * Total number of variables.
+     */
+    size_t m_size;
+
+    /**
+     * Set of active variables.
+     */
+    std::set<unsigned int> m_active;
+
+    /**
+     * Set of ignored variables.
+     */
+    std::set<unsigned int> m_ignored;
+};
+
+/**
+ * This class is responsible for both genetic and environmental data, along
+ * with computing certain properties of this data that relates to the LARS
+ * algorithm. Primarily, to avoid passing and operating on each data type
+ * separately within the algorithm.
+ */
+class gene_environment
+{
+public:
+    /**
+     * Constructor.
+     *
+     * @param genotypes A matrix of genotypes.
+     * @param cov A matrix of covariates.
+     * @param phenotype A vector of phenotypes.
+     * @param cov_names Names of the covariates.
+     */
+    gene_environment(genotype_matrix_ptr genotypes, const arma::mat &cov, const arma::vec &phenotype, const std::vector<std::string> &cov_names)
+        : m_genotypes( genotypes ),
+          m_cov( cov ),
+          m_phenotype( phenotype )
+    {
+        
+        std::vector<std::string> locus_names = genotypes->get_snp_names( );
+        m_names.insert( m_names.end( ), locus_names.begin( ), locus_names.end( ) );
+        if( cov_names.size( ) > 0 )
+        {
+            m_names.insert( m_names.end( ), cov_names.begin( ) + 2, cov_names.end( ) );
+        }
+    }
+
+    /**
+     * Imputes the missing genotypes, covariates and phenotypes.
+     */
+    void impute_missing()
+    {
+        fill_missing_genotypes( );
+        fill_missing_cov( );
+        fill_missing_phenotypes( );
+        compute_mean_sd( );
+    }
+
+    /**
+     * Centers a phenotype and returns it.
+     *
+     * @return Returns a centered phenotype.
+     */
+    arma::vec get_centered_phenotype()
+    {
+        return m_phenotype - mean( m_phenotype );
+    }
+
+    /**
+     * Returns the number of samples.
+     *
+     * @return the number of samples.
+     */
+    size_t get_num_samples()
+    {
+        return m_phenotype.n_elem;
+    }
+
+    /**
+     * Returns the number of variables.
+     *
+     * @return the number of variables.
+     */
+    size_t get_num_variables()
+    {
+        return m_genotypes->get_snp_names( ).size( ) + m_cov.n_cols;
+    }
+   
+    /**
+     * Returns the name of the variable with the given index.
+     *
+     * @param index Index of the variable whoose name to return.
+     *
+     * @return The name of the variable with the given index.
+     */ 
+    std::string get_name(size_t index)
+    {
+        return m_names[ index ];
+    }
+
+    /**
+     * Calculates the correlation between each variable and
+     * the given vector of residuals. The results are stored
+     * in the supplied vector c.
+     *
+     * @param residual A vector of residuals.
+     * @param c A vector of at least the size of the number of variables,
+     *          to store the computed correlations in.
+     */
+    void
+    calculate_cor(const arma::vec &residual, arma::vec &c)
+    {
+        int var = 0;
+        #pragma omp parallel for
+        for(int i = 0; i < m_genotypes->size( ); i++)
+        {
+            const snp_row &row = m_genotypes->get_row( i );
+            double cor = 0.0;
+            double m = m_mean[ i ];
+            double s = m_sd[ i ];
+            for(int j = 0; j < row.size( ); j++)
+            {
+                cor += ( ( row[ j ] - m ) / s ) * residual[ j ];
+            }
+            c[ i ] = cor;
+        }
+
+        var = m_genotypes->size( );
+        for(int j = 0; j < m_cov.n_cols; j++)
+        {
+            double cor = dot( ( m_cov.col( j ) - m_mean[ var + j ] ) / m_sd[ var + j ],  residual );
+            c[ var + j ] = cor;
+        }
+    }
+    
+    /**
+     * Computes the vector a from the LARS paper from the
+     * vector u.
+     *
+     * @param u The u-vector from the LARS paper.
+     *
+     * @return The a-vector from the LARS paper.
+     */
+    arma::vec eig_prod(const arma::vec &u)
+    {
+        arma::vec a = arma::zeros<arma::vec>( get_num_variables( ) );
+
+        size_t var = 0;
+        #pragma omp parallel for
+        for(int i = 0; i < m_genotypes->size( ); i++)
+        {
+            const snp_row &row = m_genotypes->get_row( i );
+            double m = m_mean[ i ];
+            double s = m_sd[ i ];
+            for(int j = 0; j < row.size( ); j++)
+            {
+                a[ i ] += ( ( row[ j ] - m ) / s ) * u[ j ];
             }
         }
-        mu = mu / total;
 
-        int mu_int = round( mu );
-        for(int j = 0; j < row.size( ); j++)
+        var = m_genotypes->size( );
+        for(int i = 0; i < m_cov.n_cols; i++)
         {
-            if( row[ j ] == 3 )
+            a[ var + i ] = dot( ( m_cov.col( i ) - m_mean[ var + i ] ) / m_sd[ var + i ], u );
+        }
+
+        return a;
+    }
+
+    /**
+     * Returns a matrix of standardized variables according to the
+     * given vector of indicides of active variables.
+     *
+     * @param active  Indicies of active variables.
+     *
+     * @return Matrix of standardized active variables.
+     */
+    arma::mat get_active(const arma::uvec &active)
+    {
+        size_t n = get_num_samples( );
+        arma::mat X( n, active.n_elem );
+        size_t var = 0;
+        for(int i = 0; i < active.n_elem; i++)
+        {
+            double m = m_mean[ active[ i ] ];
+            double s = m_sd[ active[ i ] ];
+            if( active[ i ] < m_genotypes->size( ) )
             {
-                row.assign( j, mu_int );
+                const snp_row &row = m_genotypes->get_row( active[ i ] );
+                for(int j = 0; j < row.size( ); j++)
+                {
+                    X( j, var ) = ( row[ j ] - m ) / s;
+                }
+            }
+            else
+            {
+                X.col( var ) = ( m_cov.col( active[ i ] - m_genotypes->size( ) ) - m ) / s;
+            }
+            var++;
+        }
+
+        return X;
+    }
+
+private:
+    /**
+     * Assigns missing genotypes with genotype mean.
+     */
+    void fill_missing_genotypes()
+    {
+        #pragma omp parallel for
+        for(int i = 0; i < m_genotypes->size( ); i++)
+        {
+            snp_row &row = m_genotypes->get_row( i );
+            int total = 0;
+            double mu = 0;
+            for(int j = 0; j < row.size( ); j++)
+            {
+                if( row[ j ] != 3 )
+                {
+                    mu += row[ j ];
+                    total++;
+                }
+            }
+            mu = mu / total;
+
+            int mu_int = round( mu );
+            for(int j = 0; j < row.size( ); j++)
+            {
+                if( row[ j ] == 3 )
+                {
+                    row.assign( j, mu_int );
+                }
             }
         }
     }
-}
 
-void
-fill_missing_phenotypes(arma::vec &phenotypes)
-{
-    double mu = 0.0;
-    int total = 0;
-    for(int i = 0; i < phenotypes.n_elem; i++)
-    {
-        if( phenotypes[ i ] == phenotypes[ i ] )
-        {
-            mu += phenotypes[ i ];
-            total++;
-        }
-    }
-    mu = mu / total;
-
-    for(int i = 0; i < phenotypes.n_elem; i++)
-    {
-        if( phenotypes[ i ] != phenotypes[ i ] )
-        {
-            phenotypes[ i ] = mu;
-        }
-    }
-}
-
-void
-fill_missing_cov(arma::mat &cov)
-{
-    for(int i = 0; i < cov.n_cols; i++)
+    /**
+     * Assigns missing phenotypes with phenotype mean.
+     */
+    void fill_missing_phenotypes()
     {
         double mu = 0.0;
         int total = 0;
-        for(int j = 0; j < cov.n_rows; j++)
+        for(int i = 0; i < m_phenotype.n_elem; i++)
         {
-            // Check NaN, may fail in some compilers
-            if( cov( j, i ) == cov( j, i ) )
+            if( m_phenotype[ i ] == m_phenotype[ i ] )
             {
-                mu += cov( j, i );
+                mu += m_phenotype[ i ];
                 total++;
             }
         }
         mu = mu / total;
 
-        for(int j = 0; j < cov.n_rows; j++)
+        for(int i = 0; i < m_phenotype.n_elem; i++)
         {
-            // Check NaN, may fail in some compilers
-            if( cov( j, i ) != cov( j, i ) )
+            if( m_phenotype[ i ] != m_phenotype[ i ] )
             {
-                cov( j, i ) = mu;
+                m_phenotype[ i ] = mu;
             }
         }
     }
-}
+
+    /**
+     * Assigns missing covariates with covariate mean.
+     */
+    void fill_missing_cov()
+    {
+        for(int i = 0; i < m_cov.n_cols; i++)
+        {
+            double mu = 0.0;
+            int total = 0;
+            for(int j = 0; j < m_cov.n_rows; j++)
+            {
+                // Check NaN, may fail in some compilers
+                if( m_cov( j, i ) == m_cov( j, i ) )
+                {
+                    mu += m_cov( j, i );
+                    total++;
+                }
+            }
+            mu = mu / total;
+
+            for(int j = 0; j < m_cov.n_rows; j++)
+            {
+                // Check NaN, may fail in some compilers
+                if( m_cov( j, i ) != m_cov( j, i ) )
+                {
+                    m_cov( j, i ) = mu;
+                }
+            }
+        }
+    }
+
+    /**
+     * Computes the mean and standard deviation of each variable
+     * and stores it in the m_mean and m_sd vectors. This is performed
+     * in this way because it is too expensive to store the genotypes
+     * as floats.
+     */
+    void compute_mean_sd()
+    {
+        m_mean = arma::zeros<arma::vec>( get_num_variables( ) );
+        m_sd = arma::zeros<arma::vec>( get_num_variables( ) );
+        size_t var = 0;
+        size_t n = get_num_samples( );
+        for(int i = 0; i < m_genotypes->size( ); i++)
+        {
+            snp_row &row = m_genotypes->get_row( i );
+            double m = 0;
+            int table[] = {0,0,0};
+            for(int j = 0; j < row.size( ); j++)
+            {
+                m += row[ j ];
+            }
+            m = m / n;
+
+            double s = 0;
+            for(int j = 0; j < row.size( ); j++)
+            {
+                s += pow( row[ j ] - m, 2 );
+            }
+
+            m_mean[ var ] = m;
+            m_sd[ var ] = sqrt( s );
+
+            var++;
+        }
+
+        for(int i = 0; i < m_cov.n_cols; i++)
+        {
+            double m = arma::mean( m_cov.col( i ) );
+            double s = arma::accu( pow( m_cov.col( i ) - m, 2 ) );
+
+            m_mean[ var ] = m;
+            m_sd[ var ] = sqrt( s );
+
+            var++;
+        }
+    }
+
+private:
+    /**
+     * Matrix of genotypes.
+     */
+    genotype_matrix_ptr m_genotypes;
+
+    /**
+     * Matrix of covariates.
+     */
+    arma::mat m_cov;
+
+    /**
+     * Vector of phenotypes.
+     */
+    arma::vec m_phenotype;
+
+    /**
+     * Vector of mean values for each variable.
+     */
+    arma::vec m_mean;
+
+    /**
+     * Vector of standard deviation for each variable.
+     */
+    arma::vec m_sd;
+
+    /**
+     * Vector variable names.
+     */
+    std::vector<std::string> m_names;
+};
 
 arma::vec
 nice_division(arma::vec &a, arma::vec &b)
@@ -130,209 +582,142 @@ nice_division(arma::vec &a, arma::vec &b)
     return x;
 }
 
-void
-calculate_cor(genotype_matrix_ptr genotypes, const arma::mat &cov, const arma::vec &phenotype, const arma::vec &mu, const arma::vec &mean, const arma::vec &sd, arma::vec &c)
+/**
+ * Solves the lasso problem for a given lambda. Used for computing the
+ * null model during significance testing. The algorithm is currently
+ * a pathwise coordinate descent.
+ *
+ * @param X Covariates.
+ * @param y Outcome.
+ * @param lambda Shrinkage factor.
+ * @param start Starting values for beta.
+ * @max_num_iter Maximum number of iterations before giving up.
+ */
+arma::vec optimize_lars_gd(const arma::mat &X, const arma::mat &y, double lambda, const arma::vec &start, size_t max_num_iter = 50)
 {
-    int var = 0;
-    arma::vec adjusted_pheno = phenotype - mu;
-    #pragma omp parallel for
-    for(int i = 0; i < genotypes->size( ); i++)
+    arma::vec beta = start;
+    arma::vec r = y - X * beta;
+    double prev_rss = 0;
+    double cur_rss = sum( r % r );
+    int num_iter = 0;
+
+    while( abs( prev_rss - cur_rss ) / prev_rss > 1e-20 && num_iter++ < max_num_iter )
     {
-        const snp_row &row = genotypes->get_row( i );
-        double cor = 0.0;
-        double m = mean[ i ];
-        double s = sd[ i ];
-        for(int j = 0; j < row.size( ); j++)
+        prev_rss = cur_rss;
+        for(int j = 0; j < X.n_cols; j++)
         {
-            cor += ( ( row[ j ] - m ) / s ) * adjusted_pheno[ j ];
-        }
-        c[ i ] = cor;
-    }
+            double beta_star = arma::dot( X.col( j ), r ) + beta[ j ];
+            double update = std::abs( beta_star ) - lambda;
+            update = (update > 0) ? update : 0;
 
-    var = genotypes->size( );
-    for(int j = 0; j < cov.n_cols; j++)
-    {
-        double cor = dot( ( cov.col( j ) - mean[ var + j ] ) / sd[ var + j ],  adjusted_pheno );
-        c[ var + j ] = cor;
-    }
-}
+            double new_beta = (beta_star > 0) ? update : -update;
+            double beta_increase = new_beta - beta[ j ];
 
-std::vector<std::string>
-create_names(const std::vector<std::string> &locus_names, const std::vector<std::string> &cov_names)
-{
-    std::vector<std::string> names( locus_names );
-    names.insert( names.end( ), cov_names.begin( ) + 2, cov_names.end( )) ;
+            beta[ j ] = new_beta;
 
-    return names;
-}
-arma::vec eig_prod(genotype_matrix_ptr genotypes, const arma::mat &cov, const arma::vec &u, const arma::vec &mean, const arma::vec &sd)
-{
-    arma::vec a = arma::zeros<arma::vec>( genotypes->size( ) + cov.n_cols );
-
-    size_t var = 0;
-    #pragma omp parallel for
-    for(int i = 0; i < genotypes->size( ); i++)
-    {
-        const snp_row &row = genotypes->get_row( i );
-        double m = mean[ i ];
-        double s = sd[ i ];
-        for(int j = 0; j < row.size( ); j++)
-        {
-            a[ i ] += ( ( row[ j ] - m ) / s ) * u[ j ];
-        }
-    }
-
-    var = genotypes->size( );
-    for(int i = 0; i < cov.n_cols; i++)
-    {
-        a[ var + i ] = dot( ( cov.col( i ) - mean[ var + i ] ) / sd[ var + i ], u );
-    }
-
-    return a;
-}
-
-arma::mat get_active(genotype_matrix_ptr genotypes, const arma::mat &cov, const arma::uvec &active, size_t n, const arma::vec &mean, const arma::vec &sd)
-{
-    arma::mat X( n, active.n_elem );
-    size_t var = 0;
-    for(int i = 0; i < active.n_elem; i++)
-    {
-        double m = mean[ active[ i ] ];
-        double s = sd[ active[ i ] ];
-        if( active[ i ] < genotypes->size( ) )
-        {
-            const snp_row &row = genotypes->get_row( active[ i ] );
-            for(int j = 0; j < row.size( ); j++)
+            if( abs( beta_increase ) > 0 )
             {
-                X( j, var ) = ( row[ j ] - m ) / s;
+                r = r - X.col( j ) * beta_increase;
             }
         }
-        else
-        {
-            X.col( var ) = ( cov.col( active[ i ] - genotypes->size( ) ) - m ) / s;
-        }
-        var++;
+        cur_rss = sum( r % r );
     }
 
-    return X;
+    return beta;
 }
 
-void compute_mean_sd(genotype_matrix_ptr genotypes, const arma::mat &cov, arma::vec &mean, arma::vec &sd, size_t n)
+/**
+ * Finds the maximum correlation and returns its index.
+ *
+ * @param v A vector of correlations.
+ * @param inactive A subset of indicies to consider.
+ * @param max_index The index of the maximum value in v will be stored here.
+ *
+ * @reutrn The maximum value of v restricted to the indicies in inactive.
+ */
+double
+find_max(const arma::vec &v, const arma::uvec &inactive, unsigned int *max_index)
 {
-    size_t var = 0;
-    for(int i = 0; i < genotypes->size( ); i++)
+    double max_value = 0;
+    *max_index = v.n_elem;
+    for(int i = 0; i < inactive.n_elem; i++)
     {
-        snp_row &row = genotypes->get_row( i );
-        double m = 0;
-        int table[] = {0,0,0};
-        for(int j = 0; j < row.size( ); j++)
-        {
-            m += row[ j ];
-        }
-        m = m / n;
+        unsigned int cur_index = inactive[ i ];
+        double cur_value = v[ cur_index ];
 
-        double s = 0;
-        for(int j = 0; j < row.size( ); j++)
-        {
-            s += pow( row[ j ] - m, 2 );
-        }
-
-        mean[ var ] = m;
-        sd[ var ] = sqrt( s );
-
-        var++;
+        // Notice the order of these two statements
+        *max_index = ( cur_value > max_value ) ? cur_index : *max_index;
+        max_value = ( cur_value > max_value ) ? cur_value : max_value;
     }
 
-    for(int i = 0; i < cov.n_cols; i++)
-    {
-        double m = arma::mean( cov.col( i ) );
-        double s = arma::accu( pow( cov.col( i ) - m, 2 ) );
-
-        mean[ var ] = m;
-        sd[ var ] = sqrt( s );
-
-        var++;
-    }
-}
-
-arma::uvec get_complement(const arma::uvec &active, size_t m)
-{
-    arma::uvec all = arma::zeros<arma::uvec>( m );
-    all.elem( active ).fill( 1 );
-    return find( all == 0 );
+    return max_value;
 }
 
 std::vector<lars_path>
-lars(genotype_matrix_ptr genotypes, arma::mat &cov, arma::vec &phenotype, const std::vector<std::string> &cov_names, size_t max_vars = 15, bool lasso = true)
+lars(gene_environment &variable_set, size_t max_vars = 15, bool lasso = true, bool only_p = false, double threshold = 1.0)
 {
-    fill_missing_genotypes( genotypes );
-    fill_missing_cov( cov );
-    fill_missing_phenotypes( phenotype );
+    variable_set.impute_missing( );
+    arma::vec phenotype = variable_set.get_centered_phenotype( );
+    size_t n = variable_set.get_num_samples( );
+    size_t m = variable_set.get_num_variables( );
 
-    phenotype = phenotype - mean( phenotype );
-    size_t n = phenotype.n_elem;
-    size_t m = genotypes->get_snp_names( ).size( ) + cov.n_cols;
     arma::vec mu = arma::zeros<arma::vec>( n );
     arma::vec beta = arma::zeros<arma::vec>( m );
-    std::vector<lars_path> path;
     arma::vec c = arma::zeros<arma::vec>( m );
-    std::vector<std::string> names = create_names( genotypes->get_snp_names( ), cov_names );
-
-    arma::vec mean = arma::zeros<arma::vec>( m );
-    arma::vec sd = arma::zeros<arma::vec>( m );
-    compute_mean_sd( genotypes, cov, mean, sd, n );
+    std::vector<lars_path> path;
 
     double pheno_mean = sum( phenotype ) / n;
     double pheno_var = sum( pow( phenotype - pheno_mean, 2 ) ) / (n - 1);
+    double base_cor = sum( phenotype * pheno_mean );
 
+    active_set active( m );
+    arma::uvec inactive;
     arma::uvec drop;
-    arma::uvec dropinv;
-    arma::uvec active;
-    arma::uvec inactive = arma::linspace<arma::uvec>( 0, m - 1, m );
     double eps = 1e-10;
+    double last_p = threshold;
 
     int i = 0;
-    while(active.n_elem < std::min( max_vars, m ) )
+    while( active.size( ) < std::min( max_vars, m ) && last_p <= threshold )
     {
-        std::cout << "Iteration: " << i << std::endl;
-
-        calculate_cor( genotypes, cov, phenotype, mu, mean, sd, c );
+        variable_set.calculate_cor( phenotype - mu, c );
         arma::vec cabs = abs( c );
-        double C = max( cabs.elem( inactive ) );
-        
+        unsigned int max_index;
+        double C = find_max( cabs, active.get_inactive( ), &max_index );
+
         if( C < eps )
         {
             break;
         }
-        
-        if( drop.n_elem == 0 )
-        {
-            arma::uvec new_vars = find( cabs.elem( inactive ) >= C - eps );
-            active.resize( active.n_elem + new_vars.n_elem );
-            active.tail( new_vars.n_elem ) = inactive.elem( new_vars );
-            inactive = get_complement( active, m );
-        }
+       
+        arma::uvec prev_active = active.get_active( ); 
+        active.add( max_index );
+        inactive = active.get_inactive( );
 
         /* Create the active matrix */
-        arma::mat X_active = get_active( genotypes, cov, active, n, mean, sd );
+        arma::mat X_active = variable_set.get_active( active.get_active( ) );
 
         /* Equation 2.4 */
-        arma::vec s = sign( c.elem( active ) );
+        arma::vec s = sign( c.elem( active.get_active( ) ) );
 
         /* Equation 2.5 */
         arma::mat G = X_active.t( ) * X_active;
-        arma::mat Ginv = inv( G );
+        arma::mat Ginv;
+        if( !inv( Ginv, G ) )
+        {
+            active.ignore( max_index );
+            continue;
+        }
         double A = 1.0 / sqrt( arma::accu( s.t( ) * Ginv * s ) );
 
         /* Equation 2.6 */
         arma::vec w = A * Ginv * s;
         arma::vec u = X_active * w;
-        
+
         double gamma = C / A;
-        if( active.n_elem < m )
+        if( active.size( ) < m )
         { 
             /* Equation 2.11 */
-            arma::vec a = eig_prod( genotypes, cov, u, mean, sd );
+            arma::vec a = variable_set.eig_prod( u );
 
             /* Equation 2.13 */
             arma::vec cc = c.elem( inactive );
@@ -348,12 +733,12 @@ lars(genotype_matrix_ptr genotypes, arma::mat &cov, arma::vec &phenotype, const 
 
             gamma = std::min( gn.min( ), gp.min( ) );
         }
-        
+
         if( lasso )
         {
             drop.clear( );
             /* Equation 3.4 */
-            arma::vec gammaj = -beta.elem( active ) / w;
+            arma::vec gammaj = -beta.elem( active.get_active( ) ) / w;
 
             /* Equation 3.5 */
             arma::uvec valid_elems = arma::find( gammaj > eps );
@@ -365,28 +750,77 @@ lars(genotype_matrix_ptr genotypes, arma::mat &cov, arma::vec &phenotype, const 
                 {
                     gamma = gammatilde;
                     drop = find( gammaj == gammatilde );
-                    dropinv = find( gammaj != gammatilde );
                 }
             }
         }
 
-        beta.elem( active ) = beta.elem( active ) + w * gamma;
+        beta.elem( active.get_active( ) ) = beta.elem( active.get_active( ) ) + w * gamma;
         mu = mu + gamma * u;
-        double model_var = sum( pow( phenotype - mu, 2 ) ) / (n - 1 - active.n_elem);
+        double model_var = sum( pow( phenotype - mu, 2 ) ) / (n - 1 - active.size( ) );
 
         if( lasso && drop.n_elem > 0 )
         {
-            beta.elem( active.elem( drop ) ).fill( 0.0 );
-            active = active.elem( dropinv );
-            inactive = get_complement( active, m );
-        }
+            beta.elem( active.get_active( ).elem( drop ) ).fill( 0.0 );
+            
+            active.drop( drop[ 0 ] );
 
+            /* Don't report drops */
+            continue;
+        }
+        
+        /**
+         * Compute value of the knot.
+         */
+        arma::vec r = phenotype - mu;
+        double lambda = arma::max( s % ( X_active.t( ) * r ) );
+
+        /* Compute p-values and add path of previous coefficients */
+        arma::uvec cur_active = active.get_active( );
         float tsum = sum( abs( beta ) );
-        for(int j = 0; j < active.n_elem; j++)
+        for(int j = 0; j < cur_active.n_elem - 1; j++)
         {
-            path.push_back( lars_path( i + 1, names[ active[ j ] ], beta[ active[ j ] ], tsum, 1.0 - model_var / pheno_var ) );
+            if( cur_active[ j ] != max_index )
+            {
+                path.push_back( lars_path( i + 1,
+                                           variable_set.get_name( cur_active[ j ] ),
+                                           beta[ cur_active[ j ] ],
+                                           0.0,
+                                           1.0,
+                                           lambda,
+                                           tsum,
+                                           1.0 - model_var / pheno_var ) );
+            }
+        }
+        
+        /* Calculate p for new beta and add last component of the path */
+        double cur_cor = dot( mu, phenotype );
+
+        /* Compute h0 */
+        double prev_cor = base_cor;
+        if( prev_active.n_elem > 0 )
+        {
+            arma::mat X_h0 = variable_set.get_active( prev_active );
+            arma::vec beta_h0 = optimize_lars_gd( X_h0, phenotype, lambda, beta.elem( prev_active ) );
+            prev_cor = dot( X_h0 * beta_h0, phenotype );
         }
 
+        double T = (cur_cor - prev_cor ) / model_var;
+        double p = 0.9999;
+        if( T > 0.0 )
+        {
+            p = 1 - exp_cdf( T, 1.0 );
+        }
+
+        path.push_back( lars_path( i + 1,
+                        variable_set.get_name( max_index ),
+                        beta[ max_index ],
+                        T,
+                        p,
+                        lambda,
+                        tsum,
+                        1.0 - model_var / pheno_var ) );
+
+        last_p = p;
         i++;
     }
 
@@ -406,6 +840,8 @@ main(int argc, char *argv[])
     parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
     parser.add_option( "-o", "--out" ).help( "The output file that will contain the results (binary)." );
     parser.add_option( "-m", "--max-variables" ).help( "Maximum number of variables in the model" ).set_default( 10 );
+    parser.add_option( "-t", "--threshold" ).help( "Stop after a variable has a p-value less than this threshold." ).set_default( 1.0 );
+    parser.add_option( "--only-pvalues" ).help( "Only output the beta that enters in each step along with its p-value." ).action( "store_true" );
 
     Values options = parser.parse_args( argc, argv );
     if( parser.args( ).size( ) != 1 )
@@ -420,6 +856,10 @@ main(int argc, char *argv[])
     plink_file_ptr genotype_file = open_plink_file( parser.args( )[ 0 ] );
     genotype_matrix_ptr genotypes = create_genotype_matrix( genotype_file );
     std::vector<std::string> order = genotype_file->get_sample_iids( );
+
+    /* Make error streams separate from stdout */
+    arma::set_stream_err1( std::cerr );
+    arma::set_stream_err2( std::cerr );
 
     /* Parse phenotypes */
     arma::uvec cov_missing = arma::zeros<arma::uvec>( genotype_file->get_samples( ).size( ) );
@@ -442,12 +882,33 @@ main(int argc, char *argv[])
         cov = parse_covariate_matrix( covariate_file, cov_missing, order, &cov_names );
     }
 
-    std::vector<lars_path> path = lars( genotypes, cov, phenotype, cov_names, (int) options.get( "max_variables" ) );
-    std::cout << "step\tvariable\tbeta\ttsum\texplained_var\n";
+    /* Open output stream */
+    std::ofstream output_file;
+    if( options.is_set( "out" ) )
+    {
+        output_file.open( options[ "out" ].c_str( ) );
+    }
+    std::ostream &out = options.is_set( "out" ) ? output_file : std::cout;
+
+    bool only_pvalues = options.is_set( "only_pvalues" );
+
+    gene_environment variable_set( genotypes, cov, phenotype, cov_names );
+    std::vector<lars_path> path = lars( variable_set, (int) options.get( "max_variables" ), (double) options.get( "threshold" ) );
+    out << "step\tvariable\tbeta\tT\tp\tlambda\tbeta_sum\texplained_var\n";
     for(int i = 0; i < path.size( ); i++)
     {
         lars_path step = path[ i ];
-        std::cout << step.pass << "\t" << step.variable << "\t" << step.beta << "\t" << step.tsum <<  "\t" << step.exp_var << "\n";
+        if( !only_pvalues || (only_pvalues && step.m_pvalue < 1.0) )
+        {
+            out << step.m_pass << "\t" <<
+                step.m_variable << "\t" <<
+                step.m_beta << "\t" <<
+                step.m_T << "\t" <<
+                step.m_pvalue << "\t" <<
+                step.m_lambda <<  "\t" <<
+                step.m_beta_sum <<  "\t" <<
+                step.m_explained_var << "\n";
+        }
     }
 
     return 0;

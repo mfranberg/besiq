@@ -8,6 +8,7 @@
 #include <besiq/method/wald_lm_method.hpp>
 #include <besiq/method/wald_separate_method.hpp>
 #include <besiq/method/method.hpp>
+#include <besiq/logp_grid.hpp>
 
 #include <dcdflib/libdcdf.hpp>
 
@@ -54,6 +55,7 @@ create_options()
     
     parser.add_option( "-o", "--out" ).help( "The output file that will contain the results (binary)." );
     parser.add_option( "-t", "--threshold" ).help( "Only output pairs with a p-value less than this." ).set_default( -9 );
+    parser.add_option( "-g", "--grid" ).help( "Path to grid file." );
     parser.add_option( "--split" ).help( "Runs the analysis on a part of the pair file, and this is part X of 1-<num_splits> parts (default = 1)." ).set_default( 1 );
     parser.add_option( "--num-splits" ).help( "Sets the number of parts to split the pair file in (default = 1)." ).set_default( 1 );
     
@@ -85,27 +87,29 @@ main(int argc, char *argv[])
         std::cerr << "besiq: error: Num splits and split must be > 0, and split <= num_splits." << std::endl;
         exit( 1 );
     }
-    
-    pairfile *pairs = open_pair_file( parser.args( )[ 0 ].c_str( ), plink_files[ 0 ]->get_locus_names( ) );
+   
+    std::vector<std::string> loci =  plink_files[ 0 ]->get_locus_names( );
+    pairfile *pairs = open_pair_file( parser.args( )[ 0 ].c_str( ), loci );
     if( pairs == NULL || !pairs->open( split, num_splits ) )
     {
         std::cerr << "besiq: error: Could not open pair file." << std::endl;
         exit( 1 );
     }
+    logp_grid grid( plink_files[ 0 ]->get_loci( ), 7000, 500000 );
 
     double threshold = (double) options.get( "threshold" );
 
     /**
      * Set up method
      */
-    std::vector<wald_method *> methods;
+    std::vector<wald_lm_method *> methods;
     for(int i = 0; i < plink_files.size( ); i++)
     {
         method_data_ptr data( new method_data( ) );
         data->missing = zeros<uvec>( plink_files[ i ]->get_samples( ).size( ) );
         data->phenotype = create_phenotype_vector( plink_files[ i ]->get_samples( ), data->missing );
 
-        methods.push_back( new wald_method( data ) );
+        methods.push_back( new wald_lm_method( data ) );
     }
 
     /**
@@ -114,7 +118,7 @@ main(int argc, char *argv[])
     resultfile *result = NULL;
     if( options.is_set( "out" ) )
     {
-        result = new bresultfile( options[ "out" ], plink_files[ 0 ]->get_locus_names( ) );
+        result = new bresultfile( options[ "out" ], loci );
     }
     else
     {
@@ -198,6 +202,8 @@ main(int argc, char *argv[])
 
         double chi = dot( final_beta, final_C_inv * final_beta );
         double final_p = 1.0 - chi_square_cdf( chi, 4 );
+        
+        grid.add_pvalue( pair.first, pair.second, final_p );
 
         if( threshold != -9 && final_p > threshold )
         {
@@ -213,6 +219,12 @@ main(int argc, char *argv[])
 
     result->close( );
 
+    if( options.is_set( "grid" ) )
+    {
+        std::ofstream grid_file( options[ "grid" ] );
+        grid.write_grid( grid_file );
+        grid_file.close( );
+    }
     /* Delete allocated stuff */
     
     return 0;

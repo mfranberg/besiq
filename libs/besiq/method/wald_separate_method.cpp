@@ -94,11 +94,6 @@ void
 wald_separate_method::compute_binomial(const snp_row &row1, const snp_row &row2, float *output)
 {
     arma::mat n = joint_count( row1, row2, get_data( )->phenotype, m_weight );
-    if( arma::min( arma::min( n ) ) < METHOD_SMALLEST_CELL_SIZE_BINOMIAL )
-    {
-        return;
-    }
-
     set_num_ok_samples( (size_t) arma::accu( n ) );
 
     if( n( 0, 1 ) > METHOD_SMALLEST_CELL_SIZE_BINOMIAL &&

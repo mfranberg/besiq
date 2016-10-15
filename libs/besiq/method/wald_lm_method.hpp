@@ -32,6 +32,20 @@ public:
     virtual std::vector<std::string> init();
     
     /**
+     * Returns the last computed covariance matrix.
+     *
+     * @return the last computed covariance matrix.
+     */
+    arma::mat get_last_C();
+
+    /**
+     * Returns the last computed beta.
+     *
+     * @return the last computed beta.
+     */
+    arma::vec get_last_beta();
+    
+    /**
      * @see method_type::run.
      */
     virtual double run(const snp_row &row1, const snp_row &row2, float *output);
@@ -45,6 +59,16 @@ private:
      * Determines whether variances should be estimated separately.
      */
     bool m_unequal_var;
+    
+    /**
+     * Current covariance matrix for the betas.
+     */
+    arma::mat m_C;
+
+    /**
+     * Current betas.
+     */
+    arma::vec m_beta;
 };
 
 #endif /* End of __WALD_LM_METHOD_H__ */

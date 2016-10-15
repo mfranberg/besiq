@@ -32,6 +32,7 @@ struct command g_commands[] =
     { "env", "Run a gene-environment test." },
     { "var", "Run a single variant variance-hetreogenity analysis." },
     { "lars", "Run the least angle regression in LASSO mode." },
+    { "mglm", "Multivarite additive GLM model." },
     { "meta", "Run a meta-analysis of clean case/control data." },
     { NULL, NULL }
 };
