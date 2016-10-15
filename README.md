@@ -56,8 +56,15 @@ Besiq requires you to have the following packages installed:
 
 * [CMake](http://www.cmake.org/cmake/resources/software.html) (A build system for C and C++)
 * [Armadillo](http://arma.sourceforge.net/download.html) (C++ matrix library which in turn depends on BLAS and LAPACK)
+* libblas
+* liblapack
+* libz
 
 If you install them locally (as on a cluster) just specify -DCMAKE_PREFIX_PATH to tell cmake where the libraries are.
+
+On Ubuntu simply run the following command.
+
+    > apt-get install libblas-dev liblapack-dev libz-dev
 
 ## Installing
 
