@@ -601,7 +601,7 @@ arma::vec optimize_lars_gd(const arma::mat &X, const arma::mat &y, double lambda
     double cur_rss = sum( r % r );
     int num_iter = 0;
 
-    while( abs( prev_rss - cur_rss ) / prev_rss > 1e-20 && num_iter++ < max_num_iter )
+    while( std::abs( prev_rss - cur_rss ) / prev_rss > 1e-20 && num_iter++ < max_num_iter )
     {
         prev_rss = cur_rss;
         for(int j = 0; j < X.n_cols; j++)
@@ -615,7 +615,7 @@ arma::vec optimize_lars_gd(const arma::mat &X, const arma::mat &y, double lambda
 
             beta[ j ] = new_beta;
 
-            if( abs( beta_increase ) > 0 )
+            if( std::abs( beta_increase ) > 0 )
             {
                 r = r - X.col( j ) * beta_increase;
             }

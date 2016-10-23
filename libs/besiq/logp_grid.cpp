@@ -77,6 +77,8 @@ logp_grid::add_pvalue(const std::string &snp1, const std::string &snp2, double p
     data2.sum = data1.sum;
     data2.sum_sq = data1.sum_sq;
     data2.n = data1.n;
+
+    return true;
 }
 
 void

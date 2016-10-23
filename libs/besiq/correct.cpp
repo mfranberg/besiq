@@ -275,8 +275,8 @@ do_last_stage(resultfile *last_stage, const correction_options &options, genotyp
     }
     
     delete model_matrix;
-    delete values;
-    delete method_values;
+    delete[] values;
+    delete[] method_values;
 }
 
 void

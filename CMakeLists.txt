@@ -18,7 +18,7 @@ find_package( Armadillo REQUIRED )
 find_package( BLAS REQUIRED )
 
 include( CheckIncludeFiles )
-check_include_files( "tr1/random", HAVE_TR1_RANDOM )
+check_include_files( "tr1/random" HAVE_TR1_RANDOM )
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/libs/besiq/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/libs/besiq/config.h )
 include_directories( ${CMAKE_BINARY_DIR}/libs/ )
 if( NOT HAVE_TR1_RANDOM )

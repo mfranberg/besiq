@@ -38,5 +38,5 @@ void run_method(method_type &method, genotype_matrix_ptr genotypes, pairfile &pa
         result.write( pair, output );
     }
 
-    delete output;
+    delete[] output;
 }
