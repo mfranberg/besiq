@@ -54,7 +54,17 @@ private:
      * Weight for each sample.
      */
     arma::vec m_weight;
+    
+    /**
+     * Phenotype.
+     */
+    arma::vec m_pheno;
 
+    /**
+     * Missing samples.
+     */
+    arma::uvec m_missing;
+    
     /**
      * Determines whether variances should be estimated separately.
      */

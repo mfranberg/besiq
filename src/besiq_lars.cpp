@@ -509,7 +509,6 @@ private:
         {
             snp_row &row = m_genotypes->get_row( i );
             double m = 0;
-            int table[] = {0,0,0};
             for(int j = 0; j < row.size( ); j++)
             {
                 m += row[ j ];

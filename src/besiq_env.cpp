@@ -31,7 +31,6 @@ main(int argc, char *argv[])
     
     
     char const* const choices[] = { "stepwise" };
-    char const* const link_choices[] = { "logistic", "log-complement", "odds-additive", "penetrance-additive", "penetrance-multiplicative" };
     char const* const factor_choices[] = { "factor", "additive", "tukey" };
 
     parser.add_option( "-m", "--method" ).choices( &choices[ 0 ], &choices[ 1 ] ).metavar( "method" ).help( "Which method to use, one of: 'stepwise'." );

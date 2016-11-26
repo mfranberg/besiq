@@ -1,8 +1,8 @@
 #include <besiq/model_matrix.hpp>
 
 general_matrix::general_matrix(const arma::mat &cov, size_t n, size_t num_null, size_t num_alt)
-    : m_null( n, cov.n_cols + num_null ),
-      m_alt( n, cov.n_cols + num_alt )
+    : m_alt( n, cov.n_cols + num_alt ),
+     m_null( n, cov.n_cols + num_null )
 {
     /*
      * Null matrix.
@@ -211,10 +211,6 @@ noia_matrix::update_matrix(const snp_row &row1, const snp_row &row2, arma::uvec 
             double a2 = row2[ i ] - 1;
             double d1 = row1[ i ] == 1 ? 1.0 : 0.0;
             double d2 = row2[ i ] == 1 ? 1.0 : 0.0;
-            double aa = a1 * a2;
-            double ad = a1 * d2;
-            double da = d1 * a2;
-            double dd = d1 * d2;
 
             m_alt( i, 0 ) = a1;
             m_alt( i, 1 ) = a2;
