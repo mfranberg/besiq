@@ -376,16 +376,18 @@ public:
         #pragma omp parallel for
         for(int i = 0; i < m_cov.n_cols; i++)
         {
+            double cov_mu = m_mean[ m_genotypes->size( ) + i ];
             for(int j = 0; j < m_genotypes->size( ); j++)
             {
                 snp_row &row = m_genotypes->get_row( j );
+                double geno_mu = m_mean[ j ];
 
                 double cor = 0.0;
                 double m = m_mean[ var + i * m_genotypes->size( ) + j ];
                 double s = m_sd[ var + i * m_genotypes->size( ) + j ];
                 for(int k = 0; k < n; k++)
                 {
-                    cor += (( m_cov( k, i ) * row[ k ] - m ) / s ) * residual[ k ];
+                    cor += (( (m_cov( k, i ) - cov_mu) * (row[ k ] - geno_mu) - m ) / s ) * residual[ k ];
                 }
 
                 c[ var + i * m_genotypes->size( ) + j ] = cor;
@@ -434,16 +436,18 @@ public:
         #pragma omp parallel for
         for(int i = 0; i < m_cov.n_cols; i++)
         {
+            double cov_mu = m_mean[ m_genotypes->size( ) + i ];
             for(int j = 0; j < m_genotypes->size( ); j++)
             {
                 snp_row &row = m_genotypes->get_row( j );
+                double geno_mu = m_mean[ j ];
 
                 double prod = 0.0;
                 double m = m_mean[ var + i * m_genotypes->size( ) + j ];
                 double s = m_sd[ var + i * m_genotypes->size( ) + j ];
                 for(int k = 0; k < n; k++)
                 {
-                    prod += (( m_cov( k, i ) * row[ k ] - m ) / s ) * u[ k ];
+                    prod += (( (m_cov( k, i ) - cov_mu) * (row[ k ] - geno_mu) - m ) / s ) * u[ k ];
                 }
 
                 a[ var + i * m_genotypes->size( ) + j ] = prod;
@@ -486,12 +490,15 @@ public:
             {
                 unsigned int cov_index = (active[ i ] - m_names.size( )) / m_genotypes->size( );
                 unsigned int snp_index = (active[ i ] - m_names.size( )) % m_genotypes->size( );
+            
+                double cov_mu = m_mean[ m_genotypes->size( ) + cov_index ];
+                double geno_mu = m_mean[ snp_index ];
 
                 const snp_row &row = m_genotypes->get_row( snp_index );
                 const arma::vec &cov = m_cov.col( cov_index );
                 for(int j = 0; j < n; j++)
                 {
-                    X( j, var ) = ( row[ j ] * cov[ j ] - m ) / s;
+                    X( j, var ) = ( (row[ j ] - geno_mu) * (cov[ j ] - cov_mu) - m ) / s;
                 }
             }
             var++;
@@ -644,21 +651,23 @@ private:
         #pragma omp parallel for
         for(int i = 0; i < m_cov.n_cols; i++)
         {
+            double cov_mu = m_mean[ m_genotypes->size( ) + i ];
             for(int j = 0; j < m_genotypes->size( ); j++)
             {
                 snp_row &row = m_genotypes->get_row( j );
+                double geno_mu = m_mean[ j ];
 
                 double mean = 0.0;
                 for(int k = 0; k < n; k++)
                 {
-                    mean += m_cov( k, i ) * row[ k ];
+                    mean += (m_cov( k, i ) - cov_mu) * ( row[ k ] - geno_mu );
                 }
                 mean = mean / n;
 
                 double s = 0.0;
                 for(int k = 0; k < n; k++)
                 {
-                    s += pow( m_cov( k, i ) * row[ k ] - mean, 2 );
+                    s += pow( (m_cov( k, i ) - cov_mu) * (row[ k ] - geno_mu) - mean, 2 );
                 }
 
                 m_mean[ var + m_genotypes->size( ) * i + j ] = mean;
@@ -1179,6 +1188,7 @@ main(int argc, char *argv[])
     parser.add_option( "-o", "--out" ).help( "The output file that will contain the results (binary)." );
     parser.add_option( "-m", "--max-variables" ).help( "Maximum number of variables in the model" ).set_default( 10 );
     parser.add_option( "-t", "--threshold" ).help( "Stop after a variable has a p-value less than this threshold." ).set_default( 1.0 );
+    parser.add_option( "-a", "--maf" ).help( "Filter variants with maf (it is important to set this to avoid interactions with monotonic snps)" ).set_default( 0.05 );
     parser.add_option( "--only-pvalues" ).help( "Only output the beta that enters in each step along with its p-value." ).action( "store_true" );
     parser.add_option( "--only-main" ).help( "Only output the main effects." ).action( "store_true" );
 
@@ -1193,7 +1203,7 @@ main(int argc, char *argv[])
     
     /* Read all genotypes */
     plink_file_ptr genotype_file = open_plink_file( parser.args( )[ 0 ] );
-    genotype_matrix_ptr genotypes = create_genotype_matrix( genotype_file );
+    genotype_matrix_ptr genotypes = create_filtered_genotype_matrix( genotype_file, (float) options.get( "maf" ) );
     std::vector<std::string> order = genotype_file->get_sample_iids( );
 
     /* Make error streams separate from stdout */
