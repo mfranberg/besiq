@@ -91,4 +91,15 @@ private:
 
 model_matrix *make_model_matrix(const std::string &type, const arma::mat &cov, size_t n);
 
+class env_matrix
+{
+public:
+    env_matrix(const arma::mat &cov, size_t n);
+    const arma::mat &get_alt();
+    void update_matrix(const snp_row &row, const arma::vec &env, arma::uvec &missing);
+    
+private:
+    arma::mat m_alt;
+};
+
 #endif /* __MODEL_MATRIX_H__ */

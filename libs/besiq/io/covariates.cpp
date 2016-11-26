@@ -186,7 +186,37 @@ parse_phenotypes(std::istream &stream, arma::uvec &missing, const std::vector<st
             throw std::runtime_error( "parse_phenotypes: Could not find that phenotype name." );
         }
     }
+}
 
+arma::mat
+parse_env(std::istream &stream, arma::uvec &missing, const std::vector<std::string> &order, std::vector<std::string> *out_header, std::string env_name, const char *missing_string)
+{
+    std::vector<std::string> header;
+    std::vector<std::string> *header_ptr = (out_header == NULL) ? &header : out_header;
+
+    mat env_matrix = parse_covariate_matrix( stream, missing, order, header_ptr, missing_string );
+
+    if( env_name == "" )
+    {
+        return env_matrix;
+    }
+    else
+    {
+        std::vector<std::string>::iterator it = std::find( header_ptr->begin( ), header_ptr->end( ), env_name );
+        if( it != header_ptr->end( ) )
+        {
+            int pos = it - header_ptr->begin( );
+            assert( env_matrix.n_cols >= pos - 2 );
+            (*header_ptr)[ 2 ] = (*header_ptr)[ pos ];
+            header_ptr->resize( 3 );
+
+            return env_matrix.col( pos - 2 );
+        }
+        else
+        {
+            throw std::runtime_error( "parse_env: Could not find that env name." );
+        }
+    }
 }
 
 arma::mat

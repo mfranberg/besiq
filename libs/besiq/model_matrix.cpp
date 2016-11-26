@@ -324,3 +324,56 @@ make_model_matrix(const std::string &type, const arma::mat &cov, size_t n)
         return NULL;
     }
 }
+
+env_matrix::env_matrix(const arma::mat &cov, size_t n)
+    : m_alt( n, cov.n_cols + 4 )
+{
+    unsigned int num_alt = 4;
+
+    /*
+     * Alternative matrix.
+     */
+    for(int i = 0; i < n; i++)
+    {
+        m_alt( i, 3 ) = 1.0;
+    }
+
+    for(int i = 0; i < cov.n_cols; i++)
+    {
+        m_alt.col( i + num_alt ) = cov.col( i );
+    }
+
+    m_alt.elem( arma::find_nonfinite( m_alt ) ).zeros( );
+}
+
+const arma::mat &
+env_matrix::get_alt()
+{
+    return m_alt;
+}
+
+void
+env_matrix::update_matrix(const snp_row &row, const arma::vec &env, arma::uvec &missing)
+{
+    for(int i = 0; i < row.size( ); i++)
+    {
+        if( row[ i ] != 3 && (env[ i ] == env[ i ]) && missing[ i ] == 0 )
+        {
+            double snp1 = row[ i ];
+
+            m_alt( i, 0 ) = row[ i ];
+            m_alt( i, 1 ) = env[ i ];
+            m_alt( i, 2 ) = row[ i ] * env[ i ];
+        }
+        else
+        {
+            m_alt( i, 0 ) = 0.0;
+            m_alt( i, 1 ) = 0.0;
+            m_alt( i, 2 ) = 0.0;
+            
+            missing[ i ] = 1;
+        }
+    }
+
+}
+    

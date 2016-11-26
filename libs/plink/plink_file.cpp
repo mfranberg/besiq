@@ -61,6 +61,24 @@ float compute_maf(snp_t *row, size_t length)
     return ((float) mac) / ( 2 * total );
 }
 
+float compute_real_maf(snp_row &row)
+{
+    int mac = 0;
+    int total = 0;
+    for(int i = 0; i < row.size( ); i++)
+    {
+        if( row[ i ] != 3 )
+        {
+            mac += row[ i ];
+            total++;
+        }
+    }
+
+    float maf = ((float) mac) / ( 2 * total );
+
+    return std::min( maf, 1 - maf );
+}
+
 bool
 plink_file::next_row(snp_row &row)
 {
@@ -135,6 +153,27 @@ create_genotype_matrix(plink_file_ptr genotype_file)
     }
 
     return genotype_matrix_ptr( new genotype_matrix( genotypes, genotype_file->get_locus_names( ) ) );
+}
+
+genotype_matrix_ptr
+create_filtered_genotype_matrix(plink_file_ptr genotype_file, float maf_threshold)
+{
+    shared_ptr< std::vector<snp_row> > genotypes( new std::vector<snp_row>( ) );
+    std::vector<std::string> locus_names;
+    snp_row row;
+    int i = 0;
+    while( genotype_file->next_row( row ) )
+    {
+        float maf = compute_real_maf( row );
+        if( maf >= maf_threshold )
+        {
+            genotypes->push_back( row );
+            locus_names.push_back( genotype_file->get_loci( )[ i ].name );
+        }
+        i++;
+    }
+
+    return genotype_matrix_ptr( new genotype_matrix( genotypes, locus_names ) );
 }
 
 genotype_matrix::genotype_matrix(shared_ptr< std::vector<snp_row> > matrix, const std::vector<std::string> &snp_names) 

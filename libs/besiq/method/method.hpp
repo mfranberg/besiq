@@ -70,6 +70,11 @@ struct method_data
      * Threshold for filtering variant pairs.
      */
     double threshold;
+
+    /**
+     * Use fast less robust matrix inversion.
+     */
+    bool fast_inversion;
 };
 
 /**
