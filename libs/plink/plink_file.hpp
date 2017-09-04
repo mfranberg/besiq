@@ -57,6 +57,14 @@ public:
     std::vector<std::string> get_sample_iids() const;
 
     /**
+     * Returns a vector that contains the fids and iids of all
+     * samples in the order they appear.
+     *
+     * @return A vector of pairs that contain (fid, iid) of all samples.
+     */
+    std::vector< std::pair<std::string, std::string> > get_sample_fid_iid() const;
+
+    /**
      * Returns a vector that contains the names of all loci,
      * in the order they appear.
      *

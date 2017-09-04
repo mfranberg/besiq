@@ -6,9 +6,6 @@ include_directories( ${ARMADILLO_INCLUDE_DIR} )
 
 add_library( common_options common_options.cpp )
 
-add_executable( besiq besiq.cpp )
-target_link_libraries( besiq )
-
 add_executable( besiq-stagewise besiq_stagewise.cpp )
 target_link_libraries( besiq-stagewise common_options libdcdf libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
@@ -56,10 +53,20 @@ target_link_libraries( besiq-meta libdcdf libglm libbesiq libplink libcpp-argpar
 
 find_package( OpenMP )
 
+add_executable( besiq besiq.cpp )
+target_link_libraries( besiq )
+
+add_library( gene_environment gene_environment.cpp )
+set_target_properties( gene_environment PROPERTIES COMPILE_FLAGS "${OpenMP_CXX_FLAGS}" )
+set_target_properties( gene_environment PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS}")
+
 add_executable( besiq-lars besiq_lars.cpp )
 set_target_properties( besiq-lars PROPERTIES COMPILE_FLAGS "${OpenMP_CXX_FLAGS}" )
 set_target_properties( besiq-lars PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS}")
-target_link_libraries( besiq-lars libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+target_link_libraries( besiq-lars gene_environment libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+
+add_executable( besiq-predict besiq_predict.cpp )
+target_link_libraries( besiq-predict gene_environment libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
 add_executable( besiq-mglm besiq_mglm.cpp )
 target_link_libraries( besiq-mglm libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
@@ -67,5 +74,5 @@ target_link_libraries( besiq-mglm libdcdf libglm libbesiq libplink libcpp-argpar
 INSTALL( TARGETS besiq besiq-stagewise besiq-bayes besiq-caseonly
     besiq-glm besiq-scaleinv besiq-loglinear besiq-wald besiq-env
     besiq-pairs besiq-view besiq-correct besiq-imputed besiq-var
-    besiq-separate besiq-lars besiq-meta besiq-mglm DESTINATION bin )
+    besiq-separate besiq-lars besiq-meta besiq-mglm besiq-predict DESTINATION bin )
 

@@ -27,6 +27,18 @@ plink_file::get_sample_iids() const
     return iids;
 }
 
+std::vector< std::pair<std::string, std::string> >
+plink_file::get_sample_fid_iid() const
+{
+    std::vector< std::pair<std::string, std::string> > fid_iid;
+    for(int i = 0; i < m_samples.size( ); i++)
+    {
+        fid_iid.push_back( std::pair<std::string, std::string>( m_samples[ i ].iid, m_samples[ i ].fid ) );
+    }
+
+    return fid_iid;
+}
+
 const std::vector<pio_locus_t> &
 plink_file::get_loci() const
 {
