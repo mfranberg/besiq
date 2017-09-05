@@ -30,6 +30,7 @@ main(int argc, char *argv[])
     group.add_option( "-m", "--model" ).choices( &model_choices[ 0 ], &model_choices[ 2 ] ).metavar( "model" ).help( "The model to use for the phenotype, 'binomial' or 'normal', default = 'binomial'." ).set_default( "binomial" );
     group.add_option( "-l", "--link-function" ).choices( &link_choices[ 0 ], &link_choices[ 5 ] ).metavar( "link" ).help( "The link function, or scale, that is used for the penetrance: 'logit' log(p/(1-p)), 'logc' log(1 - p), 'odds' p/(1-p), 'identity' p, 'log' log(p)." );
     group.add_option( "-f", "--factor" ).choices( &factor_choices[ 0 ], &factor_choices[ 4 ] ).help( "Determines how to code the SNPs, in 'factor' no order of the alleles is assumed, in 'additive' the SNPs are coded as the number of minor alleles, in 'tukey' the coding is the same as factor except that a single parameter for the interaction is used, 'noia' the model is divided into additive and dominance interactions." ).set_default( "factor" );
+    group.add_option( "--fast" ).help( "Faster but less robust matrix inversion, generally a speedup of 2 can be expected." ).action( "store_true" );
     parser.add_option_group( group );
 
     Values options = parser.parse_args( argc, argv );
@@ -40,6 +41,7 @@ main(int argc, char *argv[])
     }
     shared_ptr<common_options> parsed_data = parse_common_options( options, parser.args( ) );
     parsed_data->data->phenotype.elem( arma::find_nonfinite( parsed_data->data->phenotype ) ).zeros( );
+    parsed_data->data->fast_inversion = options.is_set( "fast" );
 
     model_matrix *model_matrix = make_model_matrix( options[ "factor" ], parsed_data->data->covariate_matrix, parsed_data->data->phenotype.n_elem );
 

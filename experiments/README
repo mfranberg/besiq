@@ -5,3 +5,12 @@ epibench compile lireich/
 
 epibench run --method-file method.json --experiment-file specific.json --out specific/
 epibench compile specific/
+
+epibench run --method-file method.json --experiment-file all.json --out all_logit/ --cluster ~/projects/epibench/epibench/cluster/slurm.py "20 -A b2012114 -p core -n 1 -t 4:00:00 -J all"
+epibench run --method-file method.json --experiment-file lireich.json --out all/ --cluster ~/projects/epibench/epibench/cluster/slurm.py "20 -A b2012114 -p core -n 1 -t 4:00:00 -J all"
+epibench run --method-file fwer_method.json --experiment-file fwer.json --out fwer2/ --cluster ~/projects/epibench/epibench/cluster/slurm.py "50 -A b2012114 -p core -n 1 -t 4:00:00 -J all"
+epibench run --method-file method.json --experiment-file specific.json --out specific/ --cluster ~/projects/epibench/epibench/cluster/slurm.py "10 -A b2012114 -p core -n 1 -t 4:00:00 -J all"
+epibench run --method-file specific_cc_method.json --experiment-file specific_cc.json --out specific_cc/ --cluster /home/mattiasf/projects/epibench/epibench/cluster/slurm.py "50 -A b2012114 -p core -n 1 -t 4:00:00 -J all"
+epibench run --method-file mdr_method.json --experiment-file mdr.json --out mdr/ --cluster /home/mattiasf/projects/epibench/epibench/cluster/slurm.py "1 -A b2012114 -p core -n 1 -t 12:00:00 -J all"
+epibench run --method-file method.json --experiment-file specific_logit.json --out specific_logit/ --cluster /home/mattiasf/projects/epibench/epibench/cluster/slurm.py "10 -A b2012114 -p core -n 1 -t 4:00:00 -J all"
+epibench run --method-file mdr_method.json --experiment-file mdr.json --out mdr/ --cluster /home/mattiasf/projects/epibench/epibench/cluster/slurm.py 1 -A b2012114 -p core -n 1 -t 12:00:00 -J all

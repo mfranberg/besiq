@@ -15,9 +15,10 @@
  * @param missing Identifies missing sampels by 1 and non-missing by 0.
  * @param model The GLM model to estimate.
  * @param output Output statistics of the estimated betas.
+ * @param fast_inversion Use faster but less robust matrix inversion.
  *
  * @return Estimated beta coefficients.
  */
-arma::vec glm_fit(const arma::mat &X, const arma::vec &y, const arma::uvec &missing, const glm_model &model, glm_info &output);
+arma::vec glm_fit(const arma::mat &X, const arma::vec &y, const arma::uvec &missing, const glm_model &model, glm_info &output, bool fast_inversion = false);
 
 #endif /* End of __GLM_H__ */

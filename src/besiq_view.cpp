@@ -148,7 +148,7 @@ main(int argc, char *argv[])
             output_file->write( pair, output );
         }
     }
-    delete output;
+    delete[] output;
     delete output_file;
     
     return 0;

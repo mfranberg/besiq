@@ -11,7 +11,6 @@ parse_genotypes(const std::string &path, float call_rate, const std::vector<std:
     std::ifstream stream( path.c_str( ) );
     std::string line;
     
-    int num_rows = 0;
     imputed_matrix_ptr matrix( new std::vector<snp_row>( ) );
     while( std::getline( stream, line ) )
     {

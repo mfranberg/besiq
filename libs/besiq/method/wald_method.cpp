@@ -6,6 +6,8 @@ wald_method::wald_method(method_data_ptr data)
 : method_type::method_type( data )
 {
     m_weight = arma::ones<arma::vec>( data->phenotype.n_elem );
+    m_pheno = get_data( )->phenotype;
+    m_missing = get_data( )->missing;
 }
 
 std::vector<std::string>
@@ -39,19 +41,21 @@ wald_method::run(const snp_row &row1, const snp_row &row2, float *output)
     arma::mat n1 = arma::zeros<arma::mat>( 3, 3 );
     for(int i = 0; i < row1.size( ); i++)
     {
-        if( row1[ i ] == 3 || row2[ i ] == 3 || get_data( )->missing[ i ] == 1 )
+        unsigned char snp1 = row1[ i ];
+        unsigned char snp2 = row2[ i ];
+        if( snp1 == 3 || snp2 == 3 || m_missing[ i ] == 1 )
         {
             continue;
         }
 
-        unsigned int pheno = get_data( )->phenotype[ i ];
+        unsigned int pheno = m_pheno[ i ];
         if( pheno == 0 )
         {
-            n0( row1[ i ], row2[ i ] ) += 1;
+            n0( snp1, snp2 ) += 1;
         }
         else if( pheno == 1 )
         {
-            n1( row1[ i ], row2[ i ] ) += 1;
+            n1( snp1, snp2 ) += 1;
         }
     }
 

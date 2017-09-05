@@ -218,4 +218,15 @@ bool get_snp_row(plink_file *file, snp_row &row);
  */
 genotype_matrix_ptr create_genotype_matrix(plink_file_ptr genotype_file);
 
+/**
+ * Creates a matrix of genotypes by reading the genotypes
+ * from the given plink file but filtering on maf.
+ *
+ * @param genotype_file A plink file.
+ * @param maf Minor allele frequency threshold.
+ *
+ * @return A matrix of genotypes.
+ */
+genotype_matrix_ptr create_filtered_genotype_matrix(plink_file_ptr genotype_file, float maf);
+
 #endif /* End of __PLINK_FILE_H__ */

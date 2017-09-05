@@ -124,7 +124,7 @@ main(int argc, char *argv[])
     std::ostream &out = options.is_set( "out" ) ? output_file : std::cout;
 
     arma::vec phenotype = arma::zeros<arma::vec>( fid_iid.size( ) );
-    gene_environment ge( genotypes, cov, phenotype, cov_names );
+    gene_environment ge( genotypes, cov, phenotype, cov_names, true );
     ge.impute_missing( );
 
     arma::uvec causal = get_causal_indices( ge.get_names( ), labels );

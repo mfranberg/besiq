@@ -41,7 +41,7 @@ caseonly_method::init()
 double
 caseonly_method::run(const snp_row &row1, const snp_row &row2, float *output)
 {
-    double p;
+    double p = -1.0;
     if( m_method == "r2" )
     {
         p = compute_r2( row1, row2, output );

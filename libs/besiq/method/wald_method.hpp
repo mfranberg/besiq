@@ -53,6 +53,16 @@ private:
      * Weight for each sample.
      */
     arma::vec m_weight;
+    
+    /**
+     * Phenotypes.
+     */
+    arma::vec m_pheno;
+    
+    /**
+     * Missing.
+     */
+    arma::uvec m_missing;
 
     /**
      * Current covariance matrix for the betas.

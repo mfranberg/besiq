@@ -61,7 +61,6 @@ peer_method::encode_counts(const arma::mat &counts, size_t snp1_onestart, size_t
 void
 peer_method::compute_ld_p(const arma::mat &counts, float *ld_case_z, float *ld_contrast_z)
 {
-    double N = arma::accu( counts );
     double N_controls = sum( counts.col( 0 ) );
     double N_cases = sum( counts.col( 1 ) );
 

@@ -35,7 +35,7 @@ lm(const mat &X, const vec &y, const uvec &missing, const glm_model &model, glm_
     vec sd = arma::sqrt( sigma_square * diagvec( cov_inv ) );
 
     output.se_beta = sd;
-    output.p_value = chi_square_cdf( beta % beta / ( sd % sd ), 1 );
+    output.p_value = 1 - chi_square_cdf( beta % beta / ( sd % sd ), 1 );
     output.mu = mu;
     output.logl = loglikelihood( residuals % w, sigma_square, n );
     output.success = true;

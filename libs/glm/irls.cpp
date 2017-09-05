@@ -35,7 +35,7 @@ chi_square_cdf(const vec &x, unsigned int df)
 }
 
 vec
-weighted_least_squares(const mat &X, const vec &y, const vec &w)
+weighted_least_squares(const mat &X, const vec &y, const vec &w, bool fast_inversion)
 {
     /* A = sqrt( w ) * X */
     mat A = diagmat( sqrt( w ) ) * X;
@@ -43,14 +43,28 @@ weighted_least_squares(const mat &X, const vec &y, const vec &w)
     /* ty = sqrt( w ) * y */
     vec ty = y % sqrt( w );
 
-    mat Ainv;
-    if( A.is_finite( ) && pinv( Ainv, A ) )
+    vec beta;
+    if( fast_inversion )
     {
-        return Ainv * ty;
+        if( solve( beta, A, ty, solve_opts::fast + solve_opts::no_approx ) )
+        {
+            return beta;
+        }
+        else
+        {
+            return vec( );
+        }
     }
     else
     {
-        return vec( );
+        if( solve( beta, A, ty ) )
+        {
+            return beta;
+        }
+        else
+        {
+            return vec( );
+        }
     }
 }
 
@@ -67,15 +81,15 @@ compute_w(const vec &var, const vec& mu_eta)
 }
 
 vec
-init_beta(const mat &X, const vec&y, const uvec &missing, const glm_model &model)
+init_beta(const mat &X, const vec&y, const uvec &missing, const glm_model &model, bool fast_inversion = false)
 {
     vec eta = model.get_link( ).eta( (y + 0.5) / 3.0 );
 
-    return weighted_least_squares( X, eta, ones<vec>( missing.n_elem ) - missing );
+    return weighted_least_squares( X, eta, ones<vec>( missing.n_elem ) - missing, fast_inversion );
 }
 
 vec
-irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, glm_info &output)
+irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, glm_info &output, bool fast_inversion)
 {
     const glm_link &link = model.get_link( );
     vec b = init_beta( X, y, missing, model );
@@ -98,7 +112,7 @@ irls(const mat &X, const vec &y, const uvec &missing, const glm_model &model, gl
         w = compute_w( model.var( mu ), mu_eta );
         z = compute_z( eta, mu, mu_eta, y );
         set_missing_to_zero( missing, w );
-        b = weighted_least_squares( X, z, w );
+        b = weighted_least_squares( X, z, w, fast_inversion );
         if( b.n_elem <= 0 )
         {
             inverse_fail = true;
@@ -178,7 +192,7 @@ compute_eta:
 }
 
 vec
-irls(const mat &X, const vec &y, const glm_model &model, glm_info &output)
+irls(const mat &X, const vec &y, const glm_model &model, glm_info &output, bool fast_inversion)
 {
     uvec missing = zeros<uvec>( y.n_elem );
     return irls( X, y, missing, model, output );

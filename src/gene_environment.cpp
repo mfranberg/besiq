@@ -1,9 +1,10 @@
 #include "gene_environment.hpp"
 
-gene_environment::gene_environment(genotype_matrix_ptr genotypes, const arma::mat &cov, const arma::vec &phenotype, const std::vector<std::string> &cov_names)
-        : m_genotypes( genotypes ),
-          m_cov( cov ),
-          m_phenotype( phenotype )
+gene_environment::gene_environment(genotype_matrix_ptr genotypes, const arma::mat &cov, const arma::vec &phenotype, const std::vector<std::string> &cov_names, bool only_main)
+    : m_genotypes( genotypes ),
+      m_cov( cov ),
+      m_phenotype( phenotype ),
+      m_only_main( only_main )
 {
     
     std::vector<std::string> locus_names = genotypes->get_snp_names( );
@@ -14,7 +15,7 @@ gene_environment::gene_environment(genotype_matrix_ptr genotypes, const arma::ma
     }
 }
 
-void 
+void
 gene_environment::impute_missing()
 {
     fill_missing_genotypes( );
@@ -24,37 +25,54 @@ gene_environment::impute_missing()
 }
 
 arma::vec
-gene_environment::get_centered_phenotype()
+gene_environment::get_centered_phenotype() const
 {
     return m_phenotype - mean( m_phenotype );
 }
 
 size_t
-gene_environment::get_num_samples()
+gene_environment::get_num_samples() const
 {
     return m_phenotype.n_elem;
 }
 
 size_t
-gene_environment::get_num_variables()
+gene_environment::get_num_variables() const
 {
-    return m_genotypes->get_snp_names( ).size( ) + m_cov.n_cols;
+    if( !m_only_main )
+    {
+        return m_genotypes->size( ) + m_cov.n_cols + m_genotypes->size( ) * m_cov.n_cols;
+    }
+    else
+    {
+        return m_genotypes->size( ) + m_cov.n_cols;
+    }
 }
 
 std::string
-gene_environment::get_name(size_t index)
+gene_environment::get_name(size_t index) const
 {
-    return m_names[ index ];
+    if( index < m_names.size( ) )
+    {
+        return m_names[ index ];
+    }
+    else
+    {
+        unsigned int snp_index = (index - m_names.size( )) % m_genotypes->size( );
+        unsigned int cov_index = (index - m_names.size( )) / m_genotypes->size( );
+
+        return m_names[ m_genotypes->size( ) + cov_index ] + ":" + m_names[ snp_index ];
+    }
 }
 
 std::vector<std::string> 
-gene_environment::get_names()
+gene_environment::get_names() const
 {
     return m_names;
 }
 
 void
-gene_environment::calculate_cor(const arma::vec &residual, arma::vec &c)
+gene_environment::calculate_cor(const arma::vec &residual, arma::vec &c) const
 {
     int var = 0;
     #pragma omp parallel for
@@ -74,13 +92,41 @@ gene_environment::calculate_cor(const arma::vec &residual, arma::vec &c)
     var = m_genotypes->size( );
     for(int j = 0; j < m_cov.n_cols; j++)
     {
-        double cor = dot( ( m_cov.col( j ) - m_mean[ var + j ] ) / m_sd[ var + j ],  residual );
+        double cor = dot( ( m_cov.col( j ) - m_mean[ var + j ] ) / m_sd[ var + j ], residual );
         c[ var + j ] = cor;
+    }
+
+    if( m_only_main )
+    {
+        return;
+    }
+
+    var = m_genotypes->size( ) + m_cov.n_cols;
+    size_t n = get_num_samples( );
+    #pragma omp parallel for
+    for(int i = 0; i < m_cov.n_cols; i++)
+    {
+        double cov_mu = m_mean[ m_genotypes->size( ) + i ];
+        for(int j = 0; j < m_genotypes->size( ); j++)
+        {
+            snp_row &row = m_genotypes->get_row( j );
+            double geno_mu = m_mean[ j ];
+
+            double cor = 0.0;
+            double m = m_mean[ var + i * m_genotypes->size( ) + j ];
+            double s = m_sd[ var + i * m_genotypes->size( ) + j ];
+            for(int k = 0; k < n; k++)
+            {
+                cor += (( (m_cov( k, i ) - cov_mu) * (row[ k ] - geno_mu) - m ) / s ) * residual[ k ];
+            }
+
+            c[ var + i * m_genotypes->size( ) + j ] = cor;
+        }
     }
 }
 
 arma::vec
-gene_environment::eig_prod(const arma::vec &u)
+gene_environment::eig_prod(const arma::vec &u) const
 {
     arma::vec a = arma::zeros<arma::vec>( get_num_variables( ) );
 
@@ -103,11 +149,39 @@ gene_environment::eig_prod(const arma::vec &u)
         a[ var + i ] = dot( ( m_cov.col( i ) - m_mean[ var + i ] ) / m_sd[ var + i ], u );
     }
 
+    if( m_only_main )
+    {
+        return a;
+    }
+    
+    size_t n = get_num_samples( );
+    var = m_genotypes->size( ) + m_cov.n_cols;
+    #pragma omp parallel for
+    for(int i = 0; i < m_cov.n_cols; i++)
+    {
+        double cov_mu = m_mean[ m_genotypes->size( ) + i ];
+        for(int j = 0; j < m_genotypes->size( ); j++)
+        {
+            snp_row &row = m_genotypes->get_row( j );
+            double geno_mu = m_mean[ j ];
+
+            double prod = 0.0;
+            double m = m_mean[ var + i * m_genotypes->size( ) + j ];
+            double s = m_sd[ var + i * m_genotypes->size( ) + j ];
+            for(int k = 0; k < n; k++)
+            {
+                prod += (( (m_cov( k, i ) - cov_mu) * (row[ k ] - geno_mu) - m ) / s ) * u[ k ];
+            }
+
+            a[ var + i * m_genotypes->size( ) + j ] = prod;
+        }
+    }
+
     return a;
 }
 
 arma::mat
-gene_environment::get_active(const arma::uvec &active)
+gene_environment::get_active(const arma::uvec &active) const
 {
     size_t n = get_num_samples( );
     arma::mat X( n, active.n_elem );
@@ -124,9 +198,24 @@ gene_environment::get_active(const arma::uvec &active)
                 X( j, var ) = ( row[ j ] - m ) / s;
             }
         }
-        else
+        else if( active[ i ] < m_genotypes->size( ) + m_cov.n_cols )
         {
             X.col( var ) = ( m_cov.col( active[ i ] - m_genotypes->size( ) ) - m ) / s;
+        }
+        else
+        {
+            unsigned int cov_index = (active[ i ] - m_names.size( )) / m_genotypes->size( );
+            unsigned int snp_index = (active[ i ] - m_names.size( )) % m_genotypes->size( );
+        
+            double cov_mu = m_mean[ m_genotypes->size( ) + cov_index ];
+            double geno_mu = m_mean[ snp_index ];
+
+            const snp_row &row = m_genotypes->get_row( snp_index );
+            const arma::vec &cov = m_cov.col( cov_index );
+            for(int j = 0; j < n; j++)
+            {
+                X( j, var ) = ( (row[ j ] - geno_mu) * (cov[ j ] - cov_mu) - m ) / s;
+            }
         }
         var++;
     }
@@ -135,7 +224,7 @@ gene_environment::get_active(const arma::uvec &active)
 }
 
 arma::mat
-gene_environment::get_active_raw(const arma::uvec &active)
+gene_environment::get_active_raw(const arma::uvec &active) const
 {
     size_t n = get_num_samples( );
     arma::mat X( n, active.n_elem );
@@ -152,9 +241,24 @@ gene_environment::get_active_raw(const arma::uvec &active)
                 X( j, var ) = row[ j ];
             }
         }
-        else
+        else if( active[ i ] < m_genotypes->size( ) + m_cov.n_cols )
         {
             X.col( var ) = m_cov.col( active[ i ] - m_genotypes->size( ) );
+        }
+        else
+        {
+            unsigned int cov_index = (active[ i ] - m_names.size( )) / m_genotypes->size( );
+            unsigned int snp_index = (active[ i ] - m_names.size( )) % m_genotypes->size( );
+        
+            double cov_mu = m_mean[ m_genotypes->size( ) + cov_index ];
+            double geno_mu = m_mean[ snp_index ];
+
+            const snp_row &row = m_genotypes->get_row( snp_index );
+            const arma::vec &cov = m_cov.col( cov_index );
+            for(int j = 0; j < n; j++)
+            {
+                X( j, var ) = row[ j ] * cov[ j ];
+            }
         }
         var++;
     }
@@ -250,13 +354,14 @@ gene_environment::compute_mean_sd()
 {
     m_mean = arma::zeros<arma::vec>( get_num_variables( ) );
     m_sd = arma::zeros<arma::vec>( get_num_variables( ) );
-    size_t var = 0;
     size_t n = get_num_samples( );
+    
+    size_t var = 0;
+    #pragma omp parallel for
     for(int i = 0; i < m_genotypes->size( ); i++)
     {
         snp_row &row = m_genotypes->get_row( i );
         double m = 0;
-        int table[] = {0,0,0};
         for(int j = 0; j < row.size( ); j++)
         {
             m += row[ j ];
@@ -269,20 +374,50 @@ gene_environment::compute_mean_sd()
             s += pow( row[ j ] - m, 2 );
         }
 
-        m_mean[ var ] = m;
-        m_sd[ var ] = sqrt( s );
-
-        var++;
+        m_mean[ i ] = m;
+        m_sd[ i ] = sqrt( s );
     }
 
+    var = m_genotypes->size( );
     for(int i = 0; i < m_cov.n_cols; i++)
     {
         double m = arma::mean( m_cov.col( i ) );
         double s = arma::accu( pow( m_cov.col( i ) - m, 2 ) );
 
-        m_mean[ var ] = m;
-        m_sd[ var ] = sqrt( s );
+        m_mean[ var + i ] = m;
+        m_sd[ var + i ] = sqrt( s );
+    }
 
-        var++;
+    if( m_only_main )
+    {
+        return;
+    }
+
+    var = m_genotypes->size( ) + m_cov.n_cols;
+    #pragma omp parallel for
+    for(int i = 0; i < m_cov.n_cols; i++)
+    {
+        double cov_mu = m_mean[ m_genotypes->size( ) + i ];
+        for(int j = 0; j < m_genotypes->size( ); j++)
+        {
+            snp_row &row = m_genotypes->get_row( j );
+            double geno_mu = m_mean[ j ];
+
+            double mean = 0.0;
+            for(int k = 0; k < n; k++)
+            {
+                mean += (m_cov( k, i ) - cov_mu) * ( row[ k ] - geno_mu );
+            }
+            mean = mean / n;
+
+            double s = 0.0;
+            for(int k = 0; k < n; k++)
+            {
+                s += pow( (m_cov( k, i ) - cov_mu) * (row[ k ] - geno_mu) - mean, 2 );
+            }
+
+            m_mean[ var + m_genotypes->size( ) * i + j ] = mean;
+            m_sd[ var + m_genotypes->size( ) * i + j ] = sqrt( s );
+        }
     }
 }

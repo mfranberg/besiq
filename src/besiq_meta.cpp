@@ -102,14 +102,14 @@ main(int argc, char *argv[])
     /**
      * Set up method
      */
-    std::vector<wald_lm_method *> methods;
+    std::vector<wald_method *> methods;
     for(int i = 0; i < plink_files.size( ); i++)
     {
         method_data_ptr data( new method_data( ) );
         data->missing = zeros<uvec>( plink_files[ i ]->get_samples( ).size( ) );
         data->phenotype = create_phenotype_vector( plink_files[ i ]->get_samples( ), data->missing );
 
-        methods.push_back( new wald_lm_method( data ) );
+        methods.push_back( new wald_method( data ) );
     }
 
     /**
@@ -146,7 +146,7 @@ main(int argc, char *argv[])
     {
         /* Compute betas and covariances */
         std::vector<arma::vec> betas( methods.size( ), arma::zeros<arma::vec>( 4 ) );
-        std::vector<arma::mat> covs( methods.size( ), arma::zeros<arma::mat>( 4, 4 ) );
+        std::vector<arma::mat> weights( methods.size( ), arma::zeros<arma::mat>( 4, 4 ) );
         size_t N = 0;
         bool all_valid = true;
         for(int i = 0; i < methods.size( ); i++)
@@ -157,12 +157,16 @@ main(int argc, char *argv[])
             methods[ i ]->run( *row1, *row2, output );
 
             betas[ i ] = methods[ i ]->get_last_beta( );
-            covs[ i ] = methods[ i ]->get_last_C( );
 
-            if( covs[ i ].n_cols != 4 || covs[ i ].n_rows != 4 )
+            arma::mat C = methods[ i ]->get_last_C( );
+            arma::mat Cinv;
+
+            if( C.n_cols != 4 || C.n_rows != 4 || !arma::inv( Cinv, C ) )
             {
                 all_valid = false;
             }
+            
+            weights[ i ] = Cinv;
 
             N += methods[ i ]->num_ok_samples( *row1, *row2 );
         }
@@ -174,9 +178,9 @@ main(int argc, char *argv[])
 
         /* Computed weighted average of betas (fixed effect assumption) */
         arma::mat Csum = arma::zeros<arma::mat>( 4, 4 );
-        for(int i = 0; i < covs.size( ); i++)
+        for(int i = 0; i < weights.size( ); i++)
         {
-            Csum += covs[ i ];
+            Csum += weights[ i ];
         }
         arma::mat Csum_inv;
         if( !arma::inv( Csum_inv, Csum ) )
@@ -185,14 +189,12 @@ main(int argc, char *argv[])
         }
 
         arma::vec final_beta = arma::zeros<arma::vec>( 4 );
-        arma::mat final_C = arma::zeros<arma::mat>( 4, 4 );
-        for(int i = 0; i < covs.size( ); i++)
+        arma::mat final_C = Csum_inv;
+        for(int i = 0; i < weights.size( ); i++)
         {
-            final_beta += covs[ i ] * betas[ i ];
-            final_C += covs[ i ] * covs[ i ] * covs[ i ];
+            final_beta += weights[ i ] * betas[ i ];
         }
         final_beta = Csum_inv * final_beta;
-        final_C = Csum_inv * final_C * Csum_inv;
 
         arma::mat final_C_inv;
         if( !arma::inv( final_C_inv, final_C ) )

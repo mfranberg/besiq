@@ -7,6 +7,8 @@ wald_lm_method::wald_lm_method(method_data_ptr data, bool unequal_var)
   m_unequal_var( unequal_var )
 {
     m_weight = arma::ones<arma::vec>( data->phenotype.n_elem );
+    m_missing = get_data( )->missing;
+    m_pheno = get_data()->phenotype;
 }
 
 std::vector<std::string>
@@ -43,15 +45,18 @@ wald_lm_method::run(const snp_row &row1, const snp_row &row2, float *output)
 
     for(int i = 0; i < row1.size( ); i++)
     {
-        if( row1[ i ] == 3 || row2[ i ] == 3 || get_data( )->missing[ i ] == 1 )
+        unsigned char snp1 = row1[ i ];
+        unsigned char snp2 = row2[ i ];
+        
+        if( snp1 == 3 || snp2 == 3 || m_missing[ i ] == 1 )
         {
             continue;
         }
 
-        double pheno = get_data( )->phenotype[ i ];
-        n( row1[ i ], row2[ i ] ) += 1;
-        suf( row1[ i ], row2[ i ] ) += pheno;
-        suf2( row1[ i ], row2[ i ] ) += pheno * pheno;
+        double pheno = m_pheno[ i ];
+        n( snp1, snp2 ) += 1;
+        suf( snp1, snp2 ) += pheno;
+        suf2( snp1, snp2 ) += pheno * pheno;
     }
 
     /* Calculate residual and estimate sigma^2 */
