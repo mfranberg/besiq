@@ -66,6 +66,8 @@ set_target_properties( besiq-lars PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS}")
 target_link_libraries( besiq-lars gene_environment libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
 add_executable( besiq-predict besiq_predict.cpp )
+set_target_properties( besiq-predict PROPERTIES COMPILE_FLAGS "${OpenMP_CXX_FLAGS}" )
+set_target_properties( besiq-predict PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS}")
 target_link_libraries( besiq-predict gene_environment libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
 add_executable( besiq-mglm besiq_mglm.cpp )

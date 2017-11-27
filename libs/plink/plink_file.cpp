@@ -33,7 +33,7 @@ plink_file::get_sample_fid_iid() const
     std::vector< std::pair<std::string, std::string> > fid_iid;
     for(int i = 0; i < m_samples.size( ); i++)
     {
-        fid_iid.push_back( std::pair<std::string, std::string>( m_samples[ i ].iid, m_samples[ i ].fid ) );
+        fid_iid.push_back( std::pair<std::string, std::string>( m_samples[ i ].fid, m_samples[ i ].iid ) );
     }
 
     return fid_iid;

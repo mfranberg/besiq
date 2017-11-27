@@ -13,7 +13,7 @@
 using namespace arma;
 using namespace optparse;
 
-const std::string USAGE = "besiq-predict [OPTIONS] plink_file";
+const std::string USAGE = "besiq-predict [OPTIONS] plink_file beta_file";
 const std::string DESCRIPTION = "Predicts phenotypes given a list of betas.";
 const std::string VERSION = "besiq 0.0.1";
 const std::string EPILOG = "";

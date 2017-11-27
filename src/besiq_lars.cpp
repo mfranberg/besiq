@@ -519,7 +519,7 @@ lars(lars_variables &variable_set, lars_result &result, size_t max_vars, bool la
         /* Equation 2.5 */
         arma::mat G = X_active.t( ) * X_active;
         arma::mat Ginv;
-        if( !inv( Ginv, G ) )
+        if( !pinv( Ginv, G ) )
         {
             active.ignore( max_index );
             continue;
@@ -624,7 +624,7 @@ lars(lars_variables &variable_set, lars_result &result, size_t max_vars, bool la
 
         i++;
     }
-
+    
     return beta;
 }
 
