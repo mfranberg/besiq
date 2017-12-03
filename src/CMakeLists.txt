@@ -70,11 +70,16 @@ set_target_properties( besiq-predict PROPERTIES COMPILE_FLAGS "${OpenMP_CXX_FLAG
 set_target_properties( besiq-predict PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS}")
 target_link_libraries( besiq-predict gene_environment libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
+add_executable( besiq-gxe besiq_gxe.cpp )
+set_target_properties( besiq-gxe PROPERTIES COMPILE_FLAGS "${OpenMP_CXX_FLAGS}" )
+set_target_properties( besiq-gxe PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS}")
+target_link_libraries( besiq-gxe gene_environment libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
+
 add_executable( besiq-mglm besiq_mglm.cpp )
 target_link_libraries( besiq-mglm libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
 INSTALL( TARGETS besiq besiq-stagewise besiq-bayes besiq-caseonly
     besiq-glm besiq-scaleinv besiq-loglinear besiq-wald besiq-env
     besiq-pairs besiq-view besiq-correct besiq-imputed besiq-var
-    besiq-separate besiq-lars besiq-meta besiq-mglm besiq-predict DESTINATION bin )
+    besiq-separate besiq-lars besiq-meta besiq-mglm besiq-predict besiq-gxe DESTINATION bin )
 

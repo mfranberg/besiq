@@ -6,12 +6,22 @@ gene_environment::gene_environment(genotype_matrix_ptr genotypes, const arma::ma
       m_phenotype( phenotype ),
       m_only_main( only_main )
 {
-    
     std::vector<std::string> locus_names = genotypes->get_snp_names( );
     m_names.insert( m_names.end( ), locus_names.begin( ), locus_names.end( ) );
     if( cov_names.size( ) > 0 )
     {
         m_names.insert( m_names.end( ), cov_names.begin( ) + 2, cov_names.end( ) );
+    }
+
+    if(!only_main)
+    {
+        for(int i = 2; i < cov_names.size(); i++)
+        {
+            for(int j = 0; j < locus_names.size(); j++)
+            {
+                m_names.push_back( cov_names[ i ] + ":" + locus_names[ j ] );
+            }
+        }
     }
 }
 
@@ -52,17 +62,7 @@ gene_environment::get_num_variables() const
 std::string
 gene_environment::get_name(size_t index) const
 {
-    if( index < m_names.size( ) )
-    {
-        return m_names[ index ];
-    }
-    else
-    {
-        unsigned int snp_index = (index - m_names.size( )) % m_genotypes->size( );
-        unsigned int cov_index = (index - m_names.size( )) / m_genotypes->size( );
-
-        return m_names[ m_genotypes->size( ) + cov_index ] + ":" + m_names[ snp_index ];
-    }
+    return m_names[ index ];
 }
 
 std::vector<std::string> 
@@ -204,8 +204,8 @@ gene_environment::get_active(const arma::uvec &active) const
         }
         else
         {
-            unsigned int cov_index = (active[ i ] - m_names.size( )) / m_genotypes->size( );
-            unsigned int snp_index = (active[ i ] - m_names.size( )) % m_genotypes->size( );
+            unsigned int cov_index = (active[ i ] - m_genotypes->size( ) - m_cov.n_cols) / m_genotypes->size( );
+            unsigned int snp_index = (active[ i ] - m_genotypes->size( ) - m_cov.n_cols) % m_genotypes->size( );
         
             double cov_mu = m_mean[ m_genotypes->size( ) + cov_index ];
             double geno_mu = m_mean[ snp_index ];
@@ -247,8 +247,8 @@ gene_environment::get_active_raw(const arma::uvec &active) const
         }
         else
         {
-            unsigned int cov_index = (active[ i ] - m_names.size( )) / m_genotypes->size( );
-            unsigned int snp_index = (active[ i ] - m_names.size( )) % m_genotypes->size( );
+            unsigned int cov_index = (active[ i ] - m_genotypes->size( ) - m_cov.n_cols) / m_genotypes->size( );
+            unsigned int snp_index = (active[ i ] - m_genotypes->size( ) - m_cov.n_cols) % m_genotypes->size( );
         
             double cov_mu = m_mean[ m_genotypes->size( ) + cov_index ];
             double geno_mu = m_mean[ snp_index ];
