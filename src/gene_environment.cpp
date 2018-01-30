@@ -71,6 +71,34 @@ gene_environment::get_names() const
     return m_names;
 }
 
+unsigned int
+gene_environment::compute_num_minor(size_t index) const
+{
+    if(index > m_genotypes->size( ))
+    {
+        return 0;
+    }
+    else
+    {
+        snp_row &row = m_genotypes->get_row( index );
+        unsigned int num_0 = 0;
+        unsigned int num_2 = 0;
+        for(int i = 0; i < row.size( ); i++)
+        {
+            if(row[ i ] == 0)
+            {
+                num_0 += 1;
+            }
+            else if(row[ i ] == 2)
+            {
+                num_2 += 1;
+            }
+        }
+
+        return std::min( num_0, num_2 );
+    }
+}
+
 void
 gene_environment::calculate_cor(const arma::vec &residual, arma::vec &c) const
 {

@@ -130,6 +130,17 @@ public:
     std::vector<std::string> get_names() const;
 
     /**
+     * Returns the number of minor alleles for the given index, and
+     * 0 if index is out of bounds.
+     *
+     * @param index Index to the genotype.
+     * 
+     * @return The number of minor alleles for the given index, and
+     * 0 if the index is out of bounds.
+     */
+    unsigned int compute_num_minor(size_t index) const;
+
+    /**
      * Calculates the correlation between each variable and
      * the given vector of residuals. The results are stored
      * in the supplied vector c.

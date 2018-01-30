@@ -14,6 +14,8 @@
 #include <glm/models/normal.hpp>
 #include <glm/models/binomial.hpp>
 
+#include "gene_environment.hpp"
+
 using namespace arma;
 using namespace optparse;
 
@@ -24,23 +26,63 @@ const std::string EPILOG = "";
 
 void run_env(genotype_matrix_ptr genotypes, const arma::vec &phenotype, const arma::mat &cov, const arma::mat &env, const std::vector<std::string> &env_names, const arma::uvec &missing, glm_model &model, std::ostream &out)
 {
-    std::vector<std::string> locus_names = genotypes->get_snp_names( );
-    env_matrix X( cov, phenotype.n_elem );
-    out << "interaction\tbeta\tse_beta\tpvalue\tN\n";
+    out << "variable\tbeta\tse_beta\tpvalue\tN\n";
+    gene_environment ge( genotypes, env, phenotype, env_names, false );
+    ge.impute_missing( );
+    arma::vec cent_phenotype = ge.get_centered_phenotype( );
+    arma::uvec indices = arma::zeros<arma::uvec>( 1 );
+    size_t var = 0;
+    arma::uvec minors = arma::zeros<arma::uvec>( genotypes->size( ) );
+    for(int i = 0; i < genotypes->size( ) + env.n_cols; i++)
+    {
+        indices[0] = i;
+        glm_info result;
+        arma::mat mm = ge.get_active( indices );
+        arma::vec beta = glm_fit( mm, cent_phenotype, missing, model, result );
+        bool valid_minor = true;
+        if( i < genotypes->size( ) )
+        {
+            minors[ i ] = ge.compute_num_minor( i );
+            valid_minor = minors[ i ] >= 10;
+        }
+
+        if( valid_minor && result.converged && result.success )
+        {
+            out << ge.get_name(var) << "\t" <<
+                beta[ 0 ] << "\t" <<
+                result.se_beta[ 0 ] << "\t" <<
+                result.p_value[ 0 ] << "\t" <<
+                arma::sum( 1 - missing ) << "\n";
+        }
+        else
+        {
+            out << ge.get_name(var) << "\t" <<
+                "NA" << "\t" <<
+                "NA" << "\t" <<
+                "NA" << "\t" <<
+                arma::sum( 1 - missing ) << "\n";
+        }
+        var++;
+    }
+
+    indices = arma::zeros<arma::uvec>( 3 );
     for(int i = 0; i < genotypes->size( ); i++)
     {
         snp_row &row = genotypes->get_row( i );
         for(int j = 0; j < env.n_cols; j++)
         {
-            arma::uvec cur_missing = missing;
-            X.update_matrix( row, env.col( j ), cur_missing );
+            size_t interaction_index = genotypes->size( ) + env.n_cols + j * genotypes->size( ) + i;
+            indices[ 0 ] = i;
+            indices[ 1 ] = genotypes->size( ) + j;
+            indices[ 2 ] = interaction_index;
 
+            arma::mat mm = ge.get_active( indices );
             glm_info result;
-            arma::vec beta = glm_fit( X.get_alt( ), phenotype, cur_missing, model, result );
-            
-            if( result.converged && result.success )
+            arma::vec beta = glm_fit( mm, cent_phenotype, missing, model, result );
+
+            if( minors[ i ] >= 10 && result.converged && result.success )
             {
-                out << locus_names[ i ] << " " << env_names[ 2 + j ] << "\t" <<
+                out << ge.get_name( interaction_index ) << "\t" <<
                     beta[ 2 ] << "\t" <<
                     result.se_beta[ 2 ] << "\t" <<
                     result.p_value[ 2 ] << "\t" <<
@@ -48,7 +90,7 @@ void run_env(genotype_matrix_ptr genotypes, const arma::vec &phenotype, const ar
             }
             else
             {
-                out << locus_names[ i ] << " " << env_names[ 2 + j ] << "\t" <<
+                out << ge.get_name( interaction_index ) << "\t" <<
                     "NA" << "\t" <<
                     "NA" << "\t" <<
                     "NA" << "\t" <<
@@ -56,7 +98,6 @@ void run_env(genotype_matrix_ptr genotypes, const arma::vec &phenotype, const ar
             }
         }
     }
-
 }
 
 int
@@ -71,11 +112,11 @@ main(int argc, char *argv[])
     char const* const link_choices[] = { "logit", "logc", "odds", "identity", "log" };
 
     parser.add_option( "-m", "--model" ).choices( &model_choices[ 0 ], &model_choices[ 2 ] ).metavar( "model" ).help( "The model to use for the phenotype, 'binomial' or 'normal', default = 'binomial'." ).set_default( "normal" );
-    parser.add_option( "-l", "--link-function" ).choices( &link_choices[ 0 ], &link_choices[ 5 ] ).metavar( "link" ).help( "The link function, or scale, that is used for the penetrance: 'logit' log(p/(1-p)), 'logc' log(1 - p), 'odds' p/(1-p), 'identity' p, 'log' log(p)." );
     parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
     parser.add_option( "-n", "--mpheno" ).help( "Name of the phenotype to use." );
     parser.add_option( "-e", "--menv" ).help( "Name of the environment variable to use." );
     parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
+    parser.add_option( "-o", "--out" ).help( "The output file that will contain the results (binary)." );
     
     Values options = parser.parse_args( argc, argv );
     std::vector<std::string> args = parser.args( );
