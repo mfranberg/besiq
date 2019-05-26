@@ -24,7 +24,7 @@ The following things will be added at some point:
 
 Make sure you have the Armadillo matrix library installed. Then to build and run (note --recursive flag to get submodules):
 
-    > git clone --recursive https://github.com/fadern/besiq
+    > git clone --recursive https://github.com/mfranberg/besiq
     > cd besiq
     > git submodule init
     > git submodule update
