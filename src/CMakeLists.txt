@@ -49,32 +49,26 @@ add_executable( besiq-meta besiq_meta.cpp )
 target_link_libraries( besiq-meta libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
 find_package( OpenMP )
+if( OPENMP_FOUND )
+    set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}" )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" )
+endif()
 
 add_executable( besiq besiq.cpp )
 target_link_libraries( besiq )
 
 add_library( gene_environment gene_environment.cpp )
-set_target_properties( gene_environment PROPERTIES COMPILE_FLAGS "${OpenMP_CXX_FLAGS}" )
-set_target_properties( gene_environment PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS}")
 
 add_executable( besiq-env besiq_env.cpp )
-set_target_properties( besiq-env PROPERTIES COMPILE_FLAGS "${OpenMP_CXX_FLAGS}" )
-set_target_properties( besiq-env PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS}")
 target_link_libraries( besiq-env gene_environment libdcdf libglm libbesiq libplink libcpp-argparse libgzstream ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
 add_executable( besiq-lars besiq_lars.cpp )
-set_target_properties( besiq-lars PROPERTIES COMPILE_FLAGS "${OpenMP_CXX_FLAGS}" )
-set_target_properties( besiq-lars PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS}")
 target_link_libraries( besiq-lars gene_environment libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
 add_executable( besiq-predict besiq_predict.cpp )
-set_target_properties( besiq-predict PROPERTIES COMPILE_FLAGS "${OpenMP_CXX_FLAGS}" )
-set_target_properties( besiq-predict PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS}")
 target_link_libraries( besiq-predict gene_environment libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
 add_executable( besiq-gxe besiq_gxe.cpp )
-set_target_properties( besiq-gxe PROPERTIES COMPILE_FLAGS "${OpenMP_CXX_FLAGS}" )
-set_target_properties( besiq-gxe PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS}")
 target_link_libraries( besiq-gxe gene_environment libdcdf libglm libbesiq libplink libcpp-argparse ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${PLINKIO_LIBRARIES} )
 
 add_executable( besiq-mglm besiq_mglm.cpp )
