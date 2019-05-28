@@ -33,22 +33,23 @@ Make sure you have the Armadillo matrix library installed. Then to build and run
     > cmake ../
     > make
 
-    > ls /data/
+    > ls data/
     dataset.pair
     dataset.bim
     dataset.fam
     dataset.bed
 
-    > cat dataset.pair
-    rs412512 rs516161
-    rs51512 rs151251
-    rs51512 rs516163
+    > cat data/dataset.pair
+    rs1 rs2
+    rs3 rs4
+    rs5 rs6
+    ...
 
-    > ./src/besiq wald /data/dataset.pair /data/dataset
-    snp1        snp2        LR  P   N
-    rs412512    rs516161    4.1500    0.386 3418
-    rs51512     rs151251    3.1200    0.5379    3412
-    rs51512     rs516163    15.2661   0.0042    3416
+    > ./src/besiq wald data/dataset.pair data/dataset
+    snp1 snp2	LR	P	df	N
+    rs1 rs2	54.4259	4.28573e-11	4	6000
+    rs3 rs4	2.98309	0.560659	4	6000
+    rs5 rs6	6.49456	0.165134	4	6000
 
 ## Dependencies
 
