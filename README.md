@@ -287,3 +287,10 @@ and
 
     epibench run --method-file method.json --experiment-file specific.json --out specific/
     epibench compile specific/
+
+# References
+
+This software would not have been possible without:
+ * McCullagh P. and Nelder, J. A. (1989) Generalized Linear Models. London: Chapman and Hall.
+ * Rolf Sundberg (2019) Statistical Modelling by Exponential Families. Cambridge University Press.
+ * R glm {stats}.
