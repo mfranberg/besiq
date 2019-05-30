@@ -223,6 +223,21 @@ genotype_matrix::get_snp_names() const
     return m_snp_names;
 }
 
+int
+genotype_matrix::get_index(const std::string &name) const
+{
+    std::map<std::string, size_t>::const_iterator it = m_snp_to_index.find( name );
+    if( it != m_snp_to_index.end( ) )
+    {
+        return (int) it->second;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+
 size_t 
 genotype_matrix::size() const
 {

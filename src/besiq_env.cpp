@@ -162,10 +162,6 @@ main(int argc, char *argv[])
     arma::uvec env_missing = arma::zeros<arma::uvec>( missing.n_elem );
     arma::mat E = parse_env( environment_file, env_missing, order, &env_names, options[ "menv" ] );
 
-    /* XXX: Implement proper log file. */
-    arma::set_stream_err1( std::cerr );
-    arma::set_stream_err2( std::cerr );
-    
     /* Open output stream */
     std::ofstream output_file;
     if( options.is_set( "out" ) )

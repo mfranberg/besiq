@@ -5,40 +5,48 @@
 
 #include <cpp-argparse/OptionParser.h>
 #include <besiq/io/covariates.hpp>
-#include <glm/irls.hpp>
-#include <glm/models/normal.hpp>
 
 #include <plink/plink_file.hpp>
+#include <glm/glm.hpp>
+#include <glm/models/normal.hpp>
 
 #include "gene_environment.hpp"
 
 using namespace arma;
 using namespace optparse;
 
-const std::string USAGE = "besiq-gxe [OPTIONS] plink_file variable_file";
-const std::string DESCRIPTION = "Calculates the full regression model (only linear).";
+const std::string USAGE = "besiq-predict-lm [OPTIONS] plink_file vars_file";
+const std::string DESCRIPTION = "Models phenotypes given a list of variables.";
 const std::string VERSION = "besiq 0.0.1";
 const std::string EPILOG = "";
 
 std::vector<std::string>
-parse_variables(std::istream &stream)
+parse_vars(std::istream &stream)
 {
     std::string line;
-    std::vector<std::string> variable_list;
+    std::set<std::string> vars;
     while( std::getline( stream, line ) )
     {
         std::istringstream line_stream( line );
-        std::string variable_name;
+        std::string rs_name;
+        line_stream >> rs_name;
+        vars.insert( rs_name ); 
 
-        line_stream >> variable_name;
-            
-        variable_list.push_back( variable_name );
+        std::istringstream var_stream( rs_name );
+        std::string var_name;
+        while( std::getline( var_stream, var_name, ':' ) )
+        {
+            vars.insert( var_name );
+        }
     }
 
-    return variable_list;
+    std::vector<std::string> all_vars;
+    all_vars.assign( vars.begin( ), vars.end( ) );
+ 
+    return all_vars;
 }
 
-arma::uvec get_included_indices(const std::vector<std::string> variable_order, const std::vector<std::string> &labels)
+arma::uvec get_causal_indices(const std::vector<std::string> variable_order, const std::vector<std::string> &labels)
 {
     std::vector<size_t> indices;
     std::map<std::string, int> variable_to_index;
@@ -52,6 +60,11 @@ arma::uvec get_included_indices(const std::vector<std::string> variable_order, c
         if( variable_to_index.count( labels[ i ] ) > 0 )
         {
             indices.push_back( variable_to_index[ labels[ i ] ] );
+        }
+        else
+        {
+            std::cerr << "besiq-predict-lm: Error could not find: '" << labels[ i ] << "'.\n";
+            exit( 1 );
         }
     }
 
@@ -72,10 +85,10 @@ main(int argc, char *argv[])
                                          .description( DESCRIPTION )
                                          .epilog( EPILOG ); 
  
+    parser.add_option( "-c", "--cov" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Performs the analysis by including the covariates in this file." );
     parser.add_option( "-p", "--pheno" ).help( "Read phenotypes from this file instead of a plink file." );
-    parser.add_option( "-e", "--env" ).action( "store" ).type( "string" ).metavar( "filename" ).help( "Environemental variables." );
     parser.add_option( "-o", "--out" ).help( "The output file that will contain the results (binary)." );
-    parser.add_option( "--standardize" ).help( "Use standardized genotypes and covariates." ).action( "store_true" );
+    parser.add_option( "--matrix" ).help( "Write the model matrix instead." ).action( "store_true" );
 
     Values options = parser.parse_args( argc, argv );
     if( parser.args( ).size( ) != 2 )
@@ -92,8 +105,8 @@ main(int argc, char *argv[])
     std::vector<std::string> order = genotype_file->get_sample_iids( );
     std::vector< std::pair<std::string, std::string> > fid_iid = genotype_file->get_sample_fid_iid( );
 
-    std::ifstream variable_file( parser.args( )[ 1 ].c_str( ) );
-    std::vector<std::string> variable_list = parse_variables( variable_file );
+    std::ifstream var_file( parser.args( )[ 1 ].c_str( ) );
+    std::vector<std::string> labels = parse_vars( var_file );
 
     /* Parse phenotypes */
     arma::uvec missing_not_used = arma::zeros<arma::uvec>( genotype_file->get_samples( ).size( ) );
@@ -107,15 +120,13 @@ main(int argc, char *argv[])
     {
         phenotype = create_phenotype_vector( genotype_file->get_samples( ), missing_not_used );
     }
-    
-    /* Parse env */
-    arma::uvec env_missing = arma::zeros<arma::uvec>( genotype_file->get_samples( ).size( ) );
-    arma::mat env;
-    std::vector<std::string> env_names;
-    if( options.is_set( "env" ) )
+
+    arma::mat cov;
+    std::vector<std::string> cov_names;
+    if( options.is_set( "cov" ) )
     {
-        std::ifstream env_file( options[ "env" ].c_str( ) );
-        env = parse_covariate_matrix( env_file, env_missing, order, &env_names );
+        std::ifstream covariate_file( options[ "cov" ].c_str( ) );
+        cov = parse_covariate_matrix( covariate_file, missing_not_used, order, &cov_names );
     }
 
     /* Open output stream */
@@ -126,42 +137,53 @@ main(int argc, char *argv[])
     }
     std::ostream &out = options.is_set( "out" ) ? output_file : std::cout;
 
-    gene_environment ge( genotypes, env, phenotype, env_names, false );
+    gene_environment ge( genotypes, cov, phenotype, cov_names, false );
     ge.impute_missing( );
 
-    arma::uvec included = get_included_indices( ge.get_names( ), variable_list );
-    if( included.n_elem != variable_list.size( ) )
-    {
-        std::cout << "besiq-gxe: Error could not find all genotype or covariate variables.\n";
-        return 1;
-    }
-
-    bool standardize = options.is_set( "standardize" );
+    arma::uvec causal = get_causal_indices( ge.get_names( ), labels );
+ 
+    arma::mat X = ge.get_active( causal );
+    arma::vec y = ge.get_centered_phenotype( );
     
-    arma::mat X;
-    if( standardize )
+    if( options.is_set("matrix") )
     {
-        X = ge.get_active( included );
+        out << "pheno,";
+        for(int i = 0; i < causal.size( ); i++)
+        {
+            out << ge.get_name( causal[ i ] );
+            if(i < causal.size( ) - 1)
+            {
+                out << ",";
+            }
+        }
+        out << "\n";
+
+        X.insert_cols( 0, y );
+        X.save( out, arma::csv_ascii );
     }
     else
     {
-        X = ge.get_active_raw( included );
-    }
+        X.insert_cols( 0, arma::ones<arma::vec>( X.n_rows ) );
+        
+        glm_info result;
+        normal model( "identity" );
+        arma::uvec missing = arma::zeros<arma::uvec>( genotype_file->get_samples( ).size( ) );
+        arma::vec beta = glm_fit( X, y, missing, model, result);
 
-    glm_info result;
-    normal model( "identity" );
-    arma::uvec missing = arma::zeros<arma::uvec>( genotype_file->get_samples( ).size( ) );
-    arma::vec beta = irls( X, ge.get_centered_phenotype(), missing, model, result);
-
-    out << "snp\tbeta\tse_beta\tpvalue\n";
-    if( result.success && result.converged )
-    {
-        for(int i = 0; i < included.n_elem; i++)
+        out << "snp\tbeta\tse_beta\tpvalue\n";
+        if( result.success && result.converged )
         {
-            out << ge.get_name( included[ i ] ) << "\t" <<
-                beta[ i ] << "\t" <<
-                result.se_beta[ i ] << "\t" <<
-                result.p_value[ i ] << "\n";
+            for(int i = 1; i < beta.n_elem; i++)
+            {
+                out << ge.get_name( causal[ i - 1 ] ) << "\t" <<
+                    beta[ i ] << "\t" <<
+                    result.se_beta[ i ] << "\t" <<
+                    result.p_value[ i ] << "\n";
+            }
+        }
+        else
+        {
+            std::cerr << "beisq-predict-lm: Couldn't converge.\n";
         }
     }
 

@@ -101,10 +101,6 @@ main(int argc, char *argv[])
     std::ifstream beta_file( parser.args( )[ 1 ].c_str( ) );
     arma::vec beta = parse_beta( beta_file, labels );
 
-    /* Make error streams separate from stdout */
-    arma::set_stream_err1( std::cerr );
-    arma::set_stream_err2( std::cerr );
-
     /* Parse phenotypes */
     arma::uvec cov_missing = arma::zeros<arma::uvec>( genotype_file->get_samples( ).size( ) );
     arma::mat cov;
@@ -134,7 +130,7 @@ main(int argc, char *argv[])
         return 1;
     }
 
-    bool standardize = options.is_set( "only_pvalues" );
+    bool standardize = options.is_set( "standardize" );
     
     arma::mat X;
     if( standardize )

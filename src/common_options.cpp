@@ -79,10 +79,6 @@ parse_common_options(optparse::Values &options, const std::vector<std::string> &
         data->covariate_matrix = parse_covariate_matrix( covariate_file, data->missing, order );
     }
 
-    /* XXX: Implement proper log file. */
-    arma::set_stream_err1( std::cerr );
-    arma::set_stream_err2( std::cerr );
-    
     /* Open results. */
     resultfile *result_file = NULL;
     if( options.is_set( "out" ) )

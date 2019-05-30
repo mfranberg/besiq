@@ -126,10 +126,6 @@ main(int argc, char *argv[])
     genotype_matrix_ptr genotypes = create_genotype_matrix( genotype_file );
     std::vector<std::string> order = genotype_file->get_sample_iids( );
 
-    /* Make error streams separate from stdout */
-    arma::set_stream_err1( std::cerr );
-    arma::set_stream_err2( std::cerr );
-
     /* Parse phenotypes */
     arma::uvec missing = arma::zeros<arma::uvec>( genotype_file->get_samples( ).size( ) );
     arma::vec phenotype;

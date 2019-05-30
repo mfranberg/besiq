@@ -164,6 +164,15 @@ public:
     const std::vector<std::string> &get_snp_names() const;
 
     /**
+     * Get the index for a given name.
+     *
+     * @param name The snp name.
+     *
+     * @return The index of the snp, -1 if not found.
+     */
+    int get_index(const std::string &name) const;
+
+    /**
      * Returns the size of the matrix.
      */
     size_t size() const;

@@ -14,7 +14,7 @@ if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel" )
     set( CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_PROFILE} -wd488" )
 endif( )
 
-find_package( Armadillo REQUIRED )
+find_package( Armadillo REQUIRED "8.0.0" )
 find_package( BLAS REQUIRED )
 
 include( CheckIncludeFiles )

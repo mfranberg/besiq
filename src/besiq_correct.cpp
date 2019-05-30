@@ -106,9 +106,6 @@ main(int argc, char *argv[])
         exit( 1 );
     }
     
-    arma::set_stream_err1( std::cerr );
-    arma::set_stream_err2( std::cerr );
-    
     correction_options correct;
 
     std::string method = (std::string) options.get( "method" );
