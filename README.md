@@ -92,7 +92,7 @@ To build with dependencies without root access (note --recursive flag to get sub
     > make install
 
 To build with dependencies with root access:
-    
+
     > wget http://sourceforge.net/projects/arma/files/armadillo-3.910.0.tar.gz
     > tar -xf armadillo-3.910.0.tar.gz
     > cd armadillo-3.910.0
@@ -132,11 +132,11 @@ The following commands work on single variants only:
 * **lars** - Use the least angle regression method to find important covariates and genetic variants (run multithreaded).
 
 The following commands are experimental:
-    
+
 * **bayes** - Compute the model posterior using the same models as in the loglinear method, using a conjugate dirichlet prior.
 * **imputed** - Perform interaction fine-mapping analysis using impute2 imputed data from two (small) regions.
 * **env** - Perform stage-wise gene-environment analysis.
-    
+
 ### Genotype files
 
 This software works with binary plink files .fam, .bim and .bam, and are specified using the path without the extension.
@@ -146,7 +146,7 @@ This software works with binary plink files .fam, .bim and .bam, and are specifi
 These files differs slighly from the plink phenotype and covariates file. Missing values are specified with NA. All binary phenotypes and covariates should be coded with 0/1 (in contrast to 1/2). The file format is
 
     FID IID pheno [pheno2 ... phenon]
-    
+
 or
 
     FID IID cov1 cov2 cov3 ...
@@ -189,9 +189,9 @@ The Snakefile is very simple:
 
     configfile: "experiments.json"
     include: "../besiq.rule"
-    
+
     localrules: all, besiq
-    
+
 Now the whole experiment can be run locally by:
 
     > snakemake besiq
@@ -255,11 +255,11 @@ Generate a list of all possible pairs with a combined maf of greater than 0.04, 
 Run the stepwise command, this should preferebly be parallelized on a cluster with more than 100k variants in the genotype file. It is also recommended to filter out pairs with a p-value higher than 0.05 / num_pairs. This command will use the phenotype in the plink file, if in another file specify with -p.
 
     > besiq stagewise /data/dataset.pair /data/dataset > results.out
-    
+
 Use closed testing to perform multiple testing correction assuming 50 marginally associated variants and 100k variants.
 
     > besiq correct --weight 0.25,0.25,0.25,0.25 --num-tests 4999950000,5000000,5000000,1225 results.out /data/dataset
-    
+
 This will output all pairs significant on at least one scale, and the adjusted p-values.
 
 ### GLM, Wald and loglinear
@@ -267,7 +267,7 @@ This will output all pairs significant on at least one scale, and the adjusted p
 These are all run similiarly. First pairs should be created
 
     > besiq pairs -c 0.04 -m 0.2 -d 1000000 /data/dataset > dataset.pair
-    
+
 Then these methods are simply run by the following. These commands will use the phenotype in the plink file, if in another file specify with -p.
 
     > besiq wald /data/dataset.pair /data/dataset > result.wald.out
@@ -283,10 +283,14 @@ The experiments from the paper can be run simply by:
     epibench run --method-file method.json --experiment-file lireich.json --out lireich/
     epibench compile lireich/
 
-and 
+and
 
     epibench run --method-file method.json --experiment-file specific.json --out specific/
     epibench compile specific/
+
+# Acknowledgements
+
+The code development, testing and analyses of simulated and real data were enabled by resources provided by the Swedish National Infrastructure for Computing (SNIC) at UPPMAX partially funded by the Swedish Research Council through grant agreement no. 2018-05973.
 
 # References
 
